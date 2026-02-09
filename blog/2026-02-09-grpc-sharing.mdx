@@ -84,9 +84,118 @@ public void channelRead(ChannelHandlerContext ctx, Object msg) {
 
 ---
 
-## 三、 分布式治理：生产环境的那些坑
+## 三、 跨语言的魅力：IDL 与代码生成
 
-### 3.1 为什么 L4 负载均衡（LVS/HAProxy TCP模式）对 gRPC “无效”？
+gRPC 的杀手锏之一是 **Protobuf (Protocol Buffers)**。它不仅是序列化协议，更是 **IDL (Interface Definition Language)**。
+
+### 3.1 一份合约，多处履行
+
+你只需要写一份 `.proto` 文件，就能自动生成 Java, Go, Python, C++, Node.js 等十几种语言的代码。这解决了微服务架构中最大的痛点：**接口文档与代码脱节**。
+
+```mermaid
+graph LR
+    P[user.proto] -->|protoc| J[Java Code]
+    P -->|protoc| G[Go Code]
+    P -->|protoc| Py[Python Code]
+    P -->|protoc| W[Web/TS Code]
+
+    style P fill:#f9f,stroke:#333,stroke-width:2px
+```
+
+### 3.2 实战场景：Java 后端 + Python AI
+
+在 AI 爆发的今天，我们经常需要用 Java 写业务逻辑，用 Python 跑 PyTorch 模型。gRPC 是连接这两者的最佳桥梁。
+
+- **Java 侧**：作为 Client，调用 `PredictionService`。
+- **Python 侧**：作为 Server，加载模型，暴露 gRPC 接口。
+  相比于 RESTful API，gRPC 的强类型和高性能在这里优势巨大。
+
+---
+
+## 四、 协议层图解：HTTP/2 与 gRPC 栈
+
+让我们用 Mermaid 来直观地看下 gRPC 的协议栈结构。
+
+```mermaid
+classDiagram
+    class gRPC_Stub {
+        +sayHello()
+    }
+    class gRPC_Core {
+        +Channel
+        +Interceptors
+    }
+    class HTTP2_Transport {
+        +Streams
+        +Flow Control
+    }
+    class TLS_TCP {
+        +Encryption
+        +Connection
+    }
+
+    gRPC_Stub --> gRPC_Core : Calls
+    gRPC_Core --> HTTP2_Transport : Frames (HEADERS/DATA)
+    HTTP2_Transport --> TLS_TCP : Bytes
+```
+
+### 4.1 请求流程时序图
+
+一个标准的 gRPC Unary 调用流程如下：
+
+```mermaid
+sequenceDiagram
+    participant C as Client Stub
+    participant T as Transport (HTTP/2)
+    participant S as Server
+
+    C->>T: HEADERS (Stream ID=1, :path=/Greet/SayHello)
+    C->>T: DATA (Stream ID=1, Length=15, Flags=EOS)
+    Note right of C: Protobuf Payload
+
+    T->>S: Deliver Stream 1
+    S->>S: Invoke Implementation
+
+    S->>T: HEADERS (Stream ID=1, :status=200)
+    S->>T: DATA (Stream ID=1, Length=20)
+    S->>T: HEADERS (Stream ID=1, grpc-status=0, Flags=EOS)
+
+    T->>C: Complete Future/Observer
+```
+
+---
+
+## 五、 不同场景的应对之道
+
+### 5.1 数据中心内部 (East-West Traffic)
+
+- **场景**：微服务 A 调用 微服务 B。
+- **推荐**：
+  - **协议**：原生 gRPC (Protobuf)。
+  - **LB**：Client-side LB (配合 Nacos/Consul) 或 Service Mesh (Istio)。
+  - **关键点**：追求极致的低延迟和高吞吐。
+
+### 5.2 移动端/Web端 (North-South Traffic)
+
+- **场景**：手机 App 或 浏览器 调用后端服务。
+- **挑战**：浏览器对 HTTP/2 底层控制能力有限（无法直接操作 Frame）。
+- **推荐**：
+  - **Web**：使用 **gRPC-Web** + Envoy Proxy 进行协议转换 (gRPC-Web text -> gRPC binary)。
+  - **App**：可以直接用 gRPC Mobile，但要注意弱网环境下的重连机制。
+
+### 5.3 对外 OpenAPI
+
+- **场景**：开放接口给第三方。
+- **推荐**：
+  - 使用 **Google API Extensions** (Transcoding)。
+  - 在 Envoy 或 gRPC Gateway 层，将 RESTful JSON 请求自动转换为内部的 gRPC 请求。
+  - **好处**：你只需要写一套 gRPC 代码，自动拥有了 gRPC 和 REST 两个接口。
+
+---
+
+## 六、 分布式治理：生产环境的那些坑
+
+### 6.1 为什么 L4 负载均衡（LVS/HAProxy TCP模式）对 gRPC “无效”？
 
 这是一个经典的误区。
 
