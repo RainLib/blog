@@ -18,7 +18,7 @@ export default function MotionCanvasPlayer({ src }: { src: string }) {
 
   React.useEffect(() => {
     if (playerRef.current) {
-      playerRef.current.setAttribute("auto", "true");
+      playerRef.current.setAttribute("auto", "");
     }
   }, []);
 
@@ -30,7 +30,7 @@ export default function MotionCanvasPlayer({ src }: { src: string }) {
         return (
           <div
             ref={containerRef}
-            className="glass-panel p-1 rounded-xl overflow-hidden shadow-[0_0_20px_rgba(0,242,254,0.3)] relative group bg-black/80 backdrop-blur-md"
+            className="glass-panel p-1 rounded-xl shadow-[0_0_20px_rgba(0,242,254,0.3)] relative group bg-black/80 backdrop-blur-md"
             style={{ aspectRatio: "16/9" }}
           >
             <motion-canvas-player ref={playerRef} src={src} />
