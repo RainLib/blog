@@ -6,8 +6,36 @@
 @tailwind utilities;
 
 :root {
-  /* Cyberpunk Neon Cyan/Blue Palette */
-  --ifm-color-primary: #00f2fe;
+  /* Light Mode - Tech/Clean */
+  --ifm-color-primary: #008f97; /* Darker cyan for contrast on white */
+  --ifm-color-primary-dark: #008188;
+  --ifm-color-primary-darker: #007a81;
+  --ifm-color-primary-darkest: #00646a;
+  --ifm-color-primary-light: #009da6;
+  --ifm-color-primary-lighter: #00a4ae;
+  --ifm-color-primary-lightest: #00b9c4;
+
+  --ifm-font-family-base:
+    "Inter", system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell,
+    Noto Sans, sans-serif;
+  --ifm-font-family-monospace: "JetBrains Mono", monospace;
+
+  --ifm-background-color: #ffffff;
+  --ifm-background-surface-color: #f8f9fa;
+  --ifm-text-color: #1a1a1a;
+  --ifm-heading-color: #000000;
+  --ifm-link-color: #008f97;
+
+  /* Custom Variables for Glass */
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(0, 143, 151, 0.2);
+  --glass-shadow: rgba(0, 143, 151, 0.1);
+  --neon-glow: rgba(0, 143, 151, 0.5);
+}
+
+[data-theme="dark"] {
+  /* Dark Mode - Cyberpunk/Neon */
+  --ifm-color-primary: #00f2fe; /* Neon Cyan */
   --ifm-color-primary-dark: #00d9e5;
   --ifm-color-primary-darker: #00cdd7;
   --ifm-color-primary-darkest: #00a9b1;
@@ -15,47 +43,59 @@
   --ifm-color-primary-lighter: #39f5fe;
   --ifm-color-primary-lightest: #72f8ff;
 
-  --ifm-font-family-base:
-    "Inter", system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell,
-    Noto Sans, sans-serif, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial,
-    sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-  --ifm-font-family-monospace:
-    "JetBrains Mono", SFMono-Regular, Menlo, Monaco, Consolas,
-    "Liberation Mono", "Courier New", monospace;
-
-  /* Force Dark Mode aesthetic even in light mode (or update light mode later) */
   --ifm-background-color: #050505;
-  --ifm-background-surface-color: #0f0f0f;
+  --ifm-background-surface-color: #0a0a0a;
   --ifm-text-color: #e0e0e0;
   --ifm-heading-color: #ffffff;
   --ifm-link-color: #00f2fe;
 
-  --docusaurus-highlighted-code-line-bg: rgba(0, 242, 254, 0.1);
-}
-
-/* Specific Dark Mode Overrides (if toggled) */
-[data-theme="dark"] {
-  --ifm-color-primary: #00f2fe;
-  --ifm-color-primary-dark: #00d9e5;
-  --ifm-color-primary-darker: #00cdd7;
-  --ifm-color-primary-darkest: #00a9b1;
-  --ifm-color-primary-light: #26f4fe;
-  --ifm-color-primary-lighter: #39f5fe;
-  --ifm-color-primary-lightest: #72f8ff;
-
-  --ifm-background-color: #000000;
-  --ifm-background-surface-color: #0a0a0a;
+  /* Custom Variables for Glass */
+  --glass-bg: rgba(0, 0, 0, 0.4);
+  --glass-border: rgba(0, 242, 254, 0.3);
+  --glass-shadow: rgba(0, 242, 254, 0.15);
+  --neon-glow: rgba(0, 242, 254, 0.7);
 }
 
 /* Glassmorphism Utilities */
 .glass-panel {
-  @apply bg-white/5 backdrop-blur-md border border-white/10 rounded-xl;
+  background-color: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  border-radius: 1rem;
+  box-shadow: 0 4px 30px var(--glass-shadow);
+  transition: all 0.3s ease;
+}
+
+.glass-panel:hover {
+  border-color: var(--ifm-color-primary);
+  box-shadow:
+    0 0 40px var(--glass-shadow),
+    inset 0 0 20px var(--glass-shadow);
+  transform: translateY(-2px);
 }
 
 .neon-text {
-  text-shadow: 0 0 10px rgba(0, 242, 254, 0.7);
+  text-shadow: 0 0 10px var(--neon-glow);
 }
 
 .neon-border {
-  box-shadow: 0 0 10px rgba(0, 242, 254, 0.5);
+  box-shadow: 0 0 10px var(--neon-glow);
+}
+
+/* Animations */
+@keyframes pulse-glow {
+  0%,
+  100% {
+    opacity: 1;
+    filter: drop-shadow(0 0 5px var(--neon-glow));
+  }
+  50% {
+    opacity: 0.8;
+    filter: drop-shadow(0 0 15px var(--neon-glow));
+  }
+}
+
+.animate-pulse {
+  animation: pulse-glow 3s infinite;
 }
