@@ -14,6 +14,23 @@ const config: Config = {
     v4: true, // Improve compatibility with the upcoming Docusaurus v4
   },
 
+  plugins: [
+    function (context, options) {
+      return {
+        name: "custom-webpack-plugin",
+        configureWebpack(config, isServer) {
+          return {
+            resolve: {
+              alias: {
+                "@motion-canvas/core": require.resolve("@motion-canvas/core"),
+              },
+            },
+          };
+        },
+      };
+    },
+  ],
+
   // Set the production url of your site here
   url: "https://your-docusaurus-site.example.com",
   // Set the /<baseUrl>/ pathname under which your site is served
