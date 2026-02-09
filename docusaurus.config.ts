@@ -25,6 +25,14 @@ const config: Config = {
                 "@motion-canvas/core": require.resolve("@motion-canvas/core"),
               },
             },
+            ignoreWarnings: [
+              (warning) =>
+                warning.module &&
+                warning.module.resource.includes(
+                  "node_modules/@motion-canvas/core",
+                ) &&
+                warning.message.includes("Critical dependency"),
+            ],
           };
         },
       };
