@@ -14,11 +14,11 @@ function HomepageHeader() {
 
   return (
     <header className="relative w-full h-screen overflow-hidden flex flex-col items-center justify-center">
-      {/* 3D Liquid Glass Background */}
+      {/* Raw WebGL Shader Background */}
       <BrowserOnly>
         {() => {
-          const LiquidGlass = require("../components/LiquidGlass").default;
-          return <LiquidGlass />;
+          const ShaderHero = require("../components/ShaderHero").default;
+          return <ShaderHero />;
         }}
       </BrowserOnly>
 
