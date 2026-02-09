@@ -17,3 +17,31 @@ hola:
   label: Hola
   permalink: /hola
   description: Hola tag description
+grpc:
+  label: gRPC
+  permalink: /grpc
+  description: gRPC framework
+http2:
+  label: HTTP/2
+  permalink: /http2
+  description: HTTP/2 protocol
+protocol:
+  label: Protocol
+  permalink: /protocol
+  description: Protocol details
+deep-dive:
+  label: Deep Dive
+  permalink: /deep-dive
+  description: In-depth technical articles
+java:
+  label: Java
+  permalink: /java
+  description: Java programming language
+netty:
+  label: Netty
+  permalink: /netty
+  description: Netty framework
+distributed-systems:
+  label: Distributed Systems
+  permalink: /distributed-systems
+  description: Distributed systems architecture
