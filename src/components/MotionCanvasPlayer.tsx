@@ -25,7 +25,7 @@ export default function MotionCanvasPlayer({ src }: { src: string }) {
         import("@motion-canvas/player");
         return (
           <div className="glass-panel p-4 my-8 rounded-xl overflow-hidden shadow-[0_0_20px_rgba(0,242,254,0.3)]">
-            <motion-canvas-player src={src} auto="true" />
+            <motion-canvas-player src={src} />
           </div>
         );
       }}
