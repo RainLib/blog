@@ -1,0 +1,61 @@
+@import "@fontsource/inter";
+@import "@fontsource/jetbrains-mono";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Cyberpunk Neon Cyan/Blue Palette */
+  --ifm-color-primary: #00f2fe;
+  --ifm-color-primary-dark: #00d9e5;
+  --ifm-color-primary-darker: #00cdd7;
+  --ifm-color-primary-darkest: #00a9b1;
+  --ifm-color-primary-light: #26f4fe;
+  --ifm-color-primary-lighter: #39f5fe;
+  --ifm-color-primary-lightest: #72f8ff;
+
+  --ifm-font-family-base:
+    "Inter", system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell,
+    Noto Sans, sans-serif, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial,
+    sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  --ifm-font-family-monospace:
+    "JetBrains Mono", SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+
+  /* Force Dark Mode aesthetic even in light mode (or update light mode later) */
+  --ifm-background-color: #050505;
+  --ifm-background-surface-color: #0f0f0f;
+  --ifm-text-color: #e0e0e0;
+  --ifm-heading-color: #ffffff;
+  --ifm-link-color: #00f2fe;
+
+  --docusaurus-highlighted-code-line-bg: rgba(0, 242, 254, 0.1);
+}
+
+/* Specific Dark Mode Overrides (if toggled) */
+[data-theme="dark"] {
+  --ifm-color-primary: #00f2fe;
+  --ifm-color-primary-dark: #00d9e5;
+  --ifm-color-primary-darker: #00cdd7;
+  --ifm-color-primary-darkest: #00a9b1;
+  --ifm-color-primary-light: #26f4fe;
+  --ifm-color-primary-lighter: #39f5fe;
+  --ifm-color-primary-lightest: #72f8ff;
+
+  --ifm-background-color: #000000;
+  --ifm-background-surface-color: #0a0a0a;
+}
+
+/* Glassmorphism Utilities */
+.glass-panel {
+  @apply bg-white/5 backdrop-blur-md border border-white/10 rounded-xl;
+}
+
+.neon-text {
+  text-shadow: 0 0 10px rgba(0, 242, 254, 0.7);
+}
+
+.neon-border {
+  box-shadow: 0 0 10px rgba(0, 242, 254, 0.5);
+}
