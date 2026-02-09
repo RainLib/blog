@@ -1,7 +1,7 @@
-import {makeProject} from '@motion-canvas/core';
+import { makeProject } from "@motion-canvas/core";
 
-import example from './scenes/example?scene';
+import grpc_flow from "./scenes/grpc_flow?scene";
 
 export default makeProject({
-  scenes: [example],
+  scenes: [grpc_flow],
 });
