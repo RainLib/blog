@@ -2,20 +2,6 @@ import React from "react";
 import BrowserOnly from "@docusaurus/BrowserOnly";
 
 // Augment the JSX namespace to include the custom element
-declare global {
-  namespace JSX {
-    interface IntrinsicElements {
-      "motion-canvas-player": React.DetailedHTMLProps<
-        React.HTMLAttributes<HTMLElement> & {
-          src: string;
-          auto?: boolean | string;
-          mode?: string;
-        },
-        HTMLElement
-      >;
-    }
-  }
-}
 
 export default function MotionCanvasPlayer({ src }: { src: string }) {
   const containerRef = React.useRef<HTMLDivElement>(null);
