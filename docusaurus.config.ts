@@ -56,7 +56,9 @@ const config: Config = {
     [
       "classic",
       {
-        docs: false, // Disabling docs as per user request to remove unrelated content
+        docs: {
+          sidebarPath: "./sidebars.ts",
+        },
         blog: {
           showReadingTime: true,
           feedOptions: {
@@ -144,7 +146,20 @@ const config: Config = {
     },
   } satisfies Preset.ThemeConfig,
 
-  themes: ["@docusaurus/theme-mermaid"],
+  themes: [
+    "@docusaurus/theme-mermaid",
+    [
+      require.resolve("@easyops-cn/docusaurus-search-local"),
+      /** @type {import("@easyops-cn/docusaurus-search-local").PluginOptions} */
+      {
+        hashed: true,
+        indexBlog: true,
+        indexDocs: false, // Docs are disabled
+        language: ["en"],
+        highlightSearchTermsOnTargetPage: true,
+      },
+    ],
+  ],
   markdown: {
     mermaid: true,
   },
