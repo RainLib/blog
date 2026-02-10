@@ -7,7 +7,7 @@ import type * as Preset from "@docusaurus/preset-classic";
 const config: Config = {
   title: "RainLib",
   tagline: "Full Stack Developer | Distributed Systems | Mobile | Web",
-  favicon: "img/logo.png", // Using logo as favicon for now
+  favicon: "img/logo.ico", // Using logo as favicon for now
 
   // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
   future: {

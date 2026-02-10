@@ -4,12 +4,15 @@ import Translate from "@docusaurus/Translate";
 
 // Explicitly import blog posts to ensure data availability
 // @ts-ignore
-import * as Post1 from "../../../blog/2026-02-09-grpc-production.mdx";
+import * as Post0 from "../../../blog/2026-02-08-grpc-idl.mdx";
+// @ts-ignore
+import * as Post1 from "../../../blog/2026-02-10-grpc-production.mdx";
 // @ts-ignore
 import * as Post2 from "../../../blog/2026-02-09-grpc-protocol.mdx";
 
 const RECENT_POSTS_DATA = [
-  { module: Post1, filename: "2026-02-09-grpc-production.mdx" },
+  { module: Post0, filename: "2026-02-08-grpc-idl.mdx" },
+  { module: Post1, filename: "2026-02-10-grpc-production.mdx" },
   { module: Post2, filename: "2026-02-09-grpc-protocol.mdx" },
 ];
 

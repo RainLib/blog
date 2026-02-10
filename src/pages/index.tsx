@@ -12,9 +12,8 @@ export default function Home() {
     <Layout title={siteConfig.title} description="RainLib Digital Garden">
       <div className="min-h-screen bg-[var(--ifm-background-color)] text-[var(--ifm-text-color)] selection:bg-[var(--ifm-color-primary)] selection:text-white">
         <HomepageHeader />
-
         <LatestInsights />
-        <SkillsGallery />
+        {/* <SkillsGallery /> */}
       </div>
     </Layout>
   );
