@@ -15,6 +15,8 @@ export default function BlogRow({ item, index }: BlogRowProps) {
   const { permalink, title, date, formattedDate, authors, description, tags } =
     item.metadata;
 
+  console.log("BlogRow Item:", title, authors);
+
   return (
     <motion.div
       initial={{ opacity: 0, x: -20 }}
@@ -32,17 +34,28 @@ export default function BlogRow({ item, index }: BlogRowProps) {
       </div>
 
       {/* Date & Meta (Left Column) */}
-      <div className="md:w-32 flex-shrink-0 flex flex-col gap-1">
+      <div className="md:w-32 flex-shrink-0 flex flex-col gap-2">
         <time
           dateTime={date}
           className="text-xs font-mono font-bold text-neutral-500 dark:text-cyan-200/60 uppercase tracking-wider group-hover:text-primary dark:group-hover:text-cyan-400 transition-colors"
         >
           {formattedDate}
         </time>
+
+        {/* Author Info */}
         {authors.length > 0 && (
-          <span className="text-[10px] font-mono text-neutral-400 dark:text-neutral-600 truncate">
-            {authors.map((a: any) => a.name).join(", ")}
-          </span>
+          <div className="flex items-center gap-2 mt-1">
+            {authors[0].imageURL && (
+              <img
+                src={authors[0].imageURL}
+                alt={authors[0].name}
+                className="w-6 h-6 rounded-full grayscale group-hover:grayscale-0 transition-all opacity-70 group-hover:opacity-100 object-cover ring-1 ring-neutral-200 dark:ring-neutral-700"
+              />
+            )}
+            <span className="text-[10px] font-mono text-neutral-400 dark:text-neutral-600 truncate">
+              {authors[0].name}
+            </span>
+          </div>
         )}
       </div>
 
@@ -57,16 +70,17 @@ export default function BlogRow({ item, index }: BlogRowProps) {
       </div>
 
       {/* Tags & Action (Right) */}
-      <div className="flex flex-col items-end gap-3 flex-shrink-0 md:w-32">
-        {/* Show top tag */}
-        <div className="flex gap-2">
-          {tags.slice(0, 1).map((tag: any) => (
-            <span
+      <div className="flex flex-col items-end gap-3 flex-shrink-0 md:w-32 relative z-20">
+        {/* Show tags */}
+        <div className="flex flex-wrap justify-end gap-2">
+          {tags.slice(0, 3).map((tag: any) => (
+            <Link
               key={tag.permalink}
-              className="px-2 py-0.5 text-[10px] font-mono border border-neutral-200 dark:border-neutral-800 rounded text-neutral-500 dark:text-neutral-500 uppercase"
+              to={tag.permalink}
+              className="px-2 py-0.5 text-[10px] font-mono border border-neutral-200 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-800/50 rounded text-neutral-500 dark:text-neutral-400 uppercase hover:text-primary dark:hover:text-cyan-400 hover:border-primary dark:hover:border-cyan-400 transition-colors"
             >
               {tag.label}
-            </span>
+            </Link>
           ))}
         </div>
 

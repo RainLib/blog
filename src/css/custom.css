@@ -158,3 +158,115 @@
   background: var(--ifm-background-color) !important;
   border-top: 1px solid var(--glass-border);
 }
+
+/* --- Article "Focus Mode" Redesign --- */
+
+/* 1. Container & Backdrop */
+.blog-post-page-wrapper {
+  position: relative;
+  z-index: 1;
+}
+
+.blog-post-page-wrapper article {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 24px;
+  padding: 3rem 4rem; /* Wide padding for focus */
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.05),
+    0 2px 4px -1px rgba(0, 0, 0, 0.03),
+    0 0 0 1px rgba(0, 0, 0, 0.02);
+  margin-bottom: 4rem;
+}
+
+[data-theme="dark"] .blog-post-page-wrapper article {
+  background: rgba(10, 10, 12, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 0 40px -10px rgba(0, 255, 255, 0.1),
+    /* Cyber glow */ 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+/* 2. Typography - "Tech Editorial" */
+.blog-post-page-wrapper header {
+  margin-bottom: 3rem;
+  border-bottom: 1px dashed rgba(0, 0, 0, 0.1);
+  padding-bottom: 2rem;
+}
+[data-theme="dark"] .blog-post-page-wrapper header {
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+}
+
+.blog-post-page-wrapper h1 {
+  font-size: 3.5rem;
+  font-weight: 800; /* Extra bold */
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  margin-bottom: 1.5rem;
+}
+
+.markdown h2 {
+  font-size: 2rem;
+  border-bottom: none; /* Remove default line */
+  margin-top: 3rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+/* Add a tech "marker" before H2 */
+.markdown h2::before {
+  content: "//";
+  color: var(--ifm-color-primary);
+  font-family: "JetBrains Mono", monospace; /* Fallback to mono */
+  font-size: 1.2rem;
+  opacity: 0.6;
+}
+
+.markdown p {
+  font-size: 1.125rem; /* 18px */
+  line-height: 1.8;
+  color: var(--ifm-font-color-base);
+  opacity: 0.9;
+}
+
+/* 3. Code Blocks - "Terminal" Style */
+.markdown pre {
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: #1a1b1e !important; /* Force dark background even in light mode for contrast */
+}
+[data-theme="dark"] .markdown pre {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+}
+
+/* 4. Table of Contents - "HUD" Style */
+.table-of-contents {
+  font-family: "JetBrains Mono", "Fira Code", monospace;
+  font-size: 0.75rem;
+  border-left: 1px solid var(--ifm-color-emphasis-200);
+  padding-left: 1rem;
+  margin-top: 2rem;
+}
+
+.table-of-contents li {
+  margin: 0.5rem 0;
+}
+
+.table-of-contents__link {
+  color: var(--ifm-color-content-secondary);
+  transition: all 0.2s ease;
+}
+
+.table-of-contents__link:hover,
+.table-of-contents__link--active {
+  color: var(--ifm-color-primary);
+  text-shadow: 0 0 10px rgba(var(--ifm-color-primary-rgb), 0.4);
+  padding-left: 4px; /* Slight movement */
+  border-left: 2px solid var(--ifm-color-primary);
+  margin-left: -18px; /* Offset the border */
+  padding-left: 16px;
+}
