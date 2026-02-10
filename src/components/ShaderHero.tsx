@@ -15,6 +15,7 @@ precision highp float;
 
 uniform float u_time;
 uniform vec2 u_resolution;
+uniform vec2 u_mouse; // Mouse position (normalized)
 uniform vec3 u_color_bg;
 uniform vec3 u_color_1;
 uniform vec3 u_color_2;
@@ -54,9 +55,14 @@ void main() {
 
     float t = u_time * 0.1;
 
-    // Domain Warping
-    float n1 = snoise(st * 1.5 + t);
-    float n2 = snoise(st * 3.0 - t * 1.5 + n1);
+    // Mouse Interaction
+    // Calculate distance to mouse
+    float dist = distance(st, u_mouse * vec2(u_resolution.x / u_resolution.y, 1.0));
+    float interaction = smoothstep(0.5, 0.0, dist) * 0.1; // Local distortion
+
+    // Domain Warping with Interaction
+    float n1 = snoise(st * 1.5 + t + interaction);
+    float n2 = snoise(st * 3.0 - t * 1.5 + n1 + interaction * 2.0);
 
     // Color mixing based on noise
     vec3 color = mix(u_color_bg, u_color_1, smoothstep(-0.5, 0.5, n1));
@@ -108,6 +114,21 @@ export default function ShaderHero() {
   const { colorMode } = useColorMode();
   const isDark = colorMode === "dark";
 
+  // Track mouse position
+  const mouseRef = useRef({ x: 0.5, y: 0.5 });
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      mouseRef.current = {
+        x: e.clientX / window.innerWidth,
+        y: 1.0 - e.clientY / window.innerHeight, // Invert Y for WebGL
+      };
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, []);
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -130,8 +151,6 @@ export default function ShaderHero() {
     gl.useProgram(program);
 
     // Buffer: Full screen triangle
-    // Uses a single triangle that covers the screen [-1,-1] to [3, -1] to [-1, 3]
-    // This is more efficient than a quad (2 triangles) for full screen effects.
     const positionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
     const positions = new Float32Array([-1.0, -1.0, 3.0, -1.0, -1.0, 3.0]);
@@ -144,6 +163,7 @@ export default function ShaderHero() {
     // Uniforms
     const uTimeDetails = gl.getUniformLocation(program, "u_time");
     const uResolution = gl.getUniformLocation(program, "u_resolution");
+    const uMouse = gl.getUniformLocation(program, "u_mouse"); // New Uniform
 
     // Color Uniforms
     const uBg = gl.getUniformLocation(program, "u_color_bg");
@@ -157,7 +177,6 @@ export default function ShaderHero() {
       const width = canvas.clientWidth;
       const height = canvas.clientHeight;
 
-      // Resize canvas if needed
       if (canvas.width !== width || canvas.height !== height) {
         canvas.width = width;
         canvas.height = height;
@@ -165,12 +184,11 @@ export default function ShaderHero() {
       }
 
       const time = (Date.now() - startTime) / 1000;
-
-      // Apply current theme
       const colors = isDark ? THEME.dark : THEME.light;
 
       gl.uniform1f(uTimeDetails, time);
       gl.uniform2f(uResolution, width, height);
+      gl.uniform2f(uMouse, mouseRef.current.x, mouseRef.current.y); // Pass mouse pos
       gl.uniform3fv(uBg, colors.bg);
       gl.uniform3fv(uC1, colors.c1);
       gl.uniform3fv(uC2, colors.c2);
@@ -180,6 +198,8 @@ export default function ShaderHero() {
     };
 
     render();
+
+    // ... (cleanup) ...
 
     return () => {
       cancelAnimationFrame(animationFrameId);
