@@ -5,7 +5,7 @@ import BlogPostItemHeaderInfo from "@theme/BlogPostItem/Header/Info";
 import BlogPostItemHeaderAuthors from "@theme/BlogPostItem/Header/Authors";
 import Translate from "@docusaurus/Translate";
 
-export default function BlogPostItemHeader(): JSX.Element {
+export default function BlogPostItemHeader() {
   const { metadata, isBlogPostPage } = useBlogPost();
   const { title } = metadata;
 
