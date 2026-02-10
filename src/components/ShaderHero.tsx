@@ -92,14 +92,14 @@ function compileShader(
 // --- Theme Config ---
 const THEME = {
   light: {
-    bg: [1.0, 1.0, 1.0], // White
-    c1: [0.8, 0.95, 1.0], // Light Cyan (background flow)
-    c2: [0.9, 0.6, 0.6], // Soft Coral
+    bg: [0.96, 0.96, 0.97], // #f5f5f7 (Warm Grey)
+    c1: [0.8, 0.9, 1.0], // Soft Blue
+    c2: [1.0, 0.9, 0.9], // Soft Peach
   },
   dark: {
-    bg: [0.02, 0.02, 0.02], // Almost Black
-    c1: [0.0, 0.2, 0.3], // Dark Cyan
-    c2: [0.5, 0.0, 0.5], // Neon Purple
+    bg: [0.04, 0.05, 0.06], // #0b0c10 (Deep Space)
+    c1: [0.1, 0.2, 0.3], // Muted Deep Blue
+    c2: [0.2, 0.1, 0.2], // Muted Deep Purple
   },
 };
 

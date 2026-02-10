@@ -92,8 +92,9 @@ const config: Config = {
       title: "RainLib",
       logo: {
         alt: "RainLib Logo",
-        src: "img/logo.png",
+        src: "img/logo.svg", // Updated to use the new SVG
       },
+      hideOnScroll: true, // Auto-hide navbar on scroll down
       items: [
         { to: "/blog", label: "Blog", position: "left" },
         {
@@ -107,29 +108,20 @@ const config: Config = {
       style: "dark",
       links: [
         {
-          title: "Community",
-          items: [
-            {
-              label: "GitHub",
-              href: "https://github.com/RainLib",
-            },
-            {
-              label: "Twitter",
-              href: "https://twitter.com/RainLib", // Placeholder, or remove if unknown
-            },
-          ],
-        },
-        {
-          title: "More",
+          title: "Explore",
           items: [
             {
               label: "Blog",
               to: "/blog",
             },
+            {
+              label: "GitHub",
+              href: "https://github.com/RainLib",
+            },
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} RainLib. Built with Docusaurus.`,
+      copyright: `© ${new Date().getFullYear()} RainLib. Built for the Future.`,
     },
     prism: {
       theme: prismThemes.github,
