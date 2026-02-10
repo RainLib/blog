@@ -23,8 +23,8 @@ function BlogListPageContent(props: Props) {
 
   return (
     <BlogLayout sidebar={sidebar}>
-      {/* Background Shader - Inside Layout to access Context */}
-      <div className="fixed inset-0 z-[-1] opacity-20 pointer-events-none">
+      {/* Background Shader - Fixed behind everything */}
+      <div className="fixed inset-0 z-[-1] pointer-events-none">
         <BrowserOnly>
           {() => {
             const BlogHero = require("@site/src/components/BlogHero").default;

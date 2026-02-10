@@ -313,14 +313,20 @@ html body .blog-post-page-wrapper .container {
     align-self: flex-start;
   }
 
-  /* HIDE the Left Sidebar to make room */
+  /* Restore the Left Sidebar */
+  /*
+    html body .blog-post-page-wrapper .row > aside,
+    html body .blog-post-page-wrapper .row > div[class*='col--3']:first-child:not(:last-child) {
+         display: none !important;
+    }
+    */
+
+  /* Adjust widths to fit both (Content 75%, Sidebar 25%) */
   html body .blog-post-page-wrapper .row > aside,
-  html
-    body
-    .blog-post-page-wrapper
-    .row
-    > div[class*="col--3"]:first-child:not(:last-child) {
-    display: none !important;
+  html body .blog-post-page-wrapper .row > div[class*="col--3"]:first-child {
+    flex: 0 0 280px !important;
+    max-width: 280px !important;
+    display: block !important;
   }
 }
 

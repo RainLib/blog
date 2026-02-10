@@ -13,7 +13,7 @@ export default function BlogPostItemWrapper(props: Props): ReactNode {
       <BlogPostItem {...props} />
 
       {/* Background Shader - Fixed behind everything */}
-      <div className="fixed inset-0 z-[-1] opacity-20 pointer-events-none">
+      <div className="fixed inset-0 z-[-1] pointer-events-none">
         <BrowserOnly>
           {() => {
             const BlogHero = require("@site/src/components/BlogHero").default;
