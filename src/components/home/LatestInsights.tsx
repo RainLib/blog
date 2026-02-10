@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "@docusaurus/Link";
-import Translate from "@docusaurus/Translate";
+import Translate, { translate } from "@docusaurus/Translate";
 
 // Explicitly import blog posts to ensure data availability
 // @ts-ignore
@@ -18,7 +18,8 @@ const RECENT_POSTS_DATA = [
 
 function getRecentPosts() {
   return RECENT_POSTS_DATA.map((item) => {
-    const { frontMatter } = item.module as any;
+    const module = item.module as any;
+    const frontMatter = module.frontMatter || {};
     const filename = item.filename;
 
     // Parse filename for date: 2026-02-09-slug.mdx
@@ -44,11 +45,15 @@ function getRecentPosts() {
       title: frontMatter.title || "Untitled",
       desc:
         frontMatter.description ||
-        "Deep dive into gRPC and distributed systems.", // Provide a default if missing
+        translate({
+          id: "homepage.insights.post_description_fallback",
+          message: "深入探索 gRPC 与分布式系统的核心技术。",
+          description: "Fallback description for blog posts on homepage",
+        }),
       date: date,
       rawDate: dateStr || "1970-01-01",
       link: link,
-      tag: frontMatter.tags?.[0] || "Blog",
+      tags: frontMatter.tags || ["Blog"],
     };
   }).sort((a, b) => b.rawDate.localeCompare(a.rawDate));
 }
@@ -88,10 +93,17 @@ export default function LatestInsights() {
                   0{i + 1}
                 </div>
                 <div className="relative z-10 flex flex-col h-full">
-                  <div className="flex justify-between items-center mb-6">
-                    <span className="text-xs font-mono px-3 py-1 rounded-full border border-[var(--glass-border)] bg-[var(--ifm-background-color)] opacity-70 uppercase">
-                      {post.tag}
-                    </span>
+                  <div className="flex flex-wrap gap-2 mb-6">
+                    {post.tags.map((tag, idx) => (
+                      <span
+                        key={idx}
+                        className="text-[10px] font-mono px-2 py-0.5 rounded-full border border-[var(--glass-border)] bg-[var(--ifm-background-color)] opacity-70 uppercase whitespace-nowrap"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="flex justify-between items-center mb-4">
                     <span className="text-xs font-mono opacity-50">
                       {post.date}
                     </span>

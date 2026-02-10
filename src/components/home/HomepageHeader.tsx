@@ -26,21 +26,21 @@ export default function HomepageHeader() {
           {/* Subtle Ambient Glow behind content */}
           <div className="absolute -inset-10 bg-[var(--neon-glow)] blur-[100px] opacity-20 dark:opacity-10 rounded-full animate-pulse pointer-events-none" />
 
-          <div className="relative glass-panel rounded-[2rem] p-8 md:p-16 border-white/10 dark:border-white/5 shadow-2xl overflow-hidden">
+          <div className="relative irregular-glass p-8 md:p-16 border-white/10 dark:border-white/5 shadow-2xl overflow-hidden">
             {/* Added a very subtle mesh-like overlay inside the box for "designed" feel */}
             <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]" />
 
             <div className="relative flex flex-col items-center">
-              <div className="flex flex-col md:flex-row items-center justify-center gap-6 md:gap-10 mb-8">
+              <div className="flex flex-col md:flex-row items-center justify-center gap-1 md:gap-4 mb-8">
                 <motion.img
                   src={useBaseUrl("/img/logo.svg")}
                   alt="RainLib Logo"
-                  className="w-24 h-24 md:w-36 md:h-36 drop-shadow-[0_0_15px_rgba(0,0,0,0.1)] dark:drop-shadow-[0_0_20px_rgba(255,255,255,0.2)] dark:invert transition-all duration-500 hover:scale-105"
+                  className="w-24 h-24 md:w-36 md:h-36 drop-shadow-[0_0_15px_rgba(0,0,0,0.1)] dark:drop-shadow-[0_0_20px_rgba(255,255,255,0.2)] dark:invert transition-all duration-500 hover:scale-105 animate-float"
                   initial={{ opacity: 0, scale: 0.5 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.8, delay: 0.2 }}
                 />
-                <h1 className="text-7xl md:text-9xl font-bold tracking-tighter bg-clip-text text-transparent bg-gradient-to-b from-neutral-900 to-neutral-600 dark:from-white dark:to-neutral-400 drop-shadow-2xl">
+                <h1 className="text-7xl md:text-9xl font-bold tracking-tighter metallic-text drop-shadow-2xl">
                   RainLib
                 </h1>
               </div>
@@ -70,7 +70,7 @@ export default function HomepageHeader() {
         <div className="flex gap-4 items-center justify-center mt-12">
           <Link
             to="/blog"
-            className="px-8 py-3 rounded-full bg-[var(--ifm-color-primary)] text-white hover:bg-[var(--ifm-color-primary-dark)] transition-all font-semibold"
+            className="px-8 py-3 rounded-full hero-button-primary transition-all font-semibold"
           >
             <Translate
               id="homepage.hero.explore"

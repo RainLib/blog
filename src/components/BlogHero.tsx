@@ -16,41 +16,72 @@ void main() {
 `;
 
 const FRAGMENT_SHADER = `
-precision mediump float; // Medium precision is enough for smooth gradients
+precision highp float;
 
 uniform float u_time;
 uniform vec2 u_resolution;
 uniform vec3 u_c1;
 uniform vec3 u_c2;
 uniform vec3 u_c3;
+uniform vec3 u_c4;
+
+#define S(a,b,t) smoothstep(a,b,t)
+
+mat2 Rot(float a) {
+    float s = sin(a);
+    float c = cos(a);
+    return mat2(c, -s, s, c);
+}
+
+vec2 hash(vec2 p) {
+    p = vec2(dot(p, vec2(2127.1, 81.17)), dot(p, vec2(1269.5, 283.37)));
+    return fract(sin(p) * 43758.5453);
+}
+
+float noise(in vec2 p) {
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    vec2 u = f * f * (3.0 - 2.0 * f);
+    float n = mix(mix(dot(-1.0 + 2.0 * hash(i + vec2(0.0, 0.0)), f - vec2(0.0, 0.0)),
+                      dot(-1.0 + 2.0 * hash(i + vec2(1.0, 0.0)), f - vec2(1.0, 0.0)), u.x),
+                  mix(dot(-1.0 + 2.0 * hash(i + vec2(0.0, 1.0)), f - vec2(0.0, 1.0)),
+                      dot(-1.0 + 2.0 * hash(i + vec2(1.0, 1.0)), f - vec2(1.0, 1.0)), u.x), u.y);
+    return 0.5 + 0.5 * n;
+}
 
 void main() {
+    if (u_resolution.x < 1.0 || u_resolution.y < 1.0) {
+        gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+        return;
+    }
+
     vec2 uv = gl_FragCoord.xy / u_resolution.xy;
+    float ratio = u_resolution.x / u_resolution.y;
 
-    // Slow down time significantly
-    float t = u_time * 0.2;
+    vec2 tuv = uv - 0.5;
 
-    // Create 3 moving points/blobs based on simple Trig
-    vec2 p1 = vec2(0.5 + 0.5*sin(t), 0.5 + 0.5*cos(t*0.7));
-    vec2 p2 = vec2(0.5 + 0.5*sin(t*1.2 + 2.0), 0.5 + 0.5*cos(t*1.5 + 1.0));
-    vec2 p3 = vec2(0.5 + 0.5*sin(t*0.5 + 4.0), 0.5 + 0.5*cos(t*0.3 + 2.0));
+    // Use noise for dynamic rotation - slightly faster
+    float degree = noise(vec2(u_time * 0.1, tuv.x * tuv.y));
 
-    // Distances
-    float d1 = length(uv - p1);
-    float d2 = length(uv - p2);
-    float d3 = length(uv - p3);
+    tuv.y *= 1.0 / ratio;
+    tuv *= Rot(radians((degree - 0.5) * 720.0 + 180.0));
+    tuv.y *= ratio;
 
-    // Soft mixing
-    vec3 col = u_c1;
-    col = mix(col, u_c2, smoothstep(0.8, 0.2, d1)); // Blob 1
-    col = mix(col, u_c3, smoothstep(0.8, 0.2, d2 * 1.2)); // Blob 2
+    // Wave warping - matching original snippet speeds
+    float frequency = 5.0;
+    float amplitude = 30.0;
+    float speed = u_time * 2.0;
+    tuv.x += sin(tuv.y * frequency + speed) / amplitude;
+    tuv.y += sin(tuv.x * frequency * 1.5 + speed) / (amplitude * 0.5);
 
-    // Add a ambient light wave at bottom
-    float bottomWave = 0.5 + 0.5 * sin(uv.x * 6.0 + t * 2.0);
-    col = mix(col, u_c2, bottomWave * smoothstep(0.0, 0.4, 1.0 - uv.y) * 0.3);
+    // Dynamic layers based on approved colors
+    vec3 layer1 = mix(u_c1, u_c2, S(-0.3, 0.2, (tuv * Rot(radians(-5.0))).x));
+    vec3 layer2 = mix(u_c3, u_c4, S(-0.3, 0.2, (tuv * Rot(radians(-5.0))).x));
+
+    vec3 col = mix(layer1, layer2, S(0.5, -0.3, tuv.y));
 
     // Subtle grain to prevent banding
-    float grain = fract(sin(dot(uv.xy, vec2(12.9898,78.233))) * 43758.5453) * 0.02;
+    float grain = fract(sin(dot(uv.xy, vec2(12.9898, 78.233))) * 43758.5453) * 0.01;
     col += grain;
 
     gl_FragColor = vec4(col, 1.0);
@@ -67,7 +98,7 @@ function compileShader(
   gl.shaderSource(shader, source);
   gl.compileShader(shader);
   if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-    console.warn("BlogHero Shader Error:", gl.getShaderInfoLog(shader)); // Changed to warn to see in console
+    console.warn("BlogHero Shader Error:", gl.getShaderInfoLog(shader));
     gl.deleteShader(shader);
     return null;
   }
@@ -76,16 +107,16 @@ function compileShader(
 
 const THEME = {
   light: {
-    bg: [1.0, 1.0, 1.0], // Pure White
-    c1: [0.92, 0.94, 1.0], // Very soft Indigo
-    c2: [0.95, 0.96, 0.98], // Cool Grey/White
-    c3: [0.9, 0.96, 1.0], // Pale Cyan hint
+    c1: [0.98, 0.92, 0.75], // Soft Gold
+    c2: [0.8, 0.9, 1.0], // Serene Sky
+    c3: [1.0, 0.85, 0.92], // Gentle Rose
+    c4: [0.85, 0.98, 0.92], // Airy Mint
   },
   dark: {
-    bg: [0.02, 0.02, 0.03], // Almost Pure Black (OLED friendly)
-    c1: [0.08, 0.1, 0.18], // Deep Midnight
-    c2: [0.05, 0.05, 0.08], // Dark Slate
-    c3: [0.06, 0.15, 0.2], // Deep Teal/Ocean
+    c1: [0.12, 0.1, 0.08], // Deep Chocolate/Gold base
+    c2: [0.02, 0.03, 0.1], // Deep Midnight Blue
+    c3: [0.1, 0.05, 0.08], // Deep Burgundy/Rose
+    c4: [0.04, 0.08, 0.12], // Deep Teal
   },
 };
 
@@ -146,21 +177,18 @@ const BlogHero = React.memo(() => {
     const uC1 = gl.getUniformLocation(program, "u_c1");
     const uC2 = gl.getUniformLocation(program, "u_c2");
     const uC3 = gl.getUniformLocation(program, "u_c3");
+    const uC4 = gl.getUniformLocation(program, "u_c4");
 
     let animationFrameId: number;
     const startTime = Date.now();
 
     // PERFORMANCE: Use ResizeObserver to avoid polling clientWidth/Height in the loop
-    // This prevents layout thrashing during scroll
     const resizeObserver = new ResizeObserver((entries) => {
       for (const entry of entries) {
         const displayWidth = entry.contentRect.width;
         const displayHeight = entry.contentRect.height;
 
-        // AGGRESSIVE OPTIMIZATION: Render at LOWER resolution
-        // 0.5 means we render 1/4th the pixels.
-        // For a blurry/rain background, this is usually acceptable and makes scrolling silky smooth.
-        const dpr = Math.min(window.devicePixelRatio || 1, 1.0) * 0.5;
+        const dpr = Math.min(window.devicePixelRatio || 1, 1.0) * 0.75; // Slightly higher for quality
 
         canvas.width = Math.round(displayWidth * dpr);
         canvas.height = Math.round(displayHeight * dpr);
@@ -179,6 +207,7 @@ const BlogHero = React.memo(() => {
       gl.uniform3fv(uC1, colors.c1);
       gl.uniform3fv(uC2, colors.c2);
       gl.uniform3fv(uC3, colors.c3);
+      gl.uniform3fv(uC4, colors.c4);
 
       gl.drawArrays(gl.TRIANGLES, 0, 3);
       animationFrameId = requestAnimationFrame(render);

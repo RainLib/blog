@@ -96,12 +96,103 @@
     transform: translateY(0);
   }
   50% {
-    transform: translateY(-10px);
+    transform: translateY(-15px);
   }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.metallic-text {
+  background: linear-gradient(
+    110deg,
+    #444 20%,
+    #888 40%,
+    #eee 50%,
+    #888 60%,
+    #444 80%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 6s linear infinite;
+  font-family:
+    "Inter",
+    system-ui,
+    -apple-system,
+    sans-serif !important;
+  letter-spacing: -0.04em !important;
+}
+
+[data-theme="dark"] .metallic-text {
+  background: linear-gradient(
+    110deg,
+    #888 20%,
+    #ccc 40%,
+    #fff 50%,
+    #ccc 60%,
+    #888 80%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 6s linear infinite;
+}
+
+@keyframes liquid {
+  0%,
+  100% {
+    border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+  }
+  50% {
+    border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%;
+  }
+}
+
+.irregular-glass {
+  background-color: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 4px 30px var(--glass-shadow);
+  transition: all 0.5s ease;
+  animation: liquid 15s ease-in-out infinite;
+}
+
+.irregular-glass:hover {
+  border-color: var(--ifm-color-primary);
+  box-shadow: 0 0 40px var(--neon-glow);
+  transform: scale(1.01);
 }
 
 .animate-float {
   animation: float 6s ease-in-out infinite;
+}
+
+.hero-button-primary {
+  background-color: var(--ifm-color-primary) !important;
+  color: #ffffff !important;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 14px 0 var(--neon-glow);
+}
+
+[data-theme="dark"] .hero-button-primary {
+  color: #0b0c10 !important;
+}
+
+.hero-button-primary:hover {
+  background-color: var(--ifm-color-primary-dark) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px 0 var(--neon-glow);
+  opacity: 0.95;
 }
 
 /* Navbar Overrides */

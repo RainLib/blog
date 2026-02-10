@@ -41,6 +41,10 @@
     "homepage.insights.title": {
         "message": "Latest Insights"
     },
+    "homepage.insights.post_description_fallback": {
+        "message": "Deep dive into the core technologies of gRPC and distributed systems.",
+        "description": "Fallback description for blog posts on homepage"
+    },
     "homepage.insights.view_all": {
         "message": "View All"
     },
