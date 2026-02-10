@@ -1,7 +1,8 @@
 import React, { useEffect, useRef } from "react";
 import { useColorMode } from "@docusaurus/theme-common";
 
-// --- Shader Source ---
+// --- Shader Source: "Ethereal Flow" ---
+// A smooth, liquid-like FBM gradient flow.
 
 const VERTEX_SHADER = `
 attribute vec2 position;
@@ -15,63 +16,95 @@ precision highp float;
 
 uniform float u_time;
 uniform vec2 u_resolution;
-uniform vec2 u_mouse; // Mouse position (normalized)
+uniform vec2 u_mouse;
 uniform vec3 u_color_bg;
 uniform vec3 u_color_1;
 uniform vec3 u_color_2;
+uniform vec3 u_color_3; // Added a 3rd accent color
 
-// Simplex 2D noise
-vec3 permute(vec3 x) { return mod(((x*34.0)+1.0)*x, 289.0); }
+// Random function
+float random(in vec2 _st) {
+    return fract(sin(dot(_st.xy, vec2(12.9898,78.233))) * 43758.5453123);
+}
 
-float snoise(vec2 v){
-  const vec4 C = vec4(0.211324865405187, 0.366025403784439,
-           -0.577350269189626, 0.024390243902439);
-  vec2 i  = floor(v + dot(v, C.yy) );
-  vec2 x0 = v -   i + dot(i, C.xx);
-  vec2 i1;
-  i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
-  vec4 x12 = x0.xyxy + C.xxzz;
-  x12.xy -= i1;
-  i = mod(i, 289.0);
-  vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 ))
-  + i.x + vec3(0.0, i1.x, 1.0 ));
-  vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0);
-  m = m*m ;
-  m = m*m ;
-  vec3 x = 2.0 * fract(p * C.www) - 1.0;
-  vec3 h = abs(x) - 0.5;
-  vec3 ox = floor(x + 0.5);
-  vec3 a0 = x - ox;
-  m *= 1.79284291400159 - 0.85373472095314 * ( a0*a0 + h*h );
-  vec3 g;
-  g.x  = a0.x  * x0.x  + h.x  * x0.y;
-  g.yz = a0.yz * x12.xz + h.yz * x12.yw;
-  return 130.0 * dot(m, g);
+// Noise
+float noise(in vec2 _st) {
+    vec2 i = floor(_st);
+    vec2 f = fract(_st);
+
+    // Four corners in 2D of a tile
+    float a = random(i);
+    float b = random(i + vec2(1.0, 0.0));
+    float c = random(i + vec2(0.0, 1.0));
+    float d = random(i + vec2(1.0, 1.0));
+
+    vec2 u = f * f * (3.0 - 2.0 * f);
+
+    return mix(a, b, u.x) +
+            (c - a)* u.y * (1.0 - u.x) +
+            (d - b) * u.x * u.y;
+}
+
+// Fractal Brownian Motion (FBM)
+#define NUM_OCTAVES 5
+
+float fbm( in vec2 _st) {
+    float v = 0.0;
+    float a = 0.5;
+    vec2 shift = vec2(100.0);
+    // Rotate to reduce axial bias
+    mat2 rot = mat2(cos(0.5), sin(0.5),
+                    -sin(0.5), cos(0.50));
+    for (int i = 0; i < NUM_OCTAVES; ++i) {
+        v += a * noise(_st);
+        _st = rot * _st * 2.0 + shift;
+        a *= 0.5;
+    }
+    return v;
 }
 
 void main() {
     vec2 st = gl_FragCoord.xy / u_resolution.xy;
     st.x *= u_resolution.x / u_resolution.y;
 
-    float t = u_time * 0.1;
+    float time = u_time * 0.05; // Slow, majestic movement
 
-    // Mouse Interaction
-    // Calculate distance to mouse
-    float dist = distance(st, u_mouse * vec2(u_resolution.x / u_resolution.y, 1.0));
-    float interaction = smoothstep(0.5, 0.0, dist) * 0.1; // Local distortion
+    // Mouse Interaction (Subtle Warp)
+    // Only apply if mouse is within valid range (simple check handled by JS)
+    vec2 mouseEffect = (u_mouse - 0.5) * 0.2;
 
-    // Domain Warping with Interaction
-    float n1 = snoise(st * 1.5 + t + interaction);
-    float n2 = snoise(st * 3.0 - t * 1.5 + n1 + interaction * 2.0);
+    // Pattern generation: Domain Warping
+    // q = FBM(st + mouse)
+    vec2 q = vec2(0.);
+    q.x = fbm( st + 0.05*time + mouseEffect.x); // Restored time factor
+    q.y = fbm( st + vec2(1.0) + mouseEffect.y);
 
-    // Color mixing based on noise
-    vec3 color = mix(u_color_bg, u_color_1, smoothstep(-0.5, 0.5, n1));
-    color = mix(color, u_color_2, smoothstep(-0.5, 0.5, n2) * 0.8);
+    // r = FBM(st + 4.0*q + time)
+    vec2 r = vec2(0.);
+    r.x = fbm( st + 4.0*q + vec2(1.7,9.2)+ 0.15*time );
+    r.y = fbm( st + 4.0*q + vec2(8.3,2.8)+ 0.126*time);
+
+    // Final noise value
+    float f = fbm(st + 4.0*r);
+
+    // Color Mixing based on the noise value 'f' and 'q'/'r' vectors
+    // 1. Base Gradient
+    vec3 color = mix(u_color_bg, u_color_1, clamp(f*f*4.0, 0.0, 1.0));
+
+    // 2. Add Secondary Flows
+    color = mix(color, u_color_2, clamp(length(q), 0.0, 1.0));
+
+    // 3. Add Accent Highlights
+    color = mix(color, u_color_3, clamp(length(r.x), 0.0, 1.0));
+
+    // Enhance contrast of the "waves"
+    color = pow(color, vec3(0.9)); // Slightly brighten
 
     // Vignette
     vec2 uv = gl_FragCoord.xy / u_resolution.xy;
     float vig = 1.0 - length(uv - 0.5) * 0.5;
-    color *= vig;
+    // Don't make it too dark
+    color = mix(color, u_color_bg, (1.0 - vig) * 0.5);
 
     gl_FragColor = vec4(color, 1.0);
 }
@@ -95,17 +128,19 @@ function compileShader(
   return shader;
 }
 
-// --- Theme Config ---
+// --- Theme Config (Updated for "Ethereal" Look) ---
 const THEME = {
   light: {
-    bg: [0.96, 0.96, 0.97], // #f5f5f7 (Warm Grey)
-    c1: [0.8, 0.9, 1.0], // Soft Blue
-    c2: [1.0, 0.9, 0.9], // Soft Peach
+    bg: [0.98, 0.98, 0.99], // Very Near White
+    c1: [0.85, 0.93, 1.0], // Ethereal Blue
+    c2: [0.95, 0.9, 1.0], // Soft Lavender
+    c3: [0.7, 0.85, 0.95], // Accent Sky
   },
   dark: {
-    bg: [0.04, 0.05, 0.06], // #0b0c10 (Deep Space)
-    c1: [0.1, 0.2, 0.3], // Muted Deep Blue
-    c2: [0.2, 0.1, 0.2], // Muted Deep Purple
+    bg: [0.02, 0.02, 0.03], // Void Black
+    c1: [0.05, 0.1, 0.2], // Deep Ocean
+    c2: [0.15, 0.05, 0.25], // Deep Galaxy
+    c3: [0.0, 0.2, 0.25], // Aurora Teal
   },
 };
 
@@ -116,17 +151,36 @@ export default function ShaderHero() {
 
   // Track mouse position
   const mouseRef = useRef({ x: 0.5, y: 0.5 });
+  const targetMouseRef = useRef({ x: 0.5, y: 0.5 }); // For smoothing
 
   useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
     const handleMouseMove = (e: MouseEvent) => {
-      mouseRef.current = {
-        x: e.clientX / window.innerWidth,
-        y: 1.0 - e.clientY / window.innerHeight, // Invert Y for WebGL
-      };
+      const rect = canvas.getBoundingClientRect();
+      // Calculate mouse relative to canvas
+      const x = (e.clientX - rect.left) / rect.width;
+      const y = 1.0 - (e.clientY - rect.top) / rect.height; // Invert Y
+
+      targetMouseRef.current = { x, y };
     };
 
-    window.addEventListener("mousemove", handleMouseMove);
-    return () => window.removeEventListener("mousemove", handleMouseMove);
+    const handleMouseLeave = () => {
+      // Optional: Reset to center or keep last position?
+      // Let's drift back to center for "no interaction" state
+      targetMouseRef.current = { x: 0.5, y: 0.5 };
+    };
+
+    // Attach to canvas (or window if we want global effect)
+    // User requested "only interactive when mouse is in current area" -> Attach to canvas
+    canvas.addEventListener("mousemove", handleMouseMove);
+    canvas.addEventListener("mouseleave", handleMouseLeave);
+
+    return () => {
+      canvas.removeEventListener("mousemove", handleMouseMove);
+      canvas.removeEventListener("mouseleave", handleMouseLeave);
+    };
   }, []);
 
   useEffect(() => {
@@ -163,12 +217,13 @@ export default function ShaderHero() {
     // Uniforms
     const uTimeDetails = gl.getUniformLocation(program, "u_time");
     const uResolution = gl.getUniformLocation(program, "u_resolution");
-    const uMouse = gl.getUniformLocation(program, "u_mouse"); // New Uniform
+    const uMouse = gl.getUniformLocation(program, "u_mouse");
 
     // Color Uniforms
     const uBg = gl.getUniformLocation(program, "u_color_bg");
     const uC1 = gl.getUniformLocation(program, "u_color_1");
     const uC2 = gl.getUniformLocation(program, "u_color_2");
+    const uC3 = gl.getUniformLocation(program, "u_color_3");
 
     let animationFrameId: number;
     const startTime = Date.now();
@@ -186,12 +241,21 @@ export default function ShaderHero() {
       const time = (Date.now() - startTime) / 1000;
       const colors = isDark ? THEME.dark : THEME.light;
 
+      // Smooth mouse interpolation
+      // Lerp factor (0.05 for slow smooth catchup)
+      mouseRef.current.x +=
+        (targetMouseRef.current.x - mouseRef.current.x) * 0.05;
+      mouseRef.current.y +=
+        (targetMouseRef.current.y - mouseRef.current.y) * 0.05;
+
       gl.uniform1f(uTimeDetails, time);
       gl.uniform2f(uResolution, width, height);
       gl.uniform2f(uMouse, mouseRef.current.x, mouseRef.current.y); // Pass mouse pos
+
       gl.uniform3fv(uBg, colors.bg);
       gl.uniform3fv(uC1, colors.c1);
       gl.uniform3fv(uC2, colors.c2);
+      gl.uniform3fv(uC3, colors.c3);
 
       gl.drawArrays(gl.TRIANGLES, 0, 3);
       animationFrameId = requestAnimationFrame(render);

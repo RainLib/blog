@@ -48,8 +48,8 @@ const config: Config = {
   // useful metadata like html lang. For example, if your site is Chinese, you
   // may want to replace "en" with "zh-Hans".
   i18n: {
-    defaultLocale: "en",
-    locales: ["en"],
+    defaultLocale: "zh-Hans",
+    locales: ["zh-Hans", "en"],
   },
 
   presets: [
@@ -100,6 +100,10 @@ const config: Config = {
         {
           href: "https://github.com/RainLib",
           label: "GitHub",
+          position: "right",
+        },
+        {
+          type: "localeDropdown",
           position: "right",
         },
       ],
