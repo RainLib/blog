@@ -6,7 +6,7 @@ import DriftingGallery from "../components/home/DriftingGallery";
 import LatestInsights from "../components/home/LatestInsights";
 import SkillsGallery from "../components/home/SkillsGallery";
 
-export default function Home(): JSX.Element {
+export default function Home() {
   const { siteConfig } = useDocusaurusContext();
   return (
     <Layout title={siteConfig.title} description="RainLib Digital Garden">
