@@ -27,9 +27,8 @@ function BlogListPageContent(props: Props) {
       <div className="fixed inset-0 z-[-1] opacity-20 pointer-events-none">
         <BrowserOnly>
           {() => {
-            const ShaderHero =
-              require("@site/src/components/ShaderHero").default;
-            return <ShaderHero />;
+            const BlogHero = require("@site/src/components/BlogHero").default;
+            return <BlogHero />;
           }}
         </BrowserOnly>
       </div>
