@@ -247,12 +247,12 @@ function compileShader(
 
 const THEME = {
   light: {
-    bg: [0.94, 0.94, 0.96], // Blueprint Paper White/Grey
-    fg: [0.1, 0.2, 0.4], // Dark Blue Ink
+    bg: [0.96, 0.97, 1.0], // Very Pale Blue
+    fg: [0.2, 0.3, 0.6], // Medium Indigo
   },
   dark: {
-    bg: [0.0, 0.02, 0.0], // Matrix Black
-    fg: [0.0, 0.9, 0.3], // Matrix Green
+    bg: [0.05, 0.08, 0.12], // Dark Navy/Charcoal
+    fg: [0.4, 0.8, 0.95], // Cyan/Electric Blue
   },
 };
 
