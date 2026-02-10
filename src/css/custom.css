@@ -165,28 +165,30 @@
 .blog-post-page-wrapper {
   position: relative;
   z-index: 1;
+  /* border: 2px solid red; DEBUG: REMOVED */
 }
 
-.blog-post-page-wrapper article {
-  background: rgba(255, 255, 255, 0.7);
+html body .blog-post-page-wrapper article {
+  background: rgba(255, 255, 255, 0.7) !important;
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  border-radius: 24px;
-  padding: 3rem 4rem; /* Wide padding for focus */
+  border: 1px solid rgba(0, 0, 0, 0.05) !important;
+  border-radius: 24px !important;
+  padding: 3rem 4rem !important; /* Wide padding for focus */
   box-shadow:
     0 4px 6px -1px rgba(0, 0, 0, 0.05),
     0 2px 4px -1px rgba(0, 0, 0, 0.03),
-    0 0 0 1px rgba(0, 0, 0, 0.02);
-  margin-bottom: 4rem;
+    0 0 0 1px rgba(0, 0, 0, 0.02) !important;
+  margin-bottom: 4rem !important;
+  max-width: 100% !important; /* Ensure it fills the container if needed */
 }
 
-[data-theme="dark"] .blog-post-page-wrapper article {
-  background: rgba(10, 10, 12, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+html[data-theme="dark"] body .blog-post-page-wrapper article {
+  background: rgba(10, 10, 12, 0.6) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
   box-shadow:
     0 0 40px -10px rgba(0, 255, 255, 0.1),
-    /* Cyber glow */ 0 0 0 1px rgba(255, 255, 255, 0.05);
+    /* Cyber glow */ 0 0 0 1px rgba(255, 255, 255, 0.05) !important;
 }
 
 /* 2. Typography - "Tech Editorial" */
@@ -269,4 +271,75 @@
   border-left: 2px solid var(--ifm-color-primary);
   margin-left: -18px; /* Offset the border */
   padding-left: 16px;
+}
+
+/* --- LAYOUT OVERRIDES: Widen the Blog Post --- */
+
+/* Force the container to be wider */
+html body .blog-post-page-wrapper .container {
+  max-width: 2000px !important;
+  padding-left: 2rem;
+  padding-right: 2rem;
+}
+
+/* Fix Grid Layout on Desktop */
+@media (min-width: 997px) {
+  /* Prevent wrapping so TOC stays on the side */
+  html body .blog-post-page-wrapper .row {
+    flex-wrap: nowrap !important;
+    gap: 3rem; /* Add space between content and sidebars */
+    justify-content: center;
+  }
+
+  /* Target the MAIN CONTENT column (usually a <main> tag or middle div)
+       We target col--7 (default) or others if they changed
+    */
+  html body .blog-post-page-wrapper .row > main[class*="col--"],
+  html body .blog-post-page-wrapper .row > div[class*="col--7"],
+  html body .blog-post-page-wrapper .row > div[class*="col--8"] {
+    flex: 1 1 auto !important; /* Grow to fill */
+    max-width: 90% !important; /* Allow it to be up to 80% */
+    min-width: 0; /* Prevent overflow */
+    margin: 0 !important;
+  }
+
+  /* Target the TOC column (usually col--2 or col--3) */
+  html body .blog-post-page-wrapper .row > div[class*="col--2"],
+  html body .blog-post-page-wrapper .row > div[class*="col--3"] {
+    flex: 0 0 250px !important; /* Fixed width for TOC */
+    max-width: 250px !important;
+    position: sticky;
+    top: 100px;
+    align-self: flex-start;
+  }
+
+  /* Restore the Left Sidebar */
+  /*
+    html body .blog-post-page-wrapper .row > aside,
+    html body .blog-post-page-wrapper .row > div[class*='col--3']:first-child:not(:last-child) {
+         display: none !important;
+    }
+    */
+
+  /* Adjust widths to fit both (Content 75%, Sidebar 25%) */
+  html body .blog-post-page-wrapper .row > aside,
+  html body .blog-post-page-wrapper .row > div[class*="col--3"]:first-child {
+    flex: 0 0 280px !important;
+    max-width: 280px !important;
+    display: block !important;
+  }
+}
+
+/* Mobile: Stack them */
+@media (max-width: 996px) {
+  html body .blog-post-page-wrapper .row {
+    flex-wrap: wrap !important;
+  }
+  html body .blog-post-page-wrapper .row > [class*="col--"] {
+    flex: 0 0 100% !important;
+    max-width: 100% !important;
+  }
+  html body .blog-post-page-wrapper article {
+    padding: 2rem 1.5rem !important;
+  }
 }

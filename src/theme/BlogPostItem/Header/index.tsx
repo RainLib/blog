@@ -1,11 +1,11 @@
 import React from "react";
-import { useBlogPost } from "@docusaurus/theme-common/internal";
+import { useBlogPost } from "@docusaurus/plugin-content-blog/client";
 import BlogPostItemHeaderTitle from "@theme/BlogPostItem/Header/Title";
 import BlogPostItemHeaderInfo from "@theme/BlogPostItem/Header/Info";
 import BlogPostItemHeaderAuthors from "@theme/BlogPostItem/Header/Authors";
 import Translate from "@docusaurus/Translate";
 
-export default function BlogPostItemHeader(): JSX.Element {
+export default function BlogPostItemHeader() {
   const { metadata, isBlogPostPage } = useBlogPost();
   const { title } = metadata;
 

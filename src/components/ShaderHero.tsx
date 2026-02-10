@@ -1,14 +1,9 @@
 import React, { useEffect, useRef } from "react";
 import { useColorMode } from "@docusaurus/theme-common";
 
-// --- Shader Source: "Cyber-Lattice" ---
-// A structured, high-tech geometric web.
-// - Rigid, hexagonal/triangular lattice structure.
-// - Not random noise, but "computed" geometry.
-// - Deep perspective (faked 3D layer stack).
-// - Energetic pulses traveling along connections.
-// - Light Mode: Technical Blueprint (Grey/Blue, clean lines).
-// - Dark Mode: Cyber Core (Neon Cyan/Purple, glowing nodes).
+// --- Shader Source: "ASCII Tunnel" ---
+// Concept: Retro-futuristic ASCII art tunnel.
+// Features: bitmap font, bayer dithering, mouse steering.
 
 const VERTEX_SHADER = `
 attribute vec2 position;
@@ -24,122 +19,212 @@ uniform float u_time;
 uniform vec2 u_resolution;
 uniform vec2 u_mouse;
 uniform vec3 u_color_bg;
-uniform vec3 u_color_grid;
-uniform vec3 u_color_accent;
+uniform vec3 u_color_fg;
 uniform float u_is_dark;
 
-#define PI 3.14159265359
+// --- Configuration ---
+#define CELL_SIZE 8.0
+#define FOG_DENSITY 0.06
+#define DITHER_AMOUNT 0.15
 
-// Hexagon Grid Logic
-// Returns: vec4(x_center, y_center, distance_to_center, unique_id)
-vec4 hexCoords(vec2 uv) {
-    vec2 r = vec2(1.0, 1.732);
-    vec2 h = r * 0.5;
-    vec2 a = mod(uv, r) - h;
-    vec2 b = mod(uv - h, r) - h;
+// --- Bitmap Font (5x7) compacted ---
+// We can't do full huge arrays easily in WebGL1 without textures,
+// so we'll use a procedural approach or a simplified font.
+// A simple 3x5 or 4x6 font function is efficient here.
 
-    vec2 gv = dot(a, a) < dot(b, b) ? a : b;
-    vec2 id = uv - gv;
-    return vec4(gv.x, gv.y, length(gv), id.x + id.y * 100.0); // Simple ID
+float getBit(int num, int idx) {
+    // GLSL ES 1.0 doesn't support bitwise operators easily on all platforms
+    // dividing by powers of 2 simluates right shift
+    float p = pow(2.0, float(idx));
+    return mod(floor(float(num) / p), 2.0);
 }
 
-// 2D Rotation
-mat2 rot2d(float a) {
-    float s = sin(a);
-    float c = cos(a);
-    return mat2(c, -s, s, c);
+// Minimal 4x5 font for efficiency
+float char(int ch, vec2 p) {
+    // p is 0..1 in the char cell
+    if (p.x < 0.0 || p.x > 1.0 || p.y < 0.0 || p.y > 1.0) return 0.0;
+
+    // Grid positions (4x5)
+    int x = int(p.x * 4.0);
+    int y = int(p.y * 5.0);
+    int idx = x + (4 - 1 - y) * 4; // 0..19
+
+    // Data for characters (simplified set)
+    // 0: @, 1: #, 2: %, 3: *, 4: =, 5: -, 6: :, 7: .
+    int bits = 0;
+
+    if (ch == 0) bits = 970054; // @ (approx)
+    if (ch == 1) bits = 445354; // #
+    if (ch == 2) bits = 862550; // %
+    if (ch == 3) bits = 143924; // *
+    if (ch == 4) bits = 491520; // = (top/bot lines)
+    if (ch == 5) bits = 3840;   // -
+    if (ch == 6) bits = 163820; // :
+    if (ch == 7) bits = 32;     // .
+
+    return getBit(bits, idx);
+}
+
+// Improved Font Function (Procedural Shapes instead of bits for stability)
+float getCharPixel(int ch, vec2 uv) {
+    float d = 0.0;
+    // .
+    if (ch >= 7) {
+        if (length(uv - 0.5) < 0.1) d = 1.0;
+    }
+    // :
+    else if (ch == 6) {
+        if (length(uv - vec2(0.5, 0.3)) < 0.1) d = 1.0;
+        if (length(uv - vec2(0.5, 0.7)) < 0.1) d = 1.0;
+    }
+    // -
+    else if (ch == 5) {
+        if (abs(uv.y - 0.5) < 0.1 && abs(uv.x - 0.5) < 0.3) d = 1.0;
+    }
+    // =
+    else if (ch == 4) {
+        if (abs(uv.y - 0.3) < 0.05 && abs(uv.x - 0.5) < 0.3) d = 1.0;
+        if (abs(uv.y - 0.7) < 0.05 && abs(uv.x - 0.5) < 0.3) d = 1.0;
+    }
+    // +
+    else if (ch == 3) {
+        if (abs(uv.y - 0.5) < 0.05 || abs(uv.x - 0.5) < 0.05) d = 1.0;
+    }
+    // *
+    else if (ch == 2) {
+        if (abs(uv.y - 0.5) < 0.05 || abs(uv.x - 0.5) < 0.05) d = 1.0;
+        if (abs(uv.x - uv.y) < 0.05 || abs(uv.x - (1.0 - uv.y)) < 0.05) d = 1.0;
+    }
+    // #
+    else if (ch == 1) {
+       if (abs(uv.x - 0.3) < 0.05 || abs(uv.x - 0.7) < 0.05) d = 1.0;
+       if (abs(uv.y - 0.3) < 0.05 || abs(uv.y - 0.7) < 0.05) d = 1.0;
+    }
+    // @ (Fill)
+    else {
+        if (length(uv - 0.5) < 0.4) d = 1.0;
+    }
+    return d;
+}
+
+
+// --- 4x4 Bayer Dither ---
+float bayer4(vec2 p) {
+    vec2 c = floor(mod(p, 4.0));
+    float idx = c.x + c.y * 4.0;
+
+    if (idx < 0.5) return 0.0/16.0;
+    if (idx < 1.5) return 8.0/16.0;
+    if (idx < 2.5) return 2.0/16.0;
+    if (idx < 3.5) return 10.0/16.0;
+    if (idx < 4.5) return 12.0/16.0;
+    if (idx < 5.5) return 4.0/16.0;
+    if (idx < 6.5) return 14.0/16.0;
+    if (idx < 7.5) return 6.0/16.0;
+    if (idx < 8.5) return 3.0/16.0;
+    if (idx < 9.5) return 11.0/16.0;
+    if (idx < 10.5) return 1.0/16.0;
+    if (idx < 11.5) return 9.0/16.0;
+    if (idx < 12.5) return 15.0/16.0;
+    if (idx < 13.5) return 7.0/16.0;
+    if (idx < 14.5) return 13.0/16.0;
+    return 5.0/16.0;
+}
+
+// --- Tunnel Math ---
+vec2 tunnelPath(float z) {
+    // Mouse Interaction: Mouse X controls X bend, Mouse Y controls Y bend
+    // u_mouse is 0..1
+    float bendX = (u_mouse.x - 0.5) * 6.0;
+    float bendY = (u_mouse.y - 0.5) * 6.0;
+
+    return vec2(
+        sin(z * 0.15) * bendX + cos(z * 0.07) * bendX * 0.6,
+        cos(z * 0.11) * bendY + sin(z * 0.19) * bendY * 0.6
+    );
+}
+
+float tunnelSDF(vec3 p) {
+    vec2 offset = tunnelPath(p.z);
+    return 1.6 - length(p.xy - offset); // Radius
+}
+
+vec3 renderScene(vec2 uv, float time) {
+    float speed = 6.0;
+    float t = time * speed;
+
+    // Camera
+    vec3 ro = vec3(tunnelPath(t), t);
+    vec3 target = vec3(tunnelPath(t + 2.0), t + 2.0);
+    vec3 fwd = normalize(target - ro);
+    vec3 right = normalize(cross(vec3(0, 1, 0), fwd));
+    vec3 up = cross(fwd, right);
+
+    vec3 rd = normalize(right * uv.x + up * uv.y + fwd * 0.9);
+
+    // Raymarch
+    float totalDist = 0.0;
+    vec3 p = ro;
+    bool hit = false;
+
+    for(int i=0; i<60; i++) {
+        p = ro + rd * totalDist;
+        float d = tunnelSDF(p);
+        if(d < 0.01) { hit = true; break; }
+        totalDist += d * 0.6; // step size
+        if(totalDist > 50.0) break;
+    }
+
+    if(!hit) return vec3(0.0);
+
+    // Shading
+    vec2 wOff = tunnelPath(p.z);
+    vec2 locXY = p.xy - wOff;
+    float angle = atan(locXY.y, locXY.x);
+
+    // Pattern on wall
+    float grid = sin(angle * 10.0 + p.z * 0.5) * sin(p.z * 2.0);
+    float val = smoothstep(0.0, 0.1, grid);
+
+    // Depth Fog
+    float fog = exp(-totalDist * FOG_DENSITY);
+
+    return vec3(val * fog);
 }
 
 void main() {
-    vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / u_resolution.y;
-    vec2 mouse = (u_mouse - 0.5) * vec2(u_resolution.x/u_resolution.y, 1.0);
+    // Pixelate UV for "Screen" effect
+    vec2 fragCoord = gl_FragCoord.xy;
+    vec2 cell = floor(fragCoord / CELL_SIZE);
+    vec2 cellCenter = (cell + 0.5) * CELL_SIZE;
 
-    vec3 col = u_color_bg;
+    vec2 uv = (cellCenter - 0.5 * u_resolution.xy) / u_resolution.y;
 
-    // Camera / Global Movement
-    // Slowly rotating and zooming
-    vec2 camUV = uv * rot2d(u_time * 0.05);
-    float zoom = 8.0 + sin(u_time * 0.1) * 2.0;
+    // Render Scene (Luminance)
+    vec3 col = renderScene(uv, u_time);
+    float lum = dot(col, vec3(0.33));
 
-    // --- Layer 1: The Lattice (Main Structure) ---
-    vec2 gridUV = camUV * zoom;
-    vec4 hex = hexCoords(gridUV);
-    vec2 gv = hex.xy;
-    float id = hex.w;
+    // Dithering
+    float dither = bayer4(cell) - 0.5;
+    lum = clamp(lum + dither * DITHER_AMOUNT, 0.0, 1.0);
 
-    // Distance to edge of hex (for lines)
-    // Hexagon math: max(abs(x), x*0.5 + y*0.866)
-    float dHex = max(abs(gv.x), dot(abs(gv), vec2(0.5, 0.866)));
-    // Invert: 0 at center, 0.5 at edge.
-    // Line width
-    float lineWidth = 0.03;
-    float line = smoothstep(0.48, 0.5 - lineWidth, dHex) * smoothstep(0.5, 0.48 + lineWidth, dHex);
-    // Actually simpler: Make edges glow
-    float glow = 0.02 / abs(dHex - 0.5);
-    glow = pow(glow, 1.5);
+    // Char Map (8 levels)
+    int charIdx = int(clamp((1.0 - lum) * 8.0, 0.0, 7.0));
 
-    // Node Activity (Pulsing)
-    float pulse = sin(id * 123.4 + u_time * 2.0) * 0.5 + 0.5;
-    float activity = smoothstep(0.8, 1.0, pulse); // Only some turn on
+    // Get Pixel of Char
+    vec2 cellUV = fract(fragCoord / CELL_SIZE);
+    float pixel = getCharPixel(charIdx, cellUV);
 
-    // Mouse Interaction
-    // "Excites" the lattice
-    float dMouse = length(uv - mouse);
-    float mouseExcitement = smoothstep(0.4, 0.0, dMouse) * 2.0;
-    activity += mouseExcitement;
+    // Colorize
+    // Mix Background and Foreground
+    vec3 finalCol = mix(u_color_bg, u_color_fg, pixel);
 
-    // --- Composition ---
-    vec3 latticeCol = u_color_grid;
+    // Vignette
+    vec2 vuv = fragCoord / u_resolution.xy;
+    float vig = 1.0 - length((vuv - 0.5) * 1.5);
+    finalCol *= smoothstep(0.0, 1.0, vig);
 
-    // 1. Edges
-    // Light Mode: Dark lines. Dark Mode: Glowing lines.
-    if (u_is_dark > 0.5) {
-        col += latticeCol * glow * 0.5;
-    } else {
-        // Light: Mix dark lines
-        float edgeAlpha = smoothstep(0.45, 0.5, dHex);
-        col = mix(col, latticeCol, edgeAlpha * 0.5);
-    }
-
-    // 2. Nodes (Hex Centers)
-    // Small dots at center
-    float nodeDot = 0.05 / length(gv);
-    nodeDot *= smoothstep(0.1, 0.05, length(gv)); // soft edge
-
-    vec3 nodeCol = mix(u_color_grid, u_color_accent, activity);
-
-    if (u_is_dark > 0.5) {
-         col += nodeCol * nodeDot;
-         // Active nodes bloom
-         col += u_color_accent * activity * nodeDot * 2.0;
-
-         // Fill Hex (Low opacity) for active ones
-         float fill = smoothstep(0.5, 0.4, dHex);
-         col += u_color_accent * fill * activity * 0.1;
-    } else {
-         // Light Mode
-         float dotShape = smoothstep(0.1, 0.0, length(gv));
-         col = mix(col, nodeCol, dotShape * (0.5 + activity * 0.5));
-    }
-
-    // --- Layer 2: Floating Data Particles (Depth) ---
-    // A second hex grid, larger, rotated, barely visible
-    vec2 uv2 = uv * rot2d(-u_time * 0.1) * 3.0;
-    vec4 hex2 = hexCoords(uv2);
-    float dHex2 = max(abs(hex2.x), dot(abs(hex2.xy), vec2(0.5, 0.866)));
-    float line2 = smoothstep(0.48, 0.5, dHex2); // Just Lines
-
-    if (u_is_dark > 0.5) {
-        col += u_color_accent * (0.01 / abs(dHex2 - 0.5)) * 0.2;
-    } else {
-        col = mix(col, u_color_accent, smoothstep(0.49, 0.5, dHex2) * 0.1);
-    }
-
-    // --- Vignette & Atmosphere ---
-    float vig = 1.0 - length(uv * 0.8);
-    col = mix(col, u_color_bg, 1.0 - smoothstep(0.0, 1.5, vig));
-
-    gl_FragColor = vec4(col, 1.0);
+    gl_FragColor = vec4(finalCol, 1.0);
 }
 `;
 
@@ -162,14 +247,12 @@ function compileShader(
 
 const THEME = {
   light: {
-    bg: [0.96, 0.97, 0.99], // Tech White
-    grid: [0.2, 0.3, 0.4], // Slate Blue Lines
-    accent: [0.0, 0.4, 0.9], // Electric Blue Active
+    bg: [0.96, 0.97, 1.0], // Very Pale Blue
+    fg: [0.2, 0.3, 0.6], // Medium Indigo
   },
   dark: {
-    bg: [0.03, 0.03, 0.05], // Void Black
-    grid: [0.0, 0.3, 0.4], // Dark Teal Lines
-    accent: [0.0, 0.9, 1.0], // Neon Cyan Active
+    bg: [0.05, 0.08, 0.12], // Dark Navy/Charcoal
+    fg: [0.4, 0.8, 0.95], // Cyan/Electric Blue
   },
 };
 
@@ -190,8 +273,8 @@ export default function ShaderHero() {
       const y = 1.0 - (e.clientY - rect.top) / rect.height;
       targetMouseRef.current = { x, y };
     };
-    canvas.addEventListener("mousemove", handleMouseMove);
-    return () => canvas.removeEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
   }, []);
 
   useEffect(() => {
@@ -228,36 +311,35 @@ export default function ShaderHero() {
     const uResolution = gl.getUniformLocation(program, "u_resolution");
     const uMouse = gl.getUniformLocation(program, "u_mouse");
     const uBg = gl.getUniformLocation(program, "u_color_bg");
-    const uGrid = gl.getUniformLocation(program, "u_color_grid");
-    const uAccent = gl.getUniformLocation(program, "u_color_accent");
+    const uFg = gl.getUniformLocation(program, "u_color_fg");
     const uIsDark = gl.getUniformLocation(program, "u_is_dark");
 
     let animationFrameId: number;
     const startTime = Date.now();
 
     const render = () => {
-      const width = canvas.clientWidth;
-      const height = canvas.clientHeight;
-      if (canvas.width !== width || canvas.height !== height) {
-        canvas.width = width;
-        canvas.height = height;
-        gl.viewport(0, 0, width, height);
+      const displayWidth = canvas.clientWidth;
+      const displayHeight = canvas.clientHeight;
+      if (canvas.width !== displayWidth || canvas.height !== displayHeight) {
+        canvas.width = displayWidth;
+        canvas.height = displayHeight;
+        gl.viewport(0, 0, displayWidth, displayHeight);
       }
 
       const time = (Date.now() - startTime) / 1000;
-      const colors = isDark ? THEME.dark : THEME.light;
 
       mouseRef.current.x +=
         (targetMouseRef.current.x - mouseRef.current.x) * 0.05;
       mouseRef.current.y +=
         (targetMouseRef.current.y - mouseRef.current.y) * 0.05;
 
+      const colors = isDark ? THEME.dark : THEME.light;
+
       gl.uniform1f(uTime, time);
-      gl.uniform2f(uResolution, width, height);
+      gl.uniform2f(uResolution, canvas.width, canvas.height);
       gl.uniform2f(uMouse, mouseRef.current.x, mouseRef.current.y);
       gl.uniform3fv(uBg, colors.bg);
-      gl.uniform3fv(uGrid, colors.grid);
-      gl.uniform3fv(uAccent, colors.accent);
+      gl.uniform3fv(uFg, colors.fg);
       gl.uniform1f(uIsDark, isDark ? 1.0 : 0.0);
 
       gl.drawArrays(gl.TRIANGLES, 0, 3);
@@ -277,7 +359,7 @@ export default function ShaderHero() {
   return (
     <canvas
       ref={canvasRef}
-      className="absolute inset-0 w-full h-full z-0 transition-opacity duration-1000"
+      className="absolute inset-0 w-full h-full z-0 pointer-events-none"
       style={{ display: "block" }}
     />
   );
