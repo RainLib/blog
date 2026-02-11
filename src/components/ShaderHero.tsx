@@ -281,7 +281,12 @@ export default function ShaderHero() {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const gl = canvas.getContext("webgl");
+    const gl = canvas.getContext("webgl", {
+      powerPreference: "high-performance",
+      antialias: false,
+      alpha: false, // Opaque is generally faster
+      depth: false,
+    });
     if (!gl) return;
 
     const vert = compileShader(gl, gl.VERTEX_SHADER, VERTEX_SHADER);
@@ -315,19 +320,36 @@ export default function ShaderHero() {
     const uIsDark = gl.getUniformLocation(program, "u_is_dark");
 
     let animationFrameId: number;
+    let isRendering = false;
     const startTime = Date.now();
 
-    const render = () => {
-      const displayWidth = canvas.clientWidth;
-      const displayHeight = canvas.clientHeight;
-      if (canvas.width !== displayWidth || canvas.height !== displayHeight) {
-        canvas.width = displayWidth;
-        canvas.height = displayHeight;
-        gl.viewport(0, 0, displayWidth, displayHeight);
+    // PERFORMANCE: ResizeObserver to handle sizing efficiently
+    // Also capping DPR to max 1.5 to save GPU on high-DPI screens
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        // Use devicePixelContentBoxSize if available for 1:1 pixel mapping, fallback to contentRect
+        const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+        const width = entry.contentRect.width;
+        const height = entry.contentRect.height;
+
+        const displayWidth = Math.round(width * dpr);
+        const displayHeight = Math.round(height * dpr);
+
+        if (canvas.width !== displayWidth || canvas.height !== displayHeight) {
+          canvas.width = displayWidth;
+          canvas.height = displayHeight;
+          gl.viewport(0, 0, displayWidth, displayHeight);
+        }
       }
+    });
+    resizeObserver.observe(canvas);
+
+    const render = () => {
+      if (!isRendering) return;
 
       const time = (Date.now() - startTime) / 1000;
 
+      // Mouse easing
       mouseRef.current.x +=
         (targetMouseRef.current.x - mouseRef.current.x) * 0.05;
       mouseRef.current.y +=
@@ -346,10 +368,37 @@ export default function ShaderHero() {
       animationFrameId = requestAnimationFrame(render);
     };
 
-    render();
+    const startLoop = () => {
+      if (!isRendering) {
+        isRendering = true;
+        render();
+      }
+    };
+
+    const stopLoop = () => {
+      isRendering = false;
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
+    };
+
+    // PERFORMANCE: IntersectionObserver to pause when off-screen
+    const intersectionObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            startLoop();
+          } else {
+            stopLoop();
+          }
+        });
+      },
+      { threshold: 0.0 }, // Trigger as soon as 1 pixel is visible/invisible
+    );
+    intersectionObserver.observe(canvas);
 
     return () => {
-      cancelAnimationFrame(animationFrameId);
+      stopLoop();
+      resizeObserver.disconnect();
+      intersectionObserver.disconnect();
       gl.deleteProgram(program);
       gl.deleteShader(vert);
       gl.deleteShader(frag);

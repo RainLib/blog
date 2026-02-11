@@ -107,10 +107,10 @@ function compileShader(
 
 const THEME = {
   light: {
-    c1: [0.98, 0.92, 0.75], // Soft Gold
-    c2: [0.8, 0.9, 1.0], // Serene Sky
-    c3: [1.0, 0.85, 0.92], // Gentle Rose
-    c4: [0.85, 0.98, 0.92], // Airy Mint
+    c1: [0.96, 0.93, 0.88], // Subtle Champagne
+    c2: [0.9, 0.94, 0.98], // Soft Alice Blue
+    c3: [0.96, 0.9, 0.93], // Pale Lavender Blush
+    c4: [0.9, 0.96, 0.94], // Muted Honeydew
   },
   dark: {
     c1: [0.12, 0.1, 0.08], // Deep Chocolate/Gold base
