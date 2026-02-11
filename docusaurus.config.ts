@@ -128,8 +128,8 @@ const config: Config = {
               to: "/blog",
             },
             {
-              label: "GitHub",
-              href: "https://github.com/RainLib",
+              label: "Recommend",
+              to: "/recommend",
             },
           ],
         },
