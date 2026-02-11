@@ -26,13 +26,14 @@ export default function HomepageHeader() {
           {/* Subtle Ambient Glow behind content */}
           <div className="absolute -inset-10 bg-[var(--neon-glow)] blur-[100px] opacity-20 dark:opacity-10 rounded-full animate-pulse pointer-events-none" />
 
-          <div className="relative irregular-glass p-8 md:p-16 border-white/10 dark:border-white/5 shadow-2xl overflow-visible">
-            {/* Added a very subtle mesh-like overlay inside the box for "designed" feel */}
-            <div className="absolute inset-0 overflow-hidden rounded-[inherit]">
+          <div className="relative p-8 md:p-16">
+            {/* The Glass Background Layer - Clipped & Animated */}
+            <div className="absolute inset-0 irregular-glass overflow-hidden z-0">
               <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]" />
             </div>
 
-            <div className="relative flex flex-col items-center">
+            {/* The Content Layer - Visible & Overflowing */}
+            <div className="relative z-10 flex flex-col items-center">
               <div className="flex flex-col md:flex-row items-center justify-center mb-8">
                 <motion.img
                   src={useBaseUrl("/img/logo.svg")}

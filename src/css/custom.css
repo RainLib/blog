@@ -268,28 +268,9 @@
 }
 
 /* Navbar Logo Adjustments */
-.navbar__inner {
-  display: flex;
-  align-items: center !important; /* Force all top-level items to center */
-}
-
-.navbar__items {
-  display: flex !important;
-  align-items: center !important;
-}
-
 .navbar__logo {
   margin-right: 0;
   height: 44px;
-}
-
-.navbar__brand {
-  gap: 0;
-  margin-right: 0;
-  padding: 0;
-  display: flex !important;
-  align-items: center !important;
-  height: 100%;
 }
 
 /* Hide title if still present in DOM but ensure no spacing issues */
