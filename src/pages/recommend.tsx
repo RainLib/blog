@@ -28,17 +28,6 @@ export default function Recommend() {
       })}
     >
       <main className="container margin-vert--xl">
-        <header className="text--center margin-bottom--xl">
-          <h1>
-            <Translate id="recommend.header.title">Recommended Sites</Translate>
-          </h1>
-          <p className="hero__subtitle">
-            <Translate id="recommend.header.subtitle">
-              Curated tools and resources for developers.
-            </Translate>
-          </p>
-        </header>
-
         <RecentRecommendations recommendations={recommendations} />
 
         <hr className="margin-vert--xl" />

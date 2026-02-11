@@ -263,24 +263,47 @@
 }
 
 /* Navbar Logo Adjustments */
-.navbar__brand {
-  gap: 0.5rem; /* Default gap handling */
-  margin-right: 1.5rem; /* Spacing after the brand section */
+.navbar__inner {
+  display: flex;
+  align-items: center !important; /* Force all top-level items to center */
 }
 
-/* Tighter spacing between logo and text */
-.navbar__brand .navbar__logo {
-  margin-right: -0.2rem; /* Pull title closer to logo if needed */
+.navbar__items {
+  display: flex !important;
+  align-items: center !important;
+}
+
+.navbar__logo {
+  margin-right: 0;
+  height: 44px;
+}
+
+.navbar__brand {
+  gap: 0;
+  margin-right: 0;
+  padding: 0;
+  display: flex !important;
+  align-items: center !important;
+  height: 100%;
+}
+
+/* Hide title if still present in DOM but ensure no spacing issues */
+.navbar__title {
+  display: none !important;
 }
 
 .custom-navbar-logo-class {
-  height: 28px; /* Ensure consistent height */
+  height: 44px; /* Slightly smaller for better global centering */
   width: auto;
-  transition: transform 0.3s ease;
+  display: block;
+  margin: 0;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  filter: drop-shadow(0 0 8px var(--neon-glow));
 }
 
 .navbar__brand:hover .custom-navbar-logo-class {
-  transform: rotate(5deg) scale(1.1);
+  transform: scale(1.1) rotate(-2deg);
+  filter: drop-shadow(0 0 12px var(--ifm-color-primary));
 }
 
 .footer {

@@ -96,7 +96,6 @@ const config: Config = {
       respectPrefersColorScheme: false,
     },
     navbar: {
-      title: "RainLib",
       logo: {
         alt: "RainLib Logo",
         src: "img/logo.svg",

@@ -3,7 +3,7 @@ title: "Framer Motion"
 description: "React 生态中最受欢迎的高性能动画库，专为创意和交互而生。"
 url: "https://www.framer.com/motion/"
 tags: ["Development", "Animation"]
-icon: "✨"
+icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRPznwv7OeqDgGjrlZfT28XyX4J9oJyZ9TYwg&s"
 sort: 50
 ---
 
