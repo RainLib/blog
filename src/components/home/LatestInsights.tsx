@@ -69,19 +69,22 @@ export default function LatestInsights() {
       <div className="container px-4">
         <div className="flex justify-between items-end mb-12">
           <div>
-            <p className="font-mono text-sm tracking-[0.2em] uppercase opacity-60 mb-2">
+            <p className="font-mono text-sm tracking-[0.2em] uppercase opacity-70 mb-2 flex items-center gap-2">
+              <span className="text-xl">🌱</span>
               <Translate id="homepage.insights.label">来自花园</Translate>
             </p>
-            <h2 className="text-3xl md:text-4xl font-bold">
+            <h2 className="text-3xl md:text-5xl font-bold tracking-tight">
               <Translate id="homepage.insights.title">最新洞见</Translate>
             </h2>
           </div>
           <Link
             to="/blog"
-            className="hidden md:flex items-center gap-2 text-[var(--ifm-color-primary)] hover:opacity-80 transition-opacity"
+            className="hidden md:flex items-center gap-2 text-zinc-500 hover:text-[var(--ifm-color-primary)] transition-colors font-medium"
           >
             <Translate id="homepage.insights.view_all">查看全部</Translate>{" "}
-            <span aria-hidden="true">→</span>
+            <span aria-hidden="true" className="text-lg">
+              →
+            </span>
           </Link>
         </div>
 

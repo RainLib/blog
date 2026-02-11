@@ -46,22 +46,24 @@ export default function HomepageHeader() {
               </div>
 
               <div className="max-w-2xl mx-auto">
-                <p className="text-xl md:text-2xl font-medium leading-relaxed text-neutral-800 dark:text-neutral-200 opacity-90 mb-4">
+                <p className="text-xl md:text-2xl font-medium leading-relaxed text-zinc-800 dark:text-zinc-200 opacity-90 mb-4">
                   <Translate id="homepage.hero.description.start">
                     汇聚思想，探索
                   </Translate>{" "}
-                  <span className="text-[var(--ifm-color-primary)] font-bold neon-text">
+                  <span className="text-[var(--ifm-color-primary)] font-bold flex items-center gap-1 inline-flex">
+                    <span className="text-2xl">🔗</span>
                     <Translate id="homepage.hero.distributed_systems">
                       分布式系统
                     </Translate>
                   </span>{" "}
                   &{" "}
-                  <span className="text-[var(--ifm-color-primary-light)] font-bold">
+                  <span className="text-[#059669] dark:text-[var(--ifm-color-primary-light)] font-bold flex items-center gap-1 inline-flex">
+                    <span className="text-2xl">🤖</span>
                     <Translate id="homepage.hero.genai">生成式 AI</Translate>
                   </span>
                   .
                 </p>
-                <div className="h-1 w-24 bg-gradient-to-r from-transparent via-[var(--ifm-color-primary)] to-transparent mx-auto opacity-30" />
+                <div className="h-1 w-24 bg-gradient-to-r from-transparent via-[var(--ifm-color-primary)] to-transparent mx-auto opacity-20" />
               </div>
             </div>
           </div>

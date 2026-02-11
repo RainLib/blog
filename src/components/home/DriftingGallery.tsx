@@ -7,7 +7,7 @@ const GALLERY_ITEMS = [
   {
     title: "Distributed Systems",
     desc: "Consistency Patterns",
-    color: "#0071e3",
+    color: "#1062cd",
     height: 300,
     link: "/blog/tags/distributed-systems",
     tag: "Architecture",
@@ -15,7 +15,7 @@ const GALLERY_ITEMS = [
   {
     title: "AI Agents",
     desc: "Autonomous Workflows",
-    color: "#66fcf1",
+    color: "#8b5cf6",
     height: 400,
     link: "/blog/tags/ai",
     tag: "GenAI",
@@ -23,7 +23,7 @@ const GALLERY_ITEMS = [
   {
     title: "Creative Coding",
     desc: "Generative Art",
-    color: "#d90166",
+    color: "#ec4899",
     height: 250,
     link: "/blog/tags/creative",
     tag: "Art",
@@ -31,7 +31,7 @@ const GALLERY_ITEMS = [
   {
     title: "Cloud Native",
     desc: "Kubernetes Operators",
-    color: "#4dabf7",
+    color: "#06b6d4",
     height: 350,
     link: "/blog/tags/cloud",
     tag: "DevOps",
@@ -39,7 +39,7 @@ const GALLERY_ITEMS = [
   {
     title: "Microservices",
     desc: "gRPC & Protobuf",
-    color: "#a6fcf6",
+    color: "#3b82f6",
     height: 280,
     link: "/blog/tags/microservices",
     tag: "Backend",
@@ -47,7 +47,7 @@ const GALLERY_ITEMS = [
   {
     title: "Rust",
     desc: "Memory Safety",
-    color: "#ff9f1c",
+    color: "#f59e0b",
     height: 320,
     link: "/blog/tags/rust",
     tag: "Language",
@@ -55,7 +55,7 @@ const GALLERY_ITEMS = [
   {
     title: "React",
     desc: "Concurrent Mode",
-    color: "#61dafb",
+    color: "#0ea5e9",
     height: 260,
     link: "/blog/tags/react",
     tag: "Frontend",
@@ -63,7 +63,7 @@ const GALLERY_ITEMS = [
   {
     title: "System Design",
     desc: "Scalability",
-    color: "#2ec4b6",
+    color: "#14b8a6",
     height: 380,
     link: "/blog/tags/system-design",
     tag: "Theory",
@@ -71,7 +71,7 @@ const GALLERY_ITEMS = [
   {
     title: "Observability",
     desc: "Tracing & Metrics",
-    color: "#e71d36",
+    color: "#ef4444",
     height: 310,
     link: "/blog/tags/observability",
     tag: "Ops",

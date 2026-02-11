@@ -26,8 +26,18 @@ export default function RecommendationDetail({ content, metadata }: Props) {
         <div className="row justify-center">
           <div className="col col--8">
             <div className="margin-bottom--lg text--center">
-              <div style={{ fontSize: "4rem", marginBottom: "1rem" }}>
-                {icon}
+              <div className="flex justify-center mb-8">
+                <div className="w-24 h-24 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 flex items-center justify-center overflow-hidden shadow-xl">
+                  {icon?.startsWith("http") || icon?.startsWith("/") ? (
+                    <img
+                      src={icon}
+                      alt={title}
+                      className="w-full h-full object-contain p-4"
+                    />
+                  ) : (
+                    <span style={{ fontSize: "4rem" }}>{icon}</span>
+                  )}
+                </div>
               </div>
               <Heading as="h1">{title}</Heading>
               <p className="hero__subtitle">{description}</p>

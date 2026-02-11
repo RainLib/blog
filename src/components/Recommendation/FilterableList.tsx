@@ -118,8 +118,17 @@ export default function FilterableList({ recommendations, tags }: Props) {
               <div className="relative h-full bg-white dark:bg-[#18181b] rounded-xl p-6 flex flex-col border border-zinc-200 dark:border-zinc-800 transition-transform duration-300">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center text-xl">
-                      {item.icon}
+                    <div className="w-10 h-10 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 flex items-center justify-center overflow-hidden group-hover:scale-110 transition-transform duration-500">
+                      {item.icon?.startsWith("http") ||
+                      item.icon?.startsWith("/") ? (
+                        <img
+                          src={item.icon}
+                          alt={item.title}
+                          className="w-full h-full object-contain p-2"
+                        />
+                      ) : (
+                        <span className="text-xl">{item.icon}</span>
+                      )}
                     </div>
                     <div>
                       <h3 className="font-bold text-base m-0 text-zinc-900 dark:text-zinc-100 line-clamp-1">

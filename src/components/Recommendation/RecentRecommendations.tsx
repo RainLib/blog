@@ -62,8 +62,17 @@ export default function RecentRecommendations({ recommendations }: Props) {
             <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500 to-cyan-500 rounded-2xl opacity-20 group-hover:opacity-100 transition duration-500 blur-sm"></div>
             <div className="relative h-full bg-white dark:bg-black rounded-xl p-6 flex flex-col border border-zinc-200 dark:border-zinc-800">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 rounded-lg bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center text-2xl shadow-inner">
-                  {item.icon}
+                <div className="w-12 h-12 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 flex items-center justify-center overflow-hidden shadow-inner group-hover:scale-110 transition-transform duration-500">
+                  {item.icon?.startsWith("http") ||
+                  item.icon?.startsWith("/") ? (
+                    <img
+                      src={item.icon}
+                      alt={item.title}
+                      className="w-full h-full object-contain p-2"
+                    />
+                  ) : (
+                    <span className="text-2xl">{item.icon}</span>
+                  )}
                 </div>
                 <div>
                   <h3 className="font-bold text-lg m-0 line-clamp-1">
