@@ -260,6 +260,27 @@
   text-shadow: 0 0 15px var(--neon-glow);
 }
 
+/* Navbar Logo Adjustments */
+.navbar__brand {
+  gap: 0.5rem; /* Default gap handling */
+  margin-right: 1.5rem; /* Spacing after the brand section */
+}
+
+/* Tighter spacing between logo and text */
+.navbar__brand .navbar__logo {
+  margin-right: -0.2rem; /* Pull title closer to logo if needed */
+}
+
+.custom-navbar-logo-class {
+  height: 28px; /* Ensure consistent height */
+  width: auto;
+  transition: transform 0.3s ease;
+}
+
+.navbar__brand:hover .custom-navbar-logo-class {
+  transform: rotate(5deg) scale(1.1);
+}
+
 .footer {
   background: var(--ifm-background-color) !important;
   border-top: 1px solid var(--glass-border);
