@@ -32,3 +32,6 @@ idl:
 api-design:
   label: API Design
   color: "#fb923c" # Orange 400
+development:
+  label: Development
+  color: "#0ea5e9" # Sky 500

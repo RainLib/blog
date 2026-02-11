@@ -56,6 +56,9 @@
     "homepage.recommendations.title": {
         "message": "最近推荐"
     },
+    "recent.label.recently": {
+        "message": "刚刚"
+    },
     "homepage.recommendations.view_all": {
         "message": "查看全部"
     },
@@ -127,6 +130,15 @@
     },
     "recommend.tag.tools": {
         "message": "工具"
+    },
+    "recommend.tag.protobuf": {
+        "message": "Protobuf"
+    },
+    "recommend.tag.idl": {
+        "message": "IDL"
+    },
+    "recommend.tag.api-design": {
+        "message": "API 设计"
     },
     "theme.ErrorPageContent.title": {
         "message": "页面已崩溃。",
@@ -504,5 +516,14 @@
     },
     "Navbar item with label Blog": {
         "message": "博客"
+    },
+    "recommend.hero.title": {
+        "message": "推荐资源"
+    },
+    "recommend.hero.subtitle": {
+        "message": "精选工具、库和资源，助你开发一臂之力。"
+    },
+    "recommend.all.subtitle": {
+        "message": "通过标签筛选，找到你正好需要的资源。"
     }
 }

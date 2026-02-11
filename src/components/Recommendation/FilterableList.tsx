@@ -58,46 +58,61 @@ export default function FilterableList({ recommendations, tags }: Props) {
   return (
     <div>
       {/* Tag Filters */}
-      <div className="flex flex-wrap gap-3 justify-center mb-12 sticky top-16 z-10 py-4 px-4 bg-white/80 dark:bg-[#1b1b1d]/80 backdrop-blur-md rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
-        <button
-          className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-300 border ${
-            !selectedTag
-              ? "bg-zinc-900 text-white dark:bg-white dark:text-black border-transparent"
-              : "bg-transparent text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500"
-          }`}
-          onClick={() => handleTagClick(null)}
-        >
-          <Translate id="recommend.filter.all">All</Translate>
-        </button>
-        {availableTags.map((tagKey) => {
-          const tagInfo = tags[tagKey];
-          const isSelected = selectedTag === tagKey;
-          // Default color if undefined
-          const color = tagInfo?.color || "#a1a1aa";
+      {/* Tag Filters - Floating Island */}
+      <div className="flex justify-center mb-12 sticky top-16 z-30">
+        <div className="bg-white/70 dark:bg-[#09090b]/90 backdrop-blur-xl rounded-full border border-black/5 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.4)] p-1.5 flex flex-wrap gap-1 max-w-[90vw] overflow-x-auto no-scrollbar justify-center">
+          <button
+            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-300 ${
+              !selectedTag
+                ? "bg-black text-white dark:bg-zinc-100 dark:text-zinc-950 shadow-lg"
+                : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200 hover:bg-zinc-100/50 dark:hover:bg-zinc-800/50"
+            }`}
+            onClick={() => handleTagClick(null)}
+          >
+            <Translate id="recommend.filter.all">All</Translate>
+          </button>
+          {availableTags.map((tagKey) => {
+            const tagInfo = tags[tagKey] || tags[tagKey.toLowerCase()];
+            const isSelected = selectedTag === tagKey;
+            const color = tagInfo?.color || "#a1a1aa";
 
-          return (
-            <button
-              key={tagKey}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-300 border`}
-              style={{
-                borderColor: isSelected ? color : undefined,
-                backgroundColor: isSelected ? `${color}20` : "transparent",
-                color: isSelected ? color : undefined,
-              }}
-              onClick={() => handleTagClick(tagKey)}
-            >
-              <span
-                className={
-                  !isSelected ? "text-zinc-600 dark:text-zinc-400" : ""
-                }
+            return (
+              <button
+                key={tagKey}
+                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-300 relative group`}
+                onClick={() => handleTagClick(tagKey)}
               >
-                <Translate id={`recommend.tag.${tagKey}`}>
-                  {tagInfo?.label || tagKey}
-                </Translate>
-              </span>
-            </button>
-          );
-        })}
+                {isSelected && (
+                  <motion.div
+                    layoutId="activeTag"
+                    className="absolute inset-0 rounded-full shadow-md"
+                    style={{ backgroundColor: color }}
+                    initial={false}
+                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                  />
+                )}
+                {!isSelected && (
+                  <div
+                    className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-10 transition-opacity duration-300"
+                    style={{ backgroundColor: color }}
+                  />
+                )}
+                <span
+                  className={`relative z-10 ${isSelected ? "text-white font-semibold shadow-sm" : "text-zinc-500 group-hover:text-zinc-900 dark:text-zinc-400 dark:group-hover:text-zinc-200"}`}
+                  style={{
+                    textShadow: isSelected
+                      ? "0 1px 2px rgba(0,0,0,0.1)"
+                      : "none",
+                  }}
+                >
+                  <Translate id={`recommend.tag.${tagKey}`}>
+                    {tagInfo?.label || tagKey}
+                  </Translate>
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Grid */}
@@ -105,7 +120,7 @@ export default function FilterableList({ recommendations, tags }: Props) {
         variants={container}
         initial="hidden"
         animate="show"
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-fr"
+        className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6"
       >
         <AnimatePresence mode="popLayout">
           {visibleItems.map((item) => (
@@ -113,14 +128,57 @@ export default function FilterableList({ recommendations, tags }: Props) {
               layout
               key={item.slug}
               variants={itemAnim}
+              initial="hidden"
+              animate="show"
               exit={{ opacity: 0, scale: 0.9 }}
-              className="group relative"
+              whileHover="hover"
+              className="group relative break-inside-avoid mb-6"
             >
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-pink-500 to-violet-500 rounded-2xl opacity-0 group-hover:opacity-100 transition duration-500 blur-sm"></div>
-              <div className="relative h-full bg-white dark:bg-[#18181b] rounded-xl p-6 flex flex-col border border-zinc-200 dark:border-zinc-800 transition-transform duration-300">
-                <div className="flex items-start justify-between mb-4">
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-pink-500 to-violet-500 rounded-2xl opacity-0 group-hover:opacity-100 transition duration-500 blur-md group-hover:blur-lg"></div>
+              <motion.div
+                variants={{
+                  hover: {
+                    y: -5,
+                    boxShadow:
+                      "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)",
+                  },
+                }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                className="relative h-full bg-white dark:bg-[#18181b]/90 backdrop-blur-sm rounded-xl p-6 flex flex-col border border-zinc-200 dark:border-zinc-800 transition-colors duration-300 group-hover:border-pink-500/30 overflow-hidden"
+              >
+                {/* Shine Effect */}
+                <motion.div
+                  variants={{
+                    show: { x: "-100%", opacity: 0 },
+                    hover: {
+                      x: ["-100%", "200%"],
+                      opacity: 1,
+                      transition: {
+                        repeat: Infinity,
+                        duration: 1.5,
+                        ease: "linear",
+                      },
+                    },
+                  }}
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent z-10 pointer-events-none -translate-x-full"
+                ></motion.div>
+
+                <div className="flex items-start justify-between mb-4 relative z-20">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 flex items-center justify-center overflow-hidden group-hover:scale-110 transition-transform duration-500">
+                    <motion.div
+                      variants={{
+                        hover: {
+                          scale: 1.25,
+                          rotate: 12,
+                        },
+                      }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 300,
+                        damping: 15,
+                      }}
+                      className="w-12 h-12 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 flex items-center justify-center overflow-hidden shadow-sm dark:shadow-none"
+                    >
                       {item.icon?.startsWith("http") ||
                       item.icon?.startsWith("/") ? (
                         <img
@@ -129,9 +187,9 @@ export default function FilterableList({ recommendations, tags }: Props) {
                           className="w-full h-full object-contain p-2"
                         />
                       ) : (
-                        <span className="text-xl">{item.icon}</span>
+                        <span className="text-2xl">{item.icon}</span>
                       )}
-                    </div>
+                    </motion.div>
                     <div>
                       <h3 className="font-bold text-base m-0 text-zinc-900 dark:text-zinc-100 line-clamp-1">
                         {item.title}
@@ -184,10 +242,20 @@ export default function FilterableList({ recommendations, tags }: Props) {
                     className="relative z-10 ml-auto text-xs text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 flex items-center gap-1"
                   >
                     <Translate id="recommend.card.visit">Visit</Translate>{" "}
-                    <span className="text-[10px]">↗</span>
+                    <motion.span
+                      variants={{
+                        hover: {
+                          x: 4,
+                          y: -2,
+                        },
+                      }}
+                      className="text-[10px] inline-block"
+                    >
+                      ↗
+                    </motion.span>
                   </Link>
                 </div>
-              </div>
+              </motion.div>
             </motion.div>
           ))}
         </AnimatePresence>

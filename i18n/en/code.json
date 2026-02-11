@@ -29,6 +29,9 @@
     "homepage.recommendations.title": {
         "message": "Recent Recommendations"
     },
+    "recent.label.recently": {
+        "message": "Recently"
+    },
     "homepage.recommendations.view_all": {
         "message": "View All"
     },
@@ -100,6 +103,15 @@
     },
     "recommend.tag.tools": {
         "message": "Tools"
+    },
+    "recommend.tag.protobuf": {
+        "message": "Protobuf"
+    },
+    "recommend.tag.idl": {
+        "message": "IDL"
+    },
+    "recommend.tag.api-design": {
+        "message": "API Design"
     },
     "homepage.skills.backend": {
         "message": "Distributed Systems & Backend"
@@ -523,5 +535,14 @@
     },
     "Navbar item with label Blog": {
         "message": "Blog"
+    },
+    "recommend.hero.title": {
+        "message": "Recommended Resources"
+    },
+    "recommend.hero.subtitle": {
+        "message": "A curated collection of tools, libraries, and resources to supercharge your development."
+    },
+    "recommend.all.subtitle": {
+        "message": "Filter by tag to find exactly what you need."
     }
 }
