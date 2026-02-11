@@ -201,99 +201,187 @@
   opacity: 0.95;
 }
 
-/* Navbar Overrides */
+/* --- NAVBAR REDESIGN: FLOATING GLASS ISLAND --- */
+
+/* Base Navbar Cleanup */
 .navbar {
-  background: rgba(
-    255,
-    255,
-    255,
-    0.05
-  ) !important; /* Highly transparent for glass effect */
-  backdrop-filter: blur(16px) saturate(180%);
-  -webkit-backdrop-filter: blur(16px) saturate(180%);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
-  transition: all 0.3s ease-in-out;
+  box-shadow: none !important; /* We control shadow */
+  border-bottom: none !important; /* We control border */
+  height: auto; /* Allow flexible height */
+  padding: 0.5rem 1rem;
+  background: transparent !important; /* Default transparent to let our custom container show */
+  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
-[data-theme="dark"] .navbar {
-  background: rgba(5, 5, 5, 0.3) !important;
-  border-bottom: 1px solid var(--glass-border);
-  box-shadow: 0 4px 30px var(--glass-shadow);
+/*
+   We target the inner container to create the "Island" effect.
+   Docusaurus structure: .navbar > .navbar__inner
+   But .navbar itself is the fixed element. To make it float, we style .navbar itself
+   but with constraints.
+*/
+
+/* Desktop: Floating Island Style */
+@media (min-width: 997px) {
+  .navbar {
+    position: fixed; /* Ensure it stays fixed */
+    top: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 1400px;
+    border-radius: 100px; /* Pill shape */
+
+    /* The Glass Effect */
+    background: rgba(255, 255, 255, 0.65) !important;
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.05),
+      0 1px 2px rgba(0, 0, 0, 0.05);
+  }
+
+  [data-theme="dark"] .navbar {
+    background: rgba(15, 15, 20, 0.6) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.2),
+      0 0 0 1px rgba(0, 0, 0, 0.2);
+  }
+
+  /* Scrolled State: Stick to top or shrink?
+     Let's make it shrink/compact slightly when hideOnScroll is active/triggered
+     or just keep it floating but tighter.
+     Docusaurus adds "navbar--fixed-top" by default.
+  */
 }
 
-/* Hide border when at top (optional hack, or just keep subtle border) */
-.navbar--fixed-top {
-  /* Ensure it floats properly */
-  padding: 0.75rem 1rem;
+/* Mobile: Full Width but Glassy */
+@media (max-width: 996px) {
+  .navbar {
+    top: 0;
+    left: 0;
+    transform: none;
+    width: 100%;
+    max-width: 100%;
+    border-radius: 0 0 24px 24px; /* Rounded bottom corners only */
+    background: rgba(255, 255, 255, 0.85) !important;
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05) !important;
+  }
+
+  [data-theme="dark"] .navbar {
+    background: rgba(10, 10, 12, 0.8) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+  }
 }
 
-.navbar__title {
-  font-family: "JetBrains Mono", monospace;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  background: linear-gradient(
-    90deg,
-    var(--ifm-color-primary),
-    var(--ifm-color-primary-light)
-  );
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.navbar__brand {
-  gap: 0.5rem;
-}
-
+/* Navbar Links: Fashionable Hover */
 .navbar__link {
-  font-family: "Inter", sans-serif;
+  font-family: "Outfit", sans-serif; /* Cleaner, modern font */
   font-weight: 500;
-  font-size: 0.95rem;
   color: var(--ifm-text-color) !important;
-  transition: all 0.2s;
-  opacity: 0.8;
+  padding: 0.5rem 1rem;
+  border-radius: 50px; /* Pill shape hover */
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  position: relative;
+  overflow: hidden;
 }
 
+/* Hover Effect: Soft Pill Background */
 .navbar__link:hover,
 .navbar__link--active {
   color: var(--ifm-color-primary) !important;
-  opacity: 1;
+  background: rgba(var(--ifm-color-primary-rgb), 0.1);
+  transform: translateY(-1px);
 }
 
 [data-theme="dark"] .navbar__link:hover,
 [data-theme="dark"] .navbar__link--active {
-  color: var(--ifm-color-primary) !important;
-  text-shadow: 0 0 15px var(--neon-glow);
+  background: rgba(var(--ifm-color-primary-rgb), 0.15);
+  color: #fff !important;
+  box-shadow: 0 0 15px var(--neon-glow);
 }
 
 /* Navbar Logo Adjustments */
 .navbar__logo {
-  margin-right: 0;
-  height: 44px;
-}
-
-/* Hide title if still present in DOM but ensure no spacing issues */
-.navbar__title {
-  display: none !important;
+  margin-right: 0.5rem;
+  height: 40px; /* Slightly tighter */
 }
 
 .custom-navbar-logo-class {
-  height: 44px; /* Slightly smaller for better global centering */
-  width: auto;
-  display: block;
-  margin: 0;
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  filter: none;
-}
-
-[data-theme="dark"] .custom-navbar-logo-class {
-  filter: brightness(1.5) saturate(1.1);
+  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .navbar__brand:hover .custom-navbar-logo-class {
-  transform: scale(1.08) rotate(-2deg);
-  filter: drop-shadow(0 0 12px var(--ifm-color-primary)) brightness(1.2);
+  transform: rotate(-5deg) scale(1.1);
+}
+
+/* --- MOBILE SIDEBAR: IMMERSIVE OVERLAY --- */
+.navbar-sidebar {
+  background: rgba(255, 255, 255, 0.95) !important;
+  backdrop-filter: blur(30px); /* Heavy Blur */
+  -webkit-backdrop-filter: blur(30px);
+  border-right: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="dark"] .navbar-sidebar {
+  background: rgba(5, 5, 8, 0.9) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.navbar-sidebar__brand {
+  box-shadow: none !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  padding: 1.5rem;
+}
+
+[data-theme="dark"] .navbar-sidebar__brand {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Mobile Menu Items */
+.navbar-sidebar .menu__list {
+  padding: 1rem;
+}
+
+.navbar-sidebar .menu__list-item {
+  margin-bottom: 0.5rem;
+}
+
+.navbar-sidebar .menu__link {
+  font-family: "Outfit", sans-serif;
+  font-size: 1.25rem; /* Larger text for better mobile touch */
+  font-weight: 600;
+  padding: 1rem 1.5rem;
+  border-radius: 16px; /* Smooth corners */
+  transition: all 0.2s ease;
+}
+
+.navbar-sidebar .menu__link:hover,
+.navbar-sidebar .menu__link--active {
+  background: var(--ifm-color-primary);
+  color: #fff !important;
+  transform: scale(1.02);
+  box-shadow: 0 4px 15px rgba(var(--ifm-color-primary-rgb), 0.3);
+}
+
+[data-theme="dark"] .navbar-sidebar .menu__link:hover,
+[data-theme="dark"] .navbar-sidebar .menu__link--active {
+  box-shadow: 0 4px 20px var(--neon-glow);
+}
+
+/* Hamburger Icon Animation (Optional enhancement if accessible via CSS classes) */
+.navbar__toggle {
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+.navbar__toggle:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+[data-theme="dark"] .navbar__toggle:hover {
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .footer {
