@@ -264,8 +264,22 @@
         "description": "The label for the navbar versions dropdown on mobile view"
     },
     "theme.NotFound.title": {
-        "message": "Page Not Found",
+        "message": "Lost in the Garden?",
         "description": "The title of the 404 page"
+    },
+    "theme.NotFound.p1": {
+        "message": "It seems you've wandered into an uncharted corner of the garden. The path you followed might have vanished or never existed.",
+        "description": "The first paragraph of the 404 page"
+    },
+    "theme.NotFound.p2": {
+        "message": "Please contact the owner of the site that linked you to the original URL and let them know their link is broken.",
+        "description": "The 2nd paragraph of the 404 page"
+    },
+    "theme.NotFound.backHome": {
+        "message": "Teleport Back Home"
+    },
+    "theme.NotFound.exploreBlog": {
+        "message": "Explore Latest Insights"
     },
     "theme.tags.tagsListLabel": {
         "message": "Tags:",
@@ -318,14 +332,6 @@
     "theme.NavBar.navAriaLabel": {
         "message": "Main",
         "description": "The ARIA label for the main navigation"
-    },
-    "theme.NotFound.p1": {
-        "message": "We could not find what you were looking for.",
-        "description": "The first paragraph of the 404 page"
-    },
-    "theme.NotFound.p2": {
-        "message": "Please contact the owner of the site that linked you to the original URL and let them know their link is broken.",
-        "description": "The 2nd paragraph of the 404 page"
     },
     "theme.TOCCollapsible.toggleButtonLabel": {
         "message": "On this page",
@@ -505,5 +511,17 @@
     "© {year} RainLib. 为未来构建。(Built for the Future)": {
         "message": "© {year} RainLib. Built for the Future.",
         "description": "Footer copyright"
+    },
+    "Recommend": {
+        "message": "Recommend"
+    },
+    "recommend.browse_all": {
+        "message": "Browse All"
+    },
+    "Navbar item with label Recommend": {
+        "message": "Recommend"
+    },
+    "Navbar item with label Blog": {
+        "message": "Blog"
     }
 }
