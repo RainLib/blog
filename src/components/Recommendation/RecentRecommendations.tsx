@@ -1,19 +1,21 @@
 import React from "react";
 import { motion } from "framer-motion";
 import Link from "@docusaurus/Link";
-import { Recommendation } from "../../plugins/recommendation-plugin";
 import Translate from "@docusaurus/Translate";
+import useDocusaurusContext from "@docusaurus/useDocusaurusContext";
+import { Recommendation } from "../../plugins/recommendation-plugin";
 
 interface Props {
   recommendations: Recommendation[];
 }
 
 export default function RecentRecommendations({ recommendations }: Props) {
+  const { i18n } = useDocusaurusContext();
   if (recommendations.length === 0) return null;
 
   // Take top 3 recent items
   const recentItems = recommendations.slice(0, 3);
-
+  // ... existing animation constants ...
   const container = {
     hidden: { opacity: 0 },
     show: {
@@ -79,7 +81,16 @@ export default function RecentRecommendations({ recommendations }: Props) {
                     {item.title}
                   </h3>
                   <div className="text-xs text-zinc-500 font-mono mt-1">
-                    {item.date}
+                    {item.date
+                      ? new Date(item.date).toLocaleDateString(
+                          i18n.currentLocale,
+                          {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                          },
+                        )
+                      : "Recently"}
                   </div>
                 </div>
               </div>

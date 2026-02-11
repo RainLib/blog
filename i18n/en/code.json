@@ -23,6 +23,84 @@
         "message": "A curated stack of technologies powering high-performance distributed systems and intelligent interfaces.",
         "description": "Subtitle for skills section"
     },
+    "homepage.recommendations.label": {
+        "message": "Inspiration Hub"
+    },
+    "homepage.recommendations.title": {
+        "message": "Recent Recommendations"
+    },
+    "homepage.recommendations.view_all": {
+        "message": "View All"
+    },
+    "homepage.recommendations.read_more": {
+        "message": "Read More"
+    },
+    "homepage.recommendations.view_all_mobile": {
+        "message": "View More Recommendations"
+    },
+    "recommendation.detail.visit": {
+        "message": "Visit Website"
+    },
+    "recommendation.detail.back": {
+        "message": "← Back to Recommendations"
+    },
+    "recent.title": {
+        "message": "Recent Arrivals"
+    },
+    "recent.subtitle": {
+        "message": "Discover the latest tools and resources added to our collection"
+    },
+    "recent.read_review": {
+        "message": "Read Review"
+    },
+    "recent.visit": {
+        "message": "Visit"
+    },
+    "recommend.filter.all": {
+        "message": "All"
+    },
+    "recommend.card.read_more": {
+        "message": "Read More"
+    },
+    "recommend.card.visit": {
+        "message": "Visit"
+    },
+    "recommend.list.load_more": {
+        "message": "Load More"
+    },
+    "recommend.list.end": {
+        "message": "End of list"
+    },
+    "recommend.tag.design": {
+        "message": "Design"
+    },
+    "recommend.tag.devtools": {
+        "message": "DevTools"
+    },
+    "recommend.tag.ai": {
+        "message": "AI"
+    },
+    "recommend.tag.productivity": {
+        "message": "Productivity"
+    },
+    "recommend.tag.tech": {
+        "message": "Tech"
+    },
+    "recommend.tag.library": {
+        "message": "Library"
+    },
+    "recommend.tag.search": {
+        "message": "Search"
+    },
+    "recommend.tag.animation": {
+        "message": "Animation"
+    },
+    "recommend.tag.react": {
+        "message": "React"
+    },
+    "recommend.tag.tools": {
+        "message": "Tools"
+    },
     "homepage.skills.backend": {
         "message": "Distributed Systems & Backend"
     },

@@ -50,14 +50,14 @@ export default function HomepageHeader() {
                   <Translate id="homepage.hero.description.start">
                     汇聚思想，探索
                   </Translate>{" "}
-                  <span className="text-[var(--ifm-color-primary)] font-bold flex items-center gap-1 inline-flex">
+                  <span className="text-[var(--ifm-color-primary)] font-bold inline-flex items-center gap-1">
                     <span className="text-2xl">🔗</span>
                     <Translate id="homepage.hero.distributed_systems">
                       分布式系统
                     </Translate>
                   </span>{" "}
                   &{" "}
-                  <span className="text-[#059669] dark:text-[var(--ifm-color-primary-light)] font-bold flex items-center gap-1 inline-flex">
+                  <span className="text-[#059669] dark:text-[var(--ifm-color-primary-light)] font-bold inline-flex items-center gap-1">
                     <span className="text-2xl">🤖</span>
                     <Translate id="homepage.hero.genai">生成式 AI</Translate>
                   </span>

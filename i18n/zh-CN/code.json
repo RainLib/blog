@@ -50,6 +50,84 @@
         "message": "构建高性能分布式系统与智能接口的技术栈精选。",
         "description": "Subtitle for skills section"
     },
+    "homepage.recommendations.label": {
+        "message": "灵感采集"
+    },
+    "homepage.recommendations.title": {
+        "message": "最近推荐"
+    },
+    "homepage.recommendations.view_all": {
+        "message": "查看全部"
+    },
+    "homepage.recommendations.read_more": {
+        "message": "阅读详情"
+    },
+    "homepage.recommendations.view_all_mobile": {
+        "message": "查看更多推荐"
+    },
+    "recommendation.detail.visit": {
+        "message": "访问网站"
+    },
+    "recommendation.detail.back": {
+        "message": "← 返回推荐列表"
+    },
+    "recent.title": {
+        "message": "最近加入"
+    },
+    "recent.subtitle": {
+        "message": "探索我们收藏的最新工具和资源"
+    },
+    "recent.read_review": {
+        "message": "阅读详情"
+    },
+    "recent.visit": {
+        "message": "访问"
+    },
+    "recommend.filter.all": {
+        "message": "全部"
+    },
+    "recommend.card.read_more": {
+        "message": "了解更多"
+    },
+    "recommend.card.visit": {
+        "message": "访问"
+    },
+    "recommend.list.load_more": {
+        "message": "加载更多"
+    },
+    "recommend.list.end": {
+        "message": "已显示全部"
+    },
+    "recommend.tag.design": {
+        "message": "设计"
+    },
+    "recommend.tag.devtools": {
+        "message": "开发工具"
+    },
+    "recommend.tag.ai": {
+        "message": "人工智能"
+    },
+    "recommend.tag.productivity": {
+        "message": "生产力"
+    },
+    "recommend.tag.tech": {
+        "message": "技术"
+    },
+    "recommend.tag.library": {
+        "message": "资源库"
+    },
+    "recommend.tag.search": {
+        "message": "搜索"
+    },
+    "recommend.tag.animation": {
+        "message": "动画"
+    },
+    "recommend.tag.react": {
+        "message": "React"
+    },
+    "recommend.tag.tools": {
+        "message": "工具"
+    },
     "theme.ErrorPageContent.title": {
         "message": "页面已崩溃。",
         "description": "The title of the fallback page when the page crashed"

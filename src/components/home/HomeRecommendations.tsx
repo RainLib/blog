@@ -2,10 +2,12 @@ import React from "react";
 import Link from "@docusaurus/Link";
 import useGlobalData from "@docusaurus/useGlobalData";
 import Translate from "@docusaurus/Translate";
+import useDocusaurusContext from "@docusaurus/useDocusaurusContext";
 import { Recommendation, Tag } from "../../plugins/recommendation-plugin";
 
 export default function HomeRecommendations() {
   const globalData = useGlobalData();
+  const { i18n } = useDocusaurusContext();
   const pluginData = globalData["recommendation-plugin"]?.["default"] as
     | { recommendations: Recommendation[]; tags: Record<string, Tag> }
     | undefined;
@@ -75,15 +77,31 @@ export default function HomeRecommendations() {
                         key={tag}
                         className="text-[10px] font-mono px-2 py-0.5 rounded-full border border-[var(--glass-border)] opacity-60 uppercase bg-zinc-50 dark:bg-zinc-800"
                       >
-                        {tags[tag]?.label || tag}
+                        <Translate id={`recommend.tag.${tag.toLowerCase()}`}>
+                          {tags[tag]?.label || tag}
+                        </Translate>
                       </span>
                     ))}
                   </div>
                 </div>
 
-                <h3 className="text-xl font-bold mb-3 text-zinc-900 dark:text-zinc-100 group-hover:text-[var(--ifm-color-primary)] transition-colors">
-                  {item.title}
-                </h3>
+                <div className="mb-4">
+                  <span className="text-[10px] font-mono uppercase tracking-wider opacity-40">
+                    {item.date
+                      ? new Date(item.date).toLocaleDateString(
+                          i18n.currentLocale,
+                          {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                          },
+                        )
+                      : "Recently"}
+                  </span>
+                  <h3 className="text-xl font-bold mt-1 text-zinc-900 dark:text-zinc-100 group-hover:text-[var(--ifm-color-primary)] transition-colors">
+                    {item.title}
+                  </h3>
+                </div>
 
                 <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mb-8 flex-grow line-clamp-3">
                   {item.description || item.excerpt}

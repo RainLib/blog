@@ -1,8 +1,9 @@
 import React, { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "@docusaurus/Link";
-import { Recommendation, Tag } from "../../plugins/recommendation-plugin";
 import Translate from "@docusaurus/Translate";
+import useDocusaurusContext from "@docusaurus/useDocusaurusContext";
+import { Recommendation, Tag } from "../../plugins/recommendation-plugin";
 
 interface Props {
   recommendations: Recommendation[];
@@ -12,6 +13,7 @@ interface Props {
 const ITEMS_PER_PAGE = 9;
 
 export default function FilterableList({ recommendations, tags }: Props) {
+  const { i18n } = useDocusaurusContext();
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
 
@@ -134,13 +136,27 @@ export default function FilterableList({ recommendations, tags }: Props) {
                       <h3 className="font-bold text-base m-0 text-zinc-900 dark:text-zinc-100 line-clamp-1">
                         {item.title}
                       </h3>
-                      <div className="flex flex-wrap gap-1 mt-1">
+                      <div className="text-[10px] text-zinc-400 font-mono mt-0.5">
+                        {item.date
+                          ? new Date(item.date).toLocaleDateString(
+                              i18n.currentLocale,
+                              {
+                                year: "numeric",
+                                month: "short",
+                                day: "numeric",
+                              },
+                            )
+                          : "Recently"}
+                      </div>
+                      <div className="flex flex-wrap gap-1 mt-1.5">
                         {item.tags?.slice(0, 2).map((tag) => (
                           <span
                             key={tag}
                             className="text-[10px] font-mono px-1.5 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-500"
                           >
-                            <Translate id={`recommend.tag.${tag}`}>
+                            <Translate
+                              id={`recommend.tag.${tag.toLowerCase()}`}
+                            >
                               {tags[tag]?.label || tag}
                             </Translate>
                           </span>

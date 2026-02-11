@@ -3,6 +3,7 @@ import Layout from "@theme/Layout";
 import Link from "@docusaurus/Link";
 import Heading from "@theme/Heading";
 import MDXContent from "@theme/MDXContent";
+import Translate from "@docusaurus/Translate";
 
 // Define the props interface
 interface Props {
@@ -48,13 +49,17 @@ export default function RecommendationDetail({ content, metadata }: Props) {
                     key={tag}
                     className="badge badge--secondary margin-horiz--xs"
                   >
-                    {tag}
+                    <Translate id={`recommend.tag.${tag.toLowerCase()}`}>
+                      {tag}
+                    </Translate>
                   </span>
                 ))}
               </div>
 
               <Link className="button button--primary button--lg" to={url}>
-                Visit Website
+                <Translate id="recommendation.detail.visit">
+                  Visit Website
+                </Translate>
               </Link>
             </div>
 
@@ -65,7 +70,11 @@ export default function RecommendationDetail({ content, metadata }: Props) {
             </div>
 
             <div className="margin-top--xl">
-              <Link to="/recommend">← Back to Recommendations</Link>
+              <Link to="/recommend">
+                <Translate id="recommendation.detail.back">
+                  ← Back to Recommendations
+                </Translate>
+              </Link>
             </div>
           </div>
         </div>

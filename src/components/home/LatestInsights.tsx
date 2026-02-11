@@ -1,6 +1,7 @@
 import React from "react";
 import Link from "@docusaurus/Link";
 import Translate, { translate } from "@docusaurus/Translate";
+import useDocusaurusContext from "@docusaurus/useDocusaurusContext";
 
 // Explicitly import blog posts to ensure data availability
 // @ts-ignore
@@ -16,7 +17,7 @@ const RECENT_POSTS_DATA = [
   { module: Post2, filename: "2026-02-09-grpc-protocol.mdx" },
 ];
 
-function getRecentPosts() {
+function getRecentPosts(locale: string) {
   return RECENT_POSTS_DATA.map((item) => {
     const module = item.module as any;
     const frontMatter = module.frontMatter || {};
@@ -29,7 +30,7 @@ function getRecentPosts() {
 
     // Format Date
     const date = dateStr
-      ? new Date(dateStr).toLocaleDateString("en-US", {
+      ? new Date(dateStr).toLocaleDateString(locale, {
           year: "numeric",
           month: "short",
           day: "numeric",
@@ -37,7 +38,6 @@ function getRecentPosts() {
       : "Recently";
 
     // Construct Link
-    // User confirmed the path should be /blog/slug (no date prefix)
     const slug = frontMatter.slug || filenameSlug;
     const link = `/blog/${slug}`;
 
@@ -59,7 +59,8 @@ function getRecentPosts() {
 }
 
 export default function LatestInsights() {
-  const posts = getRecentPosts();
+  const { i18n } = useDocusaurusContext();
+  const posts = getRecentPosts(i18n.currentLocale);
 
   // Fallback if no posts found (should not happen with imports)
   const displayPosts = posts.length > 0 ? posts : [];
