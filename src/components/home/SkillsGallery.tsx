@@ -11,7 +11,7 @@ function getSkills() {
       }),
       icon: "⚡",
       items: ["Java", "Go", "gRPC", "Netty", "Microservices", "Redis"],
-      color: "#0071e3",
+      color: "#1062cd", // Match new primary
     },
     {
       category: translate({
@@ -20,7 +20,7 @@ function getSkills() {
       }),
       icon: "🤖",
       items: ["Python", "PyTorch", "LLMs", "LangChain", "RAG", "Agents"],
-      color: "#a958a5",
+      color: "#8b5cf6", // Soft violet
     },
     {
       category: translate({
@@ -36,7 +36,7 @@ function getSkills() {
         "Tailwind",
         "Framer Motion",
       ],
-      color: "#ff9f1c",
+      color: "#f59e0b", // Soft amber
     },
     {
       category: translate({
@@ -52,7 +52,7 @@ function getSkills() {
         "Prometheus",
         "Terraform",
       ],
-      color: "#4dabf7",
+      color: "#06b6d4", // Soft cyan
     },
   ];
 }
@@ -64,7 +64,8 @@ export default function SkillsGallery() {
     <section className="py-24 relative z-10 border-t border-[var(--glass-border)] bg-[var(--ifm-background-color)]">
       <div className="container px-4">
         <div className="mb-16 text-center">
-          <h2 className="text-3xl md:text-5xl font-bold mb-6">
+          <h2 className="text-3xl md:text-5xl font-bold mb-6 flex items-center justify-center gap-3">
+            <span className="text-4xl">🛠️</span>
             <Translate
               id="homepage.skills.title"
               description="Title for skills section"

@@ -3,11 +3,15 @@ import { useBlogPost } from "@docusaurus/plugin-content-blog/client";
 import BlogPostItemHeaderTitle from "@theme/BlogPostItem/Header/Title";
 import BlogPostItemHeaderInfo from "@theme/BlogPostItem/Header/Info";
 import BlogPostItemHeaderAuthors from "@theme/BlogPostItem/Header/Authors";
-import Translate from "@docusaurus/Translate";
 
 export default function BlogPostItemHeader() {
   const { metadata, isBlogPostPage } = useBlogPost();
-  const { title } = metadata;
+  const { date, tags } = metadata;
+  const formattedDate = new Date(date).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 
   // Only customize for the detailed Post Page, not the list items (if they used this, but list uses BlogRow now)
   if (!isBlogPostPage) {
@@ -21,23 +25,34 @@ export default function BlogPostItemHeader() {
   }
 
   return (
-    <header className="mb-12 border-b border-dashed border-neutral-200 dark:border-white/10 pb-8 relative">
-      <div className="flex items-center gap-3 mb-6">
-        <span className="px-2 py-1 text-[10px] font-mono font-bold tracking-widest uppercase border border-primary text-primary dark:text-cyan-400 dark:border-cyan-400 bg-primary/5">
-          <Translate id="blog.transmission">INCOMING_TRANSMISSION</Translate>
-        </span>
-        <div className="h-px flex-grow bg-neutral-200 dark:bg-cyan-900/50"></div>
-        <span className="font-mono text-xs text-neutral-400 dark:text-cyan-500/50">
-          // {metadata.formattedDate}
-        </span>
+    <header className="mb-10 text-center max-w-4xl mx-auto">
+      <div className="flex flex-wrap items-center justify-center gap-3 mb-6">
+        <time
+          dateTime={metadata.date}
+          className="text-sm font-medium text-zinc-500 dark:text-zinc-400"
+        >
+          {formattedDate}
+        </time>
+        {tags.length > 0 && (
+          <span className="text-zinc-300 dark:text-zinc-700">•</span>
+        )}
+        {tags.map((tag) => (
+          <span
+            key={tag.permalink}
+            className="text-sm font-medium text-blue-600 dark:text-blue-400"
+          >
+            #{tag.label}
+          </span>
+        ))}
       </div>
 
-      <BlogPostItemHeaderTitle className="text-4xl md:text-5xl font-black tracking-tight mb-6 text-neutral-900 dark:text-white uppercase leading-tight" />
+      <BlogPostItemHeaderTitle className="text-4xl md:text-6xl font-extrabold tracking-tight mb-8 text-zinc-900 dark:text-white leading-tight" />
 
-      <div className="flex flex-wrap items-center gap-6 text-sm text-neutral-500 dark:text-neutral-400 font-mono">
+      <div className="flex justify-center">
         <BlogPostItemHeaderAuthors />
-        {/* Add more meta if needed */}
       </div>
+
+      <div className="h-px w-full max-w-xs mx-auto bg-gradient-to-r from-transparent via-zinc-200 dark:via-zinc-800 to-transparent my-10" />
     </header>
   );
 }

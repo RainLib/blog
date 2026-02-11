@@ -10,7 +10,8 @@ import BlogLayout from "@theme/BlogLayout";
 import BlogListPaginator from "@theme/BlogListPaginator";
 import SearchMetadata from "@theme/SearchMetadata";
 import type { Props } from "@theme/BlogListPage";
-import BlogRow from "@site/src/components/blog/BlogRow";
+import BlogRow from "@site/src/components/blog/BlogRow"; // Back to BlogRow
+import FeaturedPost from "@site/src/components/blog/FeaturedPost";
 import BrowserOnly from "@docusaurus/BrowserOnly";
 import Translate from "@docusaurus/Translate";
 
@@ -21,32 +22,23 @@ function BlogListPageContent(props: Props) {
   } = useDocusaurusContext();
   const { blogDescription, blogTitle, permalink } = metadata;
 
+  // Split items: First one is featured, rest are list
+  const featuredItem = items[0];
+  const listItems = items.slice(1);
+
   return (
     <BlogLayout sidebar={sidebar}>
-      {/* Background Shader - Fixed behind everything */}
-      <div className="fixed inset-0 z-[-1] pointer-events-none">
-        <BrowserOnly>
-          {() => {
-            const BlogHero = require("@site/src/components/BlogHero").default;
-            return <BlogHero />;
-          }}
-        </BrowserOnly>
-      </div>
+      <div className="relative z-10 w-full max-w-6xl mx-auto pt-10 px-4">
+        {/* Featured Post - Full Width */}
+        {featuredItem && (
+          <div className="mb-12">
+            <FeaturedPost item={featuredItem.content} />
+          </div>
+        )}
 
-      <div className="relative z-10 max-w-4xl mx-auto pt-10">
-        {/* Header for the List */}
-        <div className="mb-8 pb-4 border-b border-neutral-200 dark:border-white/10 flex items-end justify-between px-6">
-          <h1 className="text-3xl font-black tracking-tighter uppercase text-neutral-900 dark:text-white mb-0">
-            <Translate id="blog.archive.title">Latest Transmissions</Translate>
-          </h1>
-          <span className="font-mono text-xs text-neutral-400 dark:text-cyan-500/50">
-            // SYSTEM_READY
-          </span>
-        </div>
-
-        {/* Uniform List Layout */}
-        <div className="flex flex-col bg-white/50 dark:bg-black/40 backdrop-blur-md rounded-lg overflow-hidden border border-neutral-200 dark:border-white/10 shadow-sm">
-          {items.map((item, index) => (
+        {/* List Layout - Single Column */}
+        <div className="flex flex-col bg-white/50 dark:bg-black/20 backdrop-blur-md rounded-3xl overflow-hidden border border-zinc-200 dark:border-zinc-800 shadow-sm">
+          {listItems.map((item, index) => (
             <BlogRow
               key={item.content.metadata.permalink}
               item={item.content}
@@ -55,7 +47,7 @@ function BlogListPageContent(props: Props) {
           ))}
         </div>
 
-        <div className="mt-12">
+        <div className="mt-20">
           <BlogListPaginator metadata={metadata} />
         </div>
       </div>
@@ -63,11 +55,11 @@ function BlogListPageContent(props: Props) {
   );
 }
 
-export default function BlogListPage(props: Props): JSX.Element {
+export default function BlogListPage(props: Props) {
   return (
     <HtmlClassNameProvider
       className={clsx(
-        ThemeClassNames.wrapper.blogListPage,
+        ThemeClassNames.wrapper.blogPages,
         ThemeClassNames.page.blogListPage,
       )}
     >

@@ -23,6 +23,96 @@
         "message": "A curated stack of technologies powering high-performance distributed systems and intelligent interfaces.",
         "description": "Subtitle for skills section"
     },
+    "homepage.recommendations.label": {
+        "message": "Inspiration Hub"
+    },
+    "homepage.recommendations.title": {
+        "message": "Recent Recommendations"
+    },
+    "recent.label.recently": {
+        "message": "Recently"
+    },
+    "homepage.recommendations.view_all": {
+        "message": "View All"
+    },
+    "homepage.recommendations.read_more": {
+        "message": "Read More"
+    },
+    "homepage.recommendations.view_all_mobile": {
+        "message": "View More Recommendations"
+    },
+    "recommendation.detail.visit": {
+        "message": "Visit Website"
+    },
+    "recommendation.detail.back": {
+        "message": "← Back to Recommendations"
+    },
+    "recent.title": {
+        "message": "Recent Arrivals"
+    },
+    "recent.subtitle": {
+        "message": "Discover the latest tools and resources added to our collection"
+    },
+    "recent.read_review": {
+        "message": "Read Review"
+    },
+    "recent.visit": {
+        "message": "Visit"
+    },
+    "recommend.filter.all": {
+        "message": "All"
+    },
+    "recommend.card.read_more": {
+        "message": "Read More"
+    },
+    "recommend.card.visit": {
+        "message": "Visit"
+    },
+    "recommend.list.load_more": {
+        "message": "Load More"
+    },
+    "recommend.list.end": {
+        "message": "End of list"
+    },
+    "recommend.tag.design": {
+        "message": "Design"
+    },
+    "recommend.tag.devtools": {
+        "message": "DevTools"
+    },
+    "recommend.tag.ai": {
+        "message": "AI"
+    },
+    "recommend.tag.productivity": {
+        "message": "Productivity"
+    },
+    "recommend.tag.tech": {
+        "message": "Tech"
+    },
+    "recommend.tag.library": {
+        "message": "Library"
+    },
+    "recommend.tag.search": {
+        "message": "Search"
+    },
+    "recommend.tag.animation": {
+        "message": "Animation"
+    },
+    "recommend.tag.react": {
+        "message": "React"
+    },
+    "recommend.tag.tools": {
+        "message": "Tools"
+    },
+    "recommend.tag.protobuf": {
+        "message": "Protobuf"
+    },
+    "recommend.tag.idl": {
+        "message": "IDL"
+    },
+    "recommend.tag.api-design": {
+        "message": "API Design"
+    },
     "homepage.skills.backend": {
         "message": "Distributed Systems & Backend"
     },
@@ -186,8 +276,22 @@
         "description": "The label for the navbar versions dropdown on mobile view"
     },
     "theme.NotFound.title": {
-        "message": "Page Not Found",
+        "message": "Lost in the Garden?",
         "description": "The title of the 404 page"
+    },
+    "theme.NotFound.p1": {
+        "message": "It seems you've wandered into an uncharted corner of the garden. The path you followed might have vanished or never existed.",
+        "description": "The first paragraph of the 404 page"
+    },
+    "theme.NotFound.p2": {
+        "message": "Please contact the owner of the site that linked you to the original URL and let them know their link is broken.",
+        "description": "The 2nd paragraph of the 404 page"
+    },
+    "theme.NotFound.backHome": {
+        "message": "Teleport Back Home"
+    },
+    "theme.NotFound.exploreBlog": {
+        "message": "Explore Latest Insights"
     },
     "theme.tags.tagsListLabel": {
         "message": "Tags:",
@@ -240,14 +344,6 @@
     "theme.NavBar.navAriaLabel": {
         "message": "Main",
         "description": "The ARIA label for the main navigation"
-    },
-    "theme.NotFound.p1": {
-        "message": "We could not find what you were looking for.",
-        "description": "The first paragraph of the 404 page"
-    },
-    "theme.NotFound.p2": {
-        "message": "Please contact the owner of the site that linked you to the original URL and let them know their link is broken.",
-        "description": "The 2nd paragraph of the 404 page"
     },
     "theme.TOCCollapsible.toggleButtonLabel": {
         "message": "On this page",
@@ -427,5 +523,26 @@
     "© {year} RainLib. 为未来构建。(Built for the Future)": {
         "message": "© {year} RainLib. Built for the Future.",
         "description": "Footer copyright"
+    },
+    "Recommend": {
+        "message": "Recommend"
+    },
+    "recommend.browse_all": {
+        "message": "Browse All"
+    },
+    "Navbar item with label Recommend": {
+        "message": "Recommend"
+    },
+    "Navbar item with label Blog": {
+        "message": "Blog"
+    },
+    "recommend.hero.title": {
+        "message": "Recommended Resources"
+    },
+    "recommend.hero.subtitle": {
+        "message": "A curated collection of tools, libraries, and resources to supercharge your development."
+    },
+    "recommend.all.subtitle": {
+        "message": "Filter by tag to find exactly what you need."
     }
 }

@@ -1,6 +1,7 @@
 import { themes as prismThemes } from "prism-react-renderer";
 import type { Config } from "@docusaurus/types";
 import type * as Preset from "@docusaurus/preset-classic";
+import recommendationPlugin from "./src/plugins/recommendation-plugin";
 
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
@@ -15,6 +16,12 @@ const config: Config = {
   },
 
   plugins: [
+    [
+      recommendationPlugin,
+      {
+        // Plugin options here
+      },
+    ],
     function (context, options) {
       return {
         name: "custom-webpack-plugin",
@@ -48,8 +55,8 @@ const config: Config = {
   // useful metadata like html lang. For example, if your site is Chinese, you
   // may want to replace "en" with "zh-Hans".
   i18n: {
-    defaultLocale: "zh-Hans",
-    locales: ["zh-Hans", "en"],
+    defaultLocale: "zh-CN",
+    locales: ["zh-CN", "en"],
   },
 
   presets: [
@@ -89,14 +96,16 @@ const config: Config = {
       respectPrefersColorScheme: false,
     },
     navbar: {
-      title: "RainLib",
       logo: {
         alt: "RainLib Logo",
-        src: "img/logo.svg", // Updated to use the new SVG
+        src: "img/logo.svg",
+        srcDark: "img/logo.svg", // Ensure logo is visible in dark mode
+        className: "custom-navbar-logo-class", // Add class for custom styling
       },
-      hideOnScroll: true, // Auto-hide navbar on scroll down
+      hideOnScroll: true,
       items: [
         { to: "/blog", label: "Blog", position: "left" },
+        { to: "/recommend", label: "Recommend", position: "left" },
         {
           href: "https://github.com/RainLib",
           label: "GitHub",
@@ -119,8 +128,8 @@ const config: Config = {
               to: "/blog",
             },
             {
-              label: "GitHub",
-              href: "https://github.com/RainLib",
+              label: "Recommend",
+              to: "/recommend",
             },
           ],
         },
