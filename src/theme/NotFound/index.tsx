@@ -13,7 +13,9 @@ export default function NotFound(): React.ReactNode {
     <>
       <PageMetadata title={title} />
       <Layout>
-        <NotFoundContent />
+        <div className="not-found-wrapper">
+          <NotFoundContent />
+        </div>
       </Layout>
     </>
   );

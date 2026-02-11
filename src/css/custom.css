@@ -304,10 +304,22 @@
   box-shadow: 0 0 15px var(--neon-glow);
 }
 
-/* Navbar Logo Adjustments */
-.navbar__logo {
-  margin-right: 0.5rem;
-  height: 40px; /* Slightly tighter */
+/* Unhide title and style it */
+.navbar__title {
+  display: block !important; /* Restore visibility */
+  font-family: "JetBrains Mono", monospace;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  background: linear-gradient(
+    90deg,
+    var(--ifm-color-primary),
+    var(--ifm-color-primary-light)
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-size: 1.2rem;
+  margin-left: 0.5rem;
 }
 
 .custom-navbar-logo-class {
@@ -320,25 +332,42 @@
 
 /* --- MOBILE SIDEBAR: IMMERSIVE OVERLAY --- */
 .navbar-sidebar {
-  background: rgba(255, 255, 255, 0.95) !important;
-  backdrop-filter: blur(30px); /* Heavy Blur */
+  background: rgba(
+    255,
+    255,
+    255,
+    0.98
+  ) !important; /* Less transparency for readability */
+  backdrop-filter: blur(30px);
   -webkit-backdrop-filter: blur(30px);
   border-right: 1px solid rgba(0, 0, 0, 0.05);
+  z-index: 1000 !important; /* Ensure it seats above everything */
+  height: 100dvh; /* Use dynamic viewport height for mobile */
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
 }
 
 [data-theme="dark"] .navbar-sidebar {
-  background: rgba(5, 5, 8, 0.9) !important;
+  background: rgba(5, 5, 8, 0.95) !important;
   border-right: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .navbar-sidebar__brand {
   box-shadow: none !important;
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-  padding: 1.5rem;
+  padding: 1rem 1.5rem; /* Adjust padding */
+  min-height: var(--ifm-navbar-height); /* Ensure consistent height */
 }
 
 [data-theme="dark"] .navbar-sidebar__brand {
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Ensure items are visible */
+.navbar-sidebar__items {
+  padding-bottom: 60px; /* Space for bottom bar if needed */
 }
 
 /* Mobile Menu Items */
@@ -352,18 +381,19 @@
 
 .navbar-sidebar .menu__link {
   font-family: "Outfit", sans-serif;
-  font-size: 1.25rem; /* Larger text for better mobile touch */
+  font-size: 1.1rem;
   font-weight: 600;
-  padding: 1rem 1.5rem;
-  border-radius: 16px; /* Smooth corners */
+  padding: 0.75rem 1.25rem;
+  border-radius: 12px;
   transition: all 0.2s ease;
+  color: var(--ifm-text-color) !important; /* Force color visibility */
 }
 
 .navbar-sidebar .menu__link:hover,
 .navbar-sidebar .menu__link--active {
   background: var(--ifm-color-primary);
   color: #fff !important;
-  transform: scale(1.02);
+  transform: scale(1.01);
   box-shadow: 0 4px 15px rgba(var(--ifm-color-primary-rgb), 0.3);
 }
 
@@ -712,5 +742,43 @@ html body .blog-post-page-wrapper .container {
   }
   html body .blog-post-page-wrapper article {
     padding: 2rem 1.5rem !important;
+  }
+}
+
+/* --- GLOBAL SPACING FIX FOR FLOATING NAVBAR --- */
+/*
+   We apply this to all pages, but we'll override or exclude the homepage.
+   Note: The homepage layout in index.tsx now uses a specific class or structure?
+   Actually, the user asked to exclude homepage.
+
+   If we can't easily target "not homepage" on .main-wrapper without JS/Liquid,
+   we can use the fact that homepage has specific content.
+
+   BUT simpler: I will assume I added 'home-wrapper' class to the body or layout in the next step?
+   NO, I already added `home-wrapper` to the inner div.
+
+   Let's use :has(.home-wrapper) to detecting if it's homepage?
+   .main-wrapper:has(.home-wrapper) { padding-top: 0; }
+
+   Safe bet: Most modern browsers support :has().
+*/
+
+.main-wrapper {
+  padding-top: 4rem;
+}
+
+.main-wrapper:has(.home-wrapper),
+.main-wrapper:has(.not-found-wrapper) {
+  padding-top: 0 !important;
+}
+
+/* On mobile */
+@media (max-width: 996px) {
+  .main-wrapper {
+    padding-top: 4rem;
+  }
+  .main-wrapper:has(.home-wrapper),
+  .main-wrapper:has(.not-found-wrapper) {
+    padding-top: 0 !important;
   }
 }

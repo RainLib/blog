@@ -1,11 +1,8 @@
-import React from "react";
-import clsx from "clsx";
-import { Group } from "@docusaurus/theme-common/internal";
-import { translate } from "@docusaurus/Translate";
 import Link from "@docusaurus/Link";
+import { translate } from "@docusaurus/Translate";
 import type { Props } from "@theme/BlogSidebar";
 
-export default function BlogSidebar({ sidebar }: Props): JSX.Element | null {
+export default function BlogSidebar({ sidebar }: Props) {
   if (sidebar.items.length === 0) {
     return null;
   }

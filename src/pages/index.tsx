@@ -8,7 +8,7 @@ export default function Home() {
   const { siteConfig } = useDocusaurusContext();
   return (
     <Layout title={siteConfig.title} description="RainLib Digital Garden">
-      <div className="min-h-screen bg-[var(--ifm-background-color)] text-[var(--ifm-text-color)] selection:bg-[var(--ifm-color-primary)] selection:text-white">
+      <div className="home-wrapper min-h-screen bg-[var(--ifm-background-color)] text-[var(--ifm-text-color)] selection:bg-[var(--ifm-color-primary)] selection:text-white">
         <HomepageHeader />
         <LatestInsights />
         <HomeRecommendations />
