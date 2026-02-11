@@ -401,12 +401,102 @@ html[data-theme="dark"] body .blog-post-page-wrapper article {
   border: 1px solid rgba(0, 0, 0, 0.08);
   background: #f6f8fa !important; /* Light grey for light mode */
   transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
 }
 
 [data-theme="dark"] .markdown pre {
   background: #1a1b1e !important;
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+}
+
+/* Table Design - Premium Glassmorphism */
+.markdown table {
+  display: table;
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 4px 20px var(--glass-shadow);
+  margin: 2rem 0;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+[data-theme="dark"] .markdown table {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.markdown thead tr {
+  background: rgba(var(--ifm-color-primary-rgb), 0.05) !important;
+  backdrop-filter: blur(8px);
+}
+
+.markdown th {
+  font-weight: 700;
+  color: var(--ifm-color-primary);
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+  padding: 1rem !important;
+  border: none !important;
+  border-bottom: 2px solid var(--glass-border) !important;
+}
+
+.markdown td {
+  padding: 1rem !important;
+  border: none !important;
+  border-bottom: 1px solid var(--glass-border) !important;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+}
+
+.markdown tr:last-child td {
+  border-bottom: none !important;
+}
+
+.markdown tr:hover td {
+  background: rgba(var(--ifm-color-primary-rgb), 0.03);
+}
+
+[data-theme="dark"] .markdown tr:hover td {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* Code Language Badge */
+.custom-code-block {
+  position: relative;
+}
+
+.custom-code-block[data-language]::after {
+  content: attr(data-language);
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--ifm-color-primary);
+  opacity: 0.6;
+  pointer-events: none;
+  z-index: 10;
+  background: rgba(var(--ifm-color-primary-rgb), 0.1);
+  padding: 2px 8px;
+  border-radius: 6px;
+  letter-spacing: 0.05em;
+  transition: opacity 0.3s ease;
+}
+
+.custom-code-block:hover[data-language]::after {
+  opacity: 1;
+}
+
+[data-theme="dark"] .custom-code-block[data-language]::after {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--ifm-color-primary);
 }
 
 /* Inline Code Styling */
