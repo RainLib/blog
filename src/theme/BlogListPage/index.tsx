@@ -28,16 +28,6 @@ function BlogListPageContent(props: Props) {
 
   return (
     <BlogLayout sidebar={sidebar}>
-      {/* Background Shader - Fixed behind everything */}
-      <div className="fixed inset-0 z-[-1] pointer-events-none">
-        <BrowserOnly>
-          {() => {
-            const BlogHero = require("@site/src/components/BlogHero").default;
-            return <BlogHero />;
-          }}
-        </BrowserOnly>
-      </div>
-
       <div className="relative z-10 w-full max-w-6xl mx-auto pt-10 px-4">
         {/* Featured Post - Full Width */}
         {featuredItem && (
