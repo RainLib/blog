@@ -2,124 +2,135 @@ import React from "react";
 import { motion } from "framer-motion";
 import Link from "@docusaurus/Link";
 import Translate from "@docusaurus/Translate";
-import Layout from "@theme/Layout";
-
-const PARTICLES = [
-  { left: "10%", top: "20%", duration: 12, delay: 0 },
-  { left: "80%", top: "40%", duration: 15, delay: 2 },
-  { left: "30%", top: "70%", duration: 18, delay: 5 },
-  { left: "60%", top: "10%", duration: 10, delay: 1 },
-  { left: "90%", top: "80%", duration: 20, delay: 3 },
-  { left: "15%", top: "85%", duration: 14, delay: 4 },
-  { left: "75%", top: "25%", duration: 16, delay: 6 },
-  { left: "45%", top: "55%", duration: 13, delay: 0 },
-  { left: "5%", top: "50%", duration: 17, delay: 2 },
-  { left: "95%", top: "30%", duration: 11, delay: 5 },
-  { left: "25%", top: "15%", duration: 19, delay: 1 },
-  { left: "55%", top: "90%", duration: 15, delay: 3 },
-  { left: "35%", top: "35%", duration: 12, delay: 4 },
-  { left: "65%", top: "65%", duration: 14, delay: 6 },
-  { left: "20%", top: "60%", duration: 16, delay: 0 },
-  { left: "40%", top: "80%", duration: 18, delay: 2 },
-  { left: "50%", top: "20%", duration: 13, delay: 5 },
-  { left: "70%", top: "45%", duration: 11, delay: 1 },
-  { left: "85%", top: "75%", duration: 17, delay: 3 },
-  { left: "60%", top: "5%", duration: 19, delay: 4 },
-];
+import BrowserOnly from "@docusaurus/BrowserOnly";
 
 export default function NotFoundContent(): React.ReactNode {
+  // Glitch animation variants
+  const glitchVariants = {
+    initial: { opacity: 0, scale: 0.8, filter: "blur(10px)" },
+    animate: {
+      opacity: 1,
+      scale: 1,
+      filter: "blur(0px)",
+      transition: { duration: 0.8, ease: "easeOut" as any },
+    },
+  };
+
+  const textGlitch = {
+    animate: {
+      x: [0, -2, 2, -1, 1, 0],
+      opacity: [1, 0.8, 1, 0.9, 1],
+      transition: {
+        duration: 0.3,
+        repeat: Infinity,
+        repeatDelay: Math.random() * 5 + 2,
+      },
+    },
+  };
+
   return (
-    <div className="min-h-[80vh] flex items-center justify-center relative overflow-hidden px-4">
-      {/* Dynamic Background Particles */}
-      <div className="absolute inset-0 z-0">
-        {PARTICLES.map((p, i) => (
-          <motion.div
-            key={i}
-            className="absolute rounded-full bg-[var(--ifm-color-primary)] opacity-20"
-            style={{
-              width: "4px",
-              height: "4px",
-              left: p.left,
-              top: p.top,
-            }}
-            animate={{
-              y: [0, -100, 0],
-              opacity: [0.1, 0.4, 0.1],
-              scale: [1, 1.5, 1],
-            }}
-            transition={{
-              duration: p.duration,
-              repeat: Infinity,
-              ease: "linear",
-              delay: p.delay,
-            }}
-          />
-        ))}
-      </div>
+    <div className="min-h-[90vh] flex items-center justify-center relative overflow-hidden px-4 py-20">
+      {/* Background WebGL Shader */}
+      <BrowserOnly fallback={<div className="absolute inset-0 bg-[#0b0c10]" />}>
+        {() => {
+          const VoidShader = require("@site/src/components/VoidShader").default;
+          return (
+            <div className="absolute inset-0 z-0">
+              <VoidShader />
+            </div>
+          );
+        }}
+      </BrowserOnly>
 
       <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5 }}
-        className="glass-panel p-12 md:p-16 rounded-[2rem] max-w-2xl w-full text-center relative z-10"
+        variants={glitchVariants}
+        initial="initial"
+        animate="animate"
+        className="glass-panel p-10 md:p-20 rounded-[3rem] max-w-3xl w-full text-center relative z-10 backdrop-blur-[32px] border-white/10 shadow-2xl"
       >
+        {/* Animated 404 Text */}
         <motion.div
-          animate={{
-            rotate: [0, -2, 2, 0],
-            y: [0, -5, 5, 0],
-          }}
-          transition={{
-            duration: 6,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-          className="mb-8"
+          variants={textGlitch}
+          animate="animate"
+          className="relative mb-6 inline-block"
         >
-          <span className="text-8xl md:text-9xl font-bold metallic-text tracking-tighter">
+          <span className="text-9xl md:text-[12rem] font-bold metallic-text tracking-tighter opacity-90 select-none">
             404
           </span>
+          {/* Subtle Glow Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-[var(--ifm-color-primary)]/20 to-transparent blur-3xl -z-10" />
         </motion.div>
 
-        <h1 className="text-3xl md:text-4xl font-bold mb-6">
+        {/* Content Heading */}
+        <motion.h1
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.4 }}
+          className="text-4xl md:text-5xl font-extrabold mb-8 tracking-tight text-gradient"
+        >
           <Translate id="theme.NotFound.title">Lost in the Garden?</Translate>
-        </h1>
+        </motion.h1>
 
-        <p className="text-zinc-600 dark:text-zinc-400 text-lg mb-12 leading-relaxed">
+        {/* Description */}
+        <motion.p
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.6 }}
+          className="text-zinc-500 dark:text-zinc-400 text-xl mb-12 leading-relaxed max-w-xl mx-auto font-medium"
+        >
           <Translate id="theme.NotFound.p1">
             It seems you've wandered into an uncharted corner of the garden. The
             path you followed might have vanished or never existed.
           </Translate>
-        </p>
+        </motion.p>
 
-        <div className="flex flex-col md:flex-row gap-4 justify-center">
+        {/* Action Buttons */}
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.8 }}
+          className="flex flex-col md:flex-row gap-6 justify-center items-center"
+        >
           <Link
             to="/"
-            className="hero-button-primary px-8 py-4 rounded-xl font-bold no-underline flex items-center justify-center gap-2 group transition-all"
+            className="hero-button-primary px-10 py-5 rounded-2xl font-bold no-underline flex items-center justify-center gap-3 group transition-all relative overflow-hidden"
           >
+            {/* Pulsing Aura for Primary Button */}
+            <motion.div
+              animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0, 0.5] }}
+              transition={{ duration: 2, repeat: Infinity }}
+              className="absolute inset-0 bg-white/30 rounded-2xl"
+            />
+            <span className="relative z-10">
+              <Translate id="theme.NotFound.backHome">
+                Teleport Back Home
+              </Translate>
+            </span>
             <motion.span
               animate={{ x: [0, -4, 0] }}
               transition={{ duration: 1.5, repeat: Infinity }}
+              className="relative z-10 text-2xl"
             >
               ←
             </motion.span>
-            <Translate id="theme.NotFound.backHome">
-              Teleport Back Home
-            </Translate>
           </Link>
 
           <Link
             to="/blog"
-            className="px-8 py-4 rounded-xl font-bold border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all no-underline"
+            className="px-10 py-5 rounded-2xl font-bold border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50/50 dark:hover:bg-zinc-900/50 transition-all no-underline backdrop-blur-md group"
           >
-            <Translate id="theme.NotFound.exploreBlog">
-              Explore Latest Insights
-            </Translate>
+            <span className="group-hover:text-[var(--ifm-color-primary)] transition-colors">
+              <Translate id="theme.NotFound.exploreBlog">
+                Explore Latest Insights
+              </Translate>
+            </span>
           </Link>
-        </div>
+        </motion.div>
 
-        {/* Decorative Grid */}
-        <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-[var(--ifm-color-primary)] opacity-5 blur-[100px] rounded-full" />
-        <div className="absolute -top-24 -left-24 w-64 h-64 bg-pink-500 opacity-5 blur-[100px] rounded-full" />
+        {/* Dynamic Scanline Overlay Effect in CSS (via className) */}
+        <div className="absolute inset-0 pointer-events-none rounded-[3rem] overflow-hidden">
+          <div className="w-full h-full opacity-10 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_2px,3px_100%]" />
+        </div>
       </motion.div>
     </div>
   );

@@ -20,9 +20,6 @@ animation:
 react:
   label: React
   color: "#06b6d4" # Cyan 500
-react:
-  label: React
-  color: "#06b6d4" # Cyan 500
 tools:
   label: Tools
   color: "#6366f1" # Indigo 500
