@@ -65,7 +65,7 @@ export default function FilterableList({ recommendations, tags }: Props) {
             className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-300 ${
               !selectedTag
                 ? "bg-black text-white dark:bg-zinc-100 dark:text-zinc-950 shadow-lg"
-                : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200 hover:bg-zinc-100/50 dark:hover:bg-zinc-800/50"
+                : "bg-zinc-100/50 dark:bg-zinc-800/50 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200 hover:bg-zinc-200/50 dark:hover:bg-zinc-700/50"
             }`}
             onClick={() => handleTagClick(null)}
           >
@@ -74,31 +74,23 @@ export default function FilterableList({ recommendations, tags }: Props) {
           {availableTags.map((tagKey) => {
             const tagInfo = tags[tagKey] || tags[tagKey.toLowerCase()];
             const isSelected = selectedTag === tagKey;
-            const color = tagInfo?.color || "#a1a1aa";
 
             return (
               <button
                 key={tagKey}
-                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-300 relative group`}
+                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-300 relative group ${!isSelected ? "bg-zinc-100/50 dark:bg-zinc-800/50 hover:bg-zinc-200/50 dark:hover:bg-zinc-700/50" : ""}`}
                 onClick={() => handleTagClick(tagKey)}
               >
                 {isSelected && (
                   <motion.div
                     layoutId="activeTag"
-                    className="absolute inset-0 rounded-full shadow-md"
-                    style={{ backgroundColor: color }}
+                    className="absolute inset-0 rounded-full shadow-lg bg-black dark:bg-zinc-100"
                     initial={false}
                     transition={{ type: "spring", stiffness: 500, damping: 30 }}
                   />
                 )}
-                {!isSelected && (
-                  <div
-                    className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-10 transition-opacity duration-300"
-                    style={{ backgroundColor: color }}
-                  />
-                )}
                 <span
-                  className={`relative z-10 ${isSelected ? "text-white font-semibold shadow-sm" : "text-zinc-500 group-hover:text-zinc-900 dark:text-zinc-400 dark:group-hover:text-zinc-200"}`}
+                  className={`relative z-10 ${isSelected ? "text-white dark:text-zinc-950 font-medium shadow-sm" : "text-zinc-500 group-hover:text-zinc-900 dark:text-zinc-400 dark:group-hover:text-zinc-200"}`}
                   style={{
                     textShadow: isSelected
                       ? "0 1px 2px rgba(0,0,0,0.1)"

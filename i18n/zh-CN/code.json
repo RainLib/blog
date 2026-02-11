@@ -525,5 +525,17 @@
     },
     "recommend.all.subtitle": {
         "message": "通过标签筛选，找到你正好需要的资源。"
+    },
+    "footer.tagline": {
+        "message": "探索技术、设计与分布式系统的边界。构建面向未来的开发者工具。"
+    },
+    "footer.social.github": {
+        "message": "GitHub"
+    },
+    "footer.rights": {
+        "message": "版权所有。"
+    },
+    "footer.systemStatus": {
+        "message": "系统正常"
     }
 }
