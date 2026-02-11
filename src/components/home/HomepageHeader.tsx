@@ -26,23 +26,57 @@ export default function HomepageHeader() {
           {/* Subtle Ambient Glow behind content */}
           <div className="absolute -inset-10 bg-[var(--neon-glow)] blur-[100px] opacity-20 dark:opacity-10 rounded-full animate-pulse pointer-events-none" />
 
-          <div className="relative irregular-glass p-8 md:p-16 border-white/10 dark:border-white/5 shadow-2xl overflow-hidden">
+          <div className="relative irregular-glass p-8 md:p-16 border-white/10 dark:border-white/5 shadow-2xl overflow-visible">
             {/* Added a very subtle mesh-like overlay inside the box for "designed" feel */}
-            <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]" />
+            <div className="absolute inset-0 overflow-hidden rounded-[inherit]">
+              <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]" />
+            </div>
 
             <div className="relative flex flex-col items-center">
-              <div className="flex flex-col md:flex-row items-center justify-center gap-1 md:gap-4 mb-8">
+              <div className="flex flex-col md:flex-row items-center justify-center mb-8">
                 <motion.img
                   src={useBaseUrl("/img/logo.svg")}
                   alt="RainLib Logo"
-                  className="w-24 h-24 md:w-36 md:h-36 drop-shadow-[0_0_15px_rgba(0,0,0,0.1)] dark:drop-shadow-[0_0_20px_rgba(255,255,255,0.2)] dark:invert transition-all duration-500 hover:scale-105 animate-float"
-                  initial={{ opacity: 0, scale: 0.5 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.8, delay: 0.2 }}
+                  // Added opacity-0 to hide on SSG load, avoiding layout shift/flash
+                  className="opacity-0 w-32 h-32 md:w-56 md:h-56 -mt-10 md:-mt-16 drop-shadow-[0_0_15px_rgba(0,0,0,0.1)] dark:drop-shadow-[0_0_20px_rgba(255,255,255,0.2)] dark:invert"
+                  initial={{ opacity: 0, rotate: 0, scale: 1, y: 0 }}
+                  animate={{
+                    opacity: 1,
+                    rotate: [0, 10, -10, 10, 0], // Gentle wave
+                    y: [0, -15, 0, -15, 0], // Floating up and down
+                    scale: [1, 1.05, 1, 1.05, 1], // Breathing scale
+                  }}
+                  transition={{
+                    opacity: { duration: 0.5, ease: "easeOut" },
+                    default: {
+                      duration: 6, // Slower, more majestic loop
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                      repeatType: "mirror",
+                    },
+                  }}
+                  whileHover={{ scale: 1.1, rotate: 0 }} // Stop rotation on hover for focus
                 />
-                <h1 className="text-7xl md:text-9xl font-bold tracking-tighter metallic-text drop-shadow-2xl">
-                  RainLib
-                </h1>
+                <motion.h1
+                  className="text-7xl md:text-9xl font-bold tracking-tighter drop-shadow-2xl md:-ml-12"
+                  initial={{ opacity: 0, y: 20, scale: 0.9 }}
+                  animate={{
+                    opacity: 1,
+                    y: [0, -10, 0, -10, 0],
+                    scale: [1, 1.02, 1, 1.02, 1],
+                  }}
+                  transition={{
+                    opacity: { duration: 0.8, ease: "easeOut", delay: 0.2 },
+                    default: {
+                      duration: 6,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                      repeatType: "mirror",
+                    },
+                  }}
+                >
+                  <span className="metallic-text">RainLib</span>
+                </motion.h1>
               </div>
 
               <div className="max-w-2xl mx-auto">

@@ -323,6 +323,21 @@ export default function ShaderHero() {
     let isRendering = false;
     const startTime = Date.now();
 
+    // Draw function to be called by render loop and resize observer
+    const drawScene = () => {
+      const time = (Date.now() - startTime) / 1000;
+      const colors = isDark ? THEME.dark : THEME.light;
+
+      gl.uniform1f(uTime, time);
+      gl.uniform2f(uResolution, canvas.width, canvas.height);
+      gl.uniform2f(uMouse, mouseRef.current.x, mouseRef.current.y);
+      gl.uniform3fv(uBg, colors.bg);
+      gl.uniform3fv(uFg, colors.fg);
+      gl.uniform1f(uIsDark, isDark ? 1.0 : 0.0);
+
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+    };
+
     // PERFORMANCE: ResizeObserver to handle sizing efficiently
     // Also capping DPR to max 1.5 to save GPU on high-DPI screens
     const resizeObserver = new ResizeObserver((entries) => {
@@ -339,6 +354,8 @@ export default function ShaderHero() {
           canvas.width = displayWidth;
           canvas.height = displayHeight;
           gl.viewport(0, 0, displayWidth, displayHeight);
+          // Fix: Draw immediately after resize to prevent flickering
+          drawScene();
         }
       }
     });
@@ -347,24 +364,13 @@ export default function ShaderHero() {
     const render = () => {
       if (!isRendering) return;
 
-      const time = (Date.now() - startTime) / 1000;
-
       // Mouse easing
       mouseRef.current.x +=
         (targetMouseRef.current.x - mouseRef.current.x) * 0.05;
       mouseRef.current.y +=
         (targetMouseRef.current.y - mouseRef.current.y) * 0.05;
 
-      const colors = isDark ? THEME.dark : THEME.light;
-
-      gl.uniform1f(uTime, time);
-      gl.uniform2f(uResolution, canvas.width, canvas.height);
-      gl.uniform2f(uMouse, mouseRef.current.x, mouseRef.current.y);
-      gl.uniform3fv(uBg, colors.bg);
-      gl.uniform3fv(uFg, colors.fg);
-      gl.uniform1f(uIsDark, isDark ? 1.0 : 0.0);
-
-      gl.drawArrays(gl.TRIANGLES, 0, 3);
+      drawScene();
       animationFrameId = requestAnimationFrame(render);
     };
 
