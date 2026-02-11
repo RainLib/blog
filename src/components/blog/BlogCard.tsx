@@ -17,22 +17,18 @@ export default function BlogCard({ item, index }: BlogCardProps) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: index * 0.1 }}
-      className="group relative flex flex-col h-full overflow-hidden bg-white/5 dark:bg-black/40 backdrop-blur-md border border-neutral-200 dark:border-white/10 hover:border-primary/50 dark:hover:border-cyan-400/50 transition-colors duration-300"
+      className="group relative flex flex-col h-full overflow-hidden rounded-3xl bg-white/50 dark:bg-zinc-900/50 backdrop-blur-md border border-zinc-200 dark:border-zinc-800 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
     >
-      {/* Tech Corners */}
-      <div className="absolute top-0 left-0 w-2 h-2 border-t-2 border-l-2 border-primary/0 group-hover:border-primary/100 transition-colors duration-300" />
-      <div className="absolute top-0 right-0 w-2 h-2 border-t-2 border-r-2 border-primary/0 group-hover:border-primary/100 transition-colors duration-300" />
-      <div className="absolute bottom-0 left-0 w-2 h-2 border-b-2 border-l-2 border-primary/0 group-hover:border-primary/100 transition-colors duration-300" />
-      <div className="absolute bottom-0 right-0 w-2 h-2 border-b-2 border-r-2 border-primary/0 group-hover:border-primary/100 transition-colors duration-300" />
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/0 to-purple-500/0 group-hover:from-blue-500/5 group-hover:to-purple-500/5 dark:group-hover:from-blue-500/10 dark:group-hover:to-purple-500/10 transition-colors duration-500" />
 
       <Link to={permalink} className="absolute inset-0 z-10" />
 
-      <div className="p-6 flex flex-col flex-grow relative z-20">
+      <div className="p-6 md:p-8 flex flex-col flex-grow relative z-20">
         {/* Header: Date & Tag */}
-        <div className="flex justify-between items-start mb-4">
+        <div className="flex justify-between items-center mb-6">
           <time
             dateTime={date}
-            className="text-xs font-mono text-neutral-500 dark:text-cyan-200/70 uppercase tracking-wider"
+            className="text-xs font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wide"
           >
             {formattedDate}
           </time>
@@ -40,46 +36,44 @@ export default function BlogCard({ item, index }: BlogCardProps) {
             {tags.slice(0, 1).map((tag: any) => (
               <span
                 key={tag.permalink}
-                className="text-[10px] font-mono px-2 py-0.5 border border-neutral-300 dark:border-white/20 text-neutral-500 dark:text-white/60 uppercase"
+                className="text-xs font-bold px-2 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400"
               >
-                {tag.label}
+                #{tag.label}
               </span>
             ))}
           </div>
         </div>
 
         {/* Title */}
-        <h3 className="text-xl font-bold mb-3 text-neutral-900 dark:text-white group-hover:text-primary dark:group-hover:text-cyan-400 transition-colors line-clamp-2">
+        <h3 className="text-xl md:text-2xl font-bold mb-4 text-zinc-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2 leading-tight">
           {title}
         </h3>
 
         {/* Description */}
-        <p className="text-sm text-neutral-600 dark:text-neutral-400 line-clamp-3 mb-6 flex-grow leading-relaxed font-light">
+        <p className="text-base text-zinc-600 dark:text-zinc-400 line-clamp-3 mb-8 flex-grow leading-relaxed">
           {description}
         </p>
 
         {/* Footer: Author & Read More */}
-        <div className="flex items-center justify-between mt-auto pt-4 border-t border-dashed border-neutral-200 dark:border-white/10">
+        <div className="flex items-center justify-between mt-auto pt-6 border-t border-zinc-100 dark:border-zinc-800/50">
           <div className="flex items-center gap-2">
             {authors.length > 0 && authors[0].imageURL && (
               <img
                 src={authors[0].imageURL}
                 alt={authors[0].name}
-                className="w-6 h-6 rounded-full grayscale group-hover:grayscale-0 transition-all opacity-70 group-hover:opacity-100"
+                className="w-8 h-8 rounded-full border border-zinc-200 dark:border-zinc-700 shadow-sm object-cover"
               />
             )}
             {authors.length > 0 && (
-              <span className="text-xs font-mono text-neutral-500 dark:text-neutral-500">
+              <span className="text-xs font-bold text-zinc-700 dark:text-zinc-300">
                 {authors[0].name}
               </span>
             )}
           </div>
 
-          <div className="flex items-center gap-1 text-xs font-bold uppercase tracking-widest text-neutral-400 group-hover:text-primary dark:group-hover:text-cyan-400 transition-colors">
-            <Translate id="blog.card.read">Read</Translate>
-            <span className="group-hover:translate-x-1 transition-transform">
-              →
-            </span>
+          <div className="flex items-center gap-2 text-sm font-bold text-blue-600 dark:text-blue-400 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300">
+            <Translate id="blog.card.read">Read Post</Translate>
+            <span>→</span>
           </div>
         </div>
       </div>
