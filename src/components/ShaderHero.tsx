@@ -30,7 +30,7 @@ void mainImage( out vec4 o, vec2 u )
     o = z;
 
     for (float a = .5, t = iTime, i;
-         ++i < 12.;
+         ++i < 8.; // Reduced from 12 to 8 for performance
          o += (1. + cos(z+t))
             / length((1.+i*dot(v,v))
                    * sin(1.5*u/(.5-dot(u,u)) - 9.*u.yx + t))
@@ -84,147 +84,175 @@ export default function ShaderHero() {
   const isVisibleRef = useRef(false);
   const timeRef = useRef(0);
   const lastFrameTimeRef = useRef(Date.now());
+  const cleanupRef = useRef<() => void>(null); // To store the cleanup function created inside idle callback
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    // Try WebGL 2 first
-    const gl = canvas.getContext("webgl2", {
-      powerPreference: "high-performance",
-      antialias: false,
-      alpha: false,
-      depth: false,
-    });
+    // Defer initialization to unblock main thread using requestIdleCallback
+    const initShader = () => {
+      // Try WebGL 2 first
+      const gl = canvas.getContext("webgl2", {
+        powerPreference: "default", // Changed from high-performance to avoid slow GPU switching
+        antialias: false,
+        alpha: false,
+        depth: false,
+      });
 
-    if (!gl) {
-      console.error("WebGL 2 not supported");
-      return;
-    }
+      if (!gl) {
+        console.error("WebGL 2 not supported");
+        return;
+      }
 
-    const vert = compileShader(gl, gl.VERTEX_SHADER, VERTEX_SHADER);
-    const frag = compileShader(gl, gl.FRAGMENT_SHADER, FRAGMENT_SHADER);
-    if (!vert || !frag) return;
+      const vert = compileShader(gl, gl.VERTEX_SHADER, VERTEX_SHADER);
+      const frag = compileShader(gl, gl.FRAGMENT_SHADER, FRAGMENT_SHADER);
+      if (!vert || !frag) return;
 
-    const program = gl.createProgram();
-    if (!program) return;
-    gl.attachShader(program, vert);
-    gl.attachShader(program, frag);
-    gl.linkProgram(program);
+      const program = gl.createProgram();
+      if (!program) return;
+      gl.attachShader(program, vert);
+      gl.attachShader(program, frag);
+      gl.linkProgram(program);
 
-    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-      console.error("Program link error:", gl.getProgramInfoLog(program));
-      return;
-    }
+      if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+        console.error("Program link error:", gl.getProgramInfoLog(program));
+        return;
+      }
 
-    gl.useProgram(program);
+      gl.useProgram(program);
 
-    const positionBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-    gl.bufferData(
-      gl.ARRAY_BUFFER,
-      new Float32Array([-1.0, -1.0, 3.0, -1.0, -1.0, 3.0]),
-      gl.STATIC_DRAW,
-    );
+      const positionBuffer = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+      gl.bufferData(
+        gl.ARRAY_BUFFER,
+        new Float32Array([-1.0, -1.0, 3.0, -1.0, -1.0, 3.0]),
+        gl.STATIC_DRAW,
+      );
 
-    const positionLocation = gl.getAttribLocation(program, "position");
-    gl.enableVertexAttribArray(positionLocation);
-    gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
+      const positionLocation = gl.getAttribLocation(program, "position");
+      gl.enableVertexAttribArray(positionLocation);
+      gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
 
-    const iTimeLoc = gl.getUniformLocation(program, "iTime");
-    const iResolutionLoc = gl.getUniformLocation(program, "iResolution");
-    const uIsDarkLoc = gl.getUniformLocation(program, "u_is_dark");
+      const iTimeLoc = gl.getUniformLocation(program, "iTime");
+      const iResolutionLoc = gl.getUniformLocation(program, "iResolution");
+      const uIsDarkLoc = gl.getUniformLocation(program, "u_is_dark");
 
-    let animationFrameId: number;
-    let isRendering = false;
+      let animationFrameId: number;
+      let isRendering = false;
 
-    const drawScene = () => {
-      const currentTime = Date.now();
-      const deltaTime = (currentTime - lastFrameTimeRef.current) / 1000;
-      lastFrameTimeRef.current = currentTime;
+      const drawScene = () => {
+        const currentTime = Date.now();
+        const deltaTime = (currentTime - lastFrameTimeRef.current) / 1000;
+        lastFrameTimeRef.current = currentTime;
 
-      // Cap delta time to prevent huge jumps if tab was inactive
-      // or if resuming from a long pause (though we reset on resume)
-      const safeDelta = Math.min(deltaTime, 0.1);
+        // Cap delta time to prevent huge jumps if tab was inactive
+        // or if resuming from a long pause (though we reset on resume)
+        const safeDelta = Math.min(deltaTime, 0.1);
 
-      timeRef.current += safeDelta;
+        timeRef.current += safeDelta;
 
-      gl.uniform1f(iTimeLoc, timeRef.current);
-      gl.uniform3f(iResolutionLoc, canvas.width, canvas.height, 1.0);
+        gl.uniform1f(iTimeLoc, timeRef.current);
+        gl.uniform3f(iResolutionLoc, canvas.width, canvas.height, 1.0);
 
-      // Pass the dark mode uniform...
-      gl.uniform1f(uIsDarkLoc, isDark ? 1.0 : 0.0);
+        // Pass the dark mode uniform...
+        gl.uniform1f(uIsDarkLoc, isDark ? 1.0 : 0.0);
 
-      gl.drawArrays(gl.TRIANGLES, 0, 3);
-    };
+        gl.drawArrays(gl.TRIANGLES, 0, 3);
+      };
 
-    const resizeObserver = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        // PERFORMANCE: Cap at 1.0 (no retina) for speed. Shader is soft anyway.
-        const dpr = Math.min(window.devicePixelRatio || 1, 1.0);
-        const width = entry.contentRect.width;
-        const height = entry.contentRect.height;
+      const render = () => {
+        if (!isRendering) return;
+        drawScene();
+        animationFrameId = requestAnimationFrame(render);
+      };
 
-        const displayWidth = Math.round(width * dpr);
-        const displayHeight = Math.round(height * dpr);
+      const stopLoop = () => {
+        isRendering = false;
+        if (animationFrameId) cancelAnimationFrame(animationFrameId);
+      };
 
-        if (canvas.width !== displayWidth || canvas.height !== displayHeight) {
-          canvas.width = displayWidth;
-          canvas.height = displayHeight;
-          gl.viewport(0, 0, displayWidth, displayHeight);
-          // Force a draw but don't advance time here to avoid jump
-          drawScene();
+      const startLoop = () => {
+        if (!isRendering && isVisibleRef.current) {
+          isRendering = true;
+          // Important: Reset last frame time on resume so we don't jump
+          lastFrameTimeRef.current = Date.now();
+          render();
         }
-      }
-    });
-    resizeObserver.observe(canvas);
+      };
 
-    const render = () => {
-      if (!isRendering) return;
-      drawScene();
-      animationFrameId = requestAnimationFrame(render);
+      const resizeObserver = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          // PERFORMANCE: Cap at 1.0 (no retina) for speed. Shader is soft anyway.
+          const dpr = Math.min(window.devicePixelRatio || 1, 1.0);
+          const width = entry.contentRect.width;
+          const height = entry.contentRect.height;
+
+          const displayWidth = Math.round(width * dpr);
+          const displayHeight = Math.round(height * dpr);
+
+          if (
+            canvas.width !== displayWidth ||
+            canvas.height !== displayHeight
+          ) {
+            canvas.width = displayWidth;
+            canvas.height = displayHeight;
+            gl.viewport(0, 0, displayWidth, displayHeight);
+            // Force a draw but don't advance time here to avoid jump
+            drawScene();
+          }
+        }
+      });
+
+      const intersectionObserver = new IntersectionObserver(
+        (entries) => {
+          setTimeout(() => {
+            entries.forEach((entry) => {
+              isVisibleRef.current = entry.isIntersecting;
+              if (entry.isIntersecting) {
+                startLoop();
+              } else {
+                stopLoop();
+              }
+            });
+          }, 0);
+        },
+        { threshold: 0.0 },
+      );
+
+      // Start the loop
+      resizeObserver.observe(canvas);
+      intersectionObserver.observe(canvas);
+
+      // Cleanup function specifically for the GL context and observers
+      // We attach this to the canvas element or store it in a ref if needed,
+      // but here we are inside the closure. The main useEffect cleanup needs to handle this.
+      // Since we can't easily export this cleanup out of the callback,
+      // we'll store it in a mutable ref.
+      cleanupRef.current = () => {
+        if (isRendering && animationFrameId)
+          cancelAnimationFrame(animationFrameId);
+        isRendering = false;
+        resizeObserver.disconnect();
+        intersectionObserver.disconnect();
+        gl.deleteProgram(program);
+        gl.deleteShader(vert);
+        gl.deleteShader(frag);
+      };
     };
 
-    const stopLoop = () => {
-      isRendering = false;
-      if (animationFrameId) cancelAnimationFrame(animationFrameId);
-    };
-
-    const startLoop = () => {
-      if (!isRendering && isVisibleRef.current) {
-        isRendering = true;
-        // Important: Reset last frame time on resume so we don't jump
-        lastFrameTimeRef.current = Date.now();
-        render();
-      }
-    };
-
-    const intersectionObserver = new IntersectionObserver(
-      (entries) => {
-        setTimeout(() => {
-          entries.forEach((entry) => {
-            isVisibleRef.current = entry.isIntersecting;
-            if (entry.isIntersecting) {
-              startLoop();
-            } else {
-              stopLoop();
-            }
-          });
-        }, 0);
-      },
-      { threshold: 0.0 },
-    );
-    intersectionObserver.observe(canvas);
+    const handle = (window as any).requestIdleCallback
+      ? (window as any).requestIdleCallback(initShader, { timeout: 2000 })
+      : setTimeout(initShader, 100);
 
     return () => {
-      if (isRendering && animationFrameId)
-        cancelAnimationFrame(animationFrameId);
-      isRendering = false;
-      resizeObserver.disconnect();
-      intersectionObserver.disconnect();
-      gl.deleteProgram(program);
-      gl.deleteShader(vert);
-      gl.deleteShader(frag);
+      if ((window as any).cancelIdleCallback) {
+        (window as any).cancelIdleCallback(handle);
+      } else {
+        clearTimeout(handle);
+      }
+      // Call the cleanup function if it was assigned
+      if (cleanupRef.current) cleanupRef.current();
     };
   }, [isDark]); // Re-run effect when theme changes to ensure unrelated state is clean
 

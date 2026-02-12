@@ -8,11 +8,23 @@ import Translate, { translate } from "@docusaurus/Translate";
 export default function HomepageHeader() {
   return (
     <header className="relative w-full h-screen min-h-[600px] flex flex-col items-center justify-center overflow-hidden">
-      {/* Restored WebGL Shader Background */}
+      {/* Static Gradient Placeholder for LCP */}
+      <div className="absolute inset-0 bg-gradient-to-b from-indigo-500/20 via-purple-500/20 to-pink-500/20 dark:from-indigo-900/40 dark:via-purple-900/40 dark:to-pink-900/40 z-0" />
+
+      {/* Restored WebGL Shader Background - Load after hydration */}
       <BrowserOnly>
         {() => {
           const ShaderHero = require("../ShaderHero").default;
-          return <ShaderHero />;
+          return (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 1.5, delay: 0.5 }}
+              className="absolute inset-0 z-0"
+            >
+              <ShaderHero />
+            </motion.div>
+          );
         }}
       </BrowserOnly>
 
