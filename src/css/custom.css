@@ -314,29 +314,81 @@
 
 /* Navbar Links: Fashionable Hover */
 .navbar__link {
-  font-family: "Outfit", sans-serif; /* Cleaner, modern font */
-  font-weight: 500;
+  font-family: "Outfit", sans-serif;
+  font-weight: 600;
   color: var(--ifm-text-color) !important;
   padding: 0.5rem 1rem;
-  border-radius: 50px; /* Pill shape hover */
+  background: transparent !important; /* Remove old pill bg */
+  border-radius: 0; /* Clear radius */
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   position: relative;
-  overflow: hidden;
 }
 
-/* Hover Effect: Soft Pill Background */
+/* Underline Animation (Common) */
+.navbar__link::after {
+  content: "";
+  position: absolute;
+  bottom: 8px; /* Adjust based on padding */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 2px;
+  background: var(--ifm-color-primary);
+  border-radius: 2px;
+  transition:
+    width 0.3s ease,
+    opacity 0.3s ease;
+  opacity: 0;
+}
+
+/* Hover & Active: Expand Underline */
+.navbar__link:hover::after,
+.navbar__link--active::after {
+  width: 20px; /* Minimal dot/dash style */
+  opacity: 1;
+}
+
 .navbar__link:hover,
 .navbar__link--active {
   color: var(--ifm-color-primary) !important;
-  background: rgba(var(--ifm-color-primary-rgb), 0.1);
   transform: translateY(-1px);
+  background: transparent !important; /* Ensure transparent */
+}
+
+/* --- DARK MODE: Glowing Gradient Dot --- */
+[data-theme="dark"] .navbar__link::after {
+  height: 3px;
+  width: 0;
+  background: linear-gradient(90deg, #00c6ff, #ec4899);
+  box-shadow: 0 0 10px rgba(0, 198, 255, 0.8);
+}
+
+[data-theme="dark"] .navbar__link:hover::after,
+[data-theme="dark"] .navbar__link--active::after {
+  width: 24px; /* Slightly wider glow */
 }
 
 [data-theme="dark"] .navbar__link:hover,
 [data-theme="dark"] .navbar__link--active {
-  background: rgba(var(--ifm-color-primary-rgb), 0.15);
   color: #fff !important;
-  box-shadow: 0 0 15px var(--neon-glow);
+  text-shadow: 0 0 12px rgba(255, 255, 255, 0.6);
+  box-shadow: none; /* Clear old shadow */
+}
+
+/* --- LIGHT MODE: Bold & Sharp --- */
+html[data-theme="light"] .navbar__link {
+  color: #666 !important;
+}
+
+html[data-theme="light"] .navbar__link::after {
+  background: #000; /* Sharp black */
+  height: 2px;
+}
+
+html[data-theme="light"] .navbar__link:hover,
+html[data-theme="light"] .navbar__link--active {
+  color: #000 !important;
+  font-weight: 700; /* Make it bold */
 }
 
 /* Unhide title and style it */
@@ -379,6 +431,15 @@
 .navbar__brand:hover .custom-navbar-logo-class {
   transform: rotate(360deg) scale(1.1);
   filter: drop-shadow(0 0 15px rgba(0, 198, 255, 0.6));
+}
+
+[data-theme="dark"] .custom-navbar-logo-class {
+  filter: brightness(0) invert(1) drop-shadow(0 0 5px rgba(0, 198, 255, 0.4));
+}
+
+[data-theme="dark"] .navbar__brand:hover .custom-navbar-logo-class {
+  /* Invert first, then glow */
+  filter: brightness(0) invert(1) drop-shadow(0 0 15px rgba(0, 198, 255, 0.8));
 }
 
 /* --- MOBILE SIDEBAR: IMMERSIVE OVERLAY --- */
