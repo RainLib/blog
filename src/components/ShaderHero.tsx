@@ -30,7 +30,7 @@ void mainImage( out vec4 o, vec2 u )
     o = z;
 
     for (float a = .5, t = iTime, i;
-         ++i < 19.;
+         ++i < 12.;
          o += (1. + cos(z+t))
             / length((1.+i*dot(v,v))
                    * sin(1.5*u/(.5-dot(u,u)) - 9.*u.yx + t))
@@ -46,8 +46,8 @@ void mainImage( out vec4 o, vec2 u )
 
      // Calculate brightness factor
      // Light Mode = 25.6 (Original)
-     // Dark Mode  = 8.0  (Dimmer)
-     float brightness = u_is_dark > 0.5 ? 8.0 : 25.6;
+     // Dark Mode  = 14.0 (Brighter) e.g., was 8.0
+     float brightness = u_is_dark > 0.5 ? 14.0 : 25.6;
 
      // Original formula with configurable brightness
      o = brightness / (min(o, 13.) + 164. / o)
@@ -81,6 +81,9 @@ export default function ShaderHero() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { colorMode } = useColorMode();
   const isDark = colorMode === "dark";
+  const isVisibleRef = useRef(false);
+  const timeRef = useRef(0);
+  const lastFrameTimeRef = useRef(Date.now());
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -134,20 +137,22 @@ export default function ShaderHero() {
 
     let animationFrameId: number;
     let isRendering = false;
-    const startTime = Date.now();
 
     const drawScene = () => {
-      const time = (Date.now() - startTime) / 1000;
+      const currentTime = Date.now();
+      const deltaTime = (currentTime - lastFrameTimeRef.current) / 1000;
+      lastFrameTimeRef.current = currentTime;
 
-      gl.uniform1f(iTimeLoc, time);
+      // Cap delta time to prevent huge jumps if tab was inactive
+      // or if resuming from a long pause (though we reset on resume)
+      const safeDelta = Math.min(deltaTime, 0.1);
+
+      timeRef.current += safeDelta;
+
+      gl.uniform1f(iTimeLoc, timeRef.current);
       gl.uniform3f(iResolutionLoc, canvas.width, canvas.height, 1.0);
 
-      // Pass the dark mode uniform (1.0 for dark, 0.0 for light)
-      // We read the current ref value or closure value.
-      // Since this effect depends on 'isDark', strictly speaking we should
-      // re-bind or update. The 'useEffect' dependency [isDark] will
-      // handle restarting the whole context, which is safest for state.
-      // But we can just pass the value.
+      // Pass the dark mode uniform...
       gl.uniform1f(uIsDarkLoc, isDark ? 1.0 : 0.0);
 
       gl.drawArrays(gl.TRIANGLES, 0, 3);
@@ -155,7 +160,8 @@ export default function ShaderHero() {
 
     const resizeObserver = new ResizeObserver((entries) => {
       for (const entry of entries) {
-        const dpr = Math.min(window.devicePixelRatio || 1, 2.0);
+        // PERFORMANCE: Cap at 1.0 (no retina) for speed. Shader is soft anyway.
+        const dpr = Math.min(window.devicePixelRatio || 1, 1.0);
         const width = entry.contentRect.width;
         const height = entry.contentRect.height;
 
@@ -166,6 +172,7 @@ export default function ShaderHero() {
           canvas.width = displayWidth;
           canvas.height = displayHeight;
           gl.viewport(0, 0, displayWidth, displayHeight);
+          // Force a draw but don't advance time here to avoid jump
           drawScene();
         }
       }
@@ -178,34 +185,41 @@ export default function ShaderHero() {
       animationFrameId = requestAnimationFrame(render);
     };
 
-    const startLoop = () => {
-      if (!isRendering) {
-        isRendering = true;
-        render();
-      }
-    };
-
     const stopLoop = () => {
       isRendering = false;
       if (animationFrameId) cancelAnimationFrame(animationFrameId);
     };
 
+    const startLoop = () => {
+      if (!isRendering && isVisibleRef.current) {
+        isRendering = true;
+        // Important: Reset last frame time on resume so we don't jump
+        lastFrameTimeRef.current = Date.now();
+        render();
+      }
+    };
+
     const intersectionObserver = new IntersectionObserver(
       (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            startLoop();
-          } else {
-            stopLoop();
-          }
-        });
+        setTimeout(() => {
+          entries.forEach((entry) => {
+            isVisibleRef.current = entry.isIntersecting;
+            if (entry.isIntersecting) {
+              startLoop();
+            } else {
+              stopLoop();
+            }
+          });
+        }, 0);
       },
       { threshold: 0.0 },
     );
     intersectionObserver.observe(canvas);
 
     return () => {
-      stopLoop();
+      if (isRendering && animationFrameId)
+        cancelAnimationFrame(animationFrameId);
+      isRendering = false;
       resizeObserver.disconnect();
       intersectionObserver.disconnect();
       gl.deleteProgram(program);
