@@ -96,21 +96,24 @@ export default function MotionCanvasPlayer({ src }: { src: string }) {
             style.textContent = `
                   /* Hide native controls */
                   .overlay { display: none !important; opacity: 0 !important; pointer-events: none !important; }
-                  /* Force host to center content */
+
+                  /* Host: Full size flex container */
                   :host {
                     display: flex !important;
                     align-items: center !important;
                     justify-content: center !important;
                     width: 100% !important;
                     height: 100% !important;
+                    background: black !important; /* Ensure background matches */
                   }
-                  /* Ensure canvas scales correctly */
+
+                  /* Canvas: Intrinsic size with constraints, centered by flex */
                   #canvas {
-                    width: 100% !important;
-                    height: 100% !important;
-                    object-fit: contain !important;
+                    width: auto !important;
+                    height: auto !important;
                     max-width: 100% !important;
                     max-height: 100% !important;
+                    display: block !important;
                   }
                 `;
             shadow.appendChild(style);
@@ -145,7 +148,7 @@ export default function MotionCanvasPlayer({ src }: { src: string }) {
             <motion-canvas-player
               ref={playerRef}
               src={src}
-              className="w-full h-full block object-contain"
+              className="w-full h-full flex items-center justify-center object-contain max-h-screen"
             />
 
             {/* Custom Play Button Overlay */}
