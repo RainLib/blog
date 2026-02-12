@@ -19,7 +19,6 @@ declare global {
     }
   }
 }
-
 export default function MotionCanvasPlayer({ src }: { src: string }) {
   const containerRef = React.useRef<HTMLDivElement>(null);
   const playerRef = React.useRef<any>(null); // Use any to access specific methods
@@ -144,11 +143,11 @@ export default function MotionCanvasPlayer({ src }: { src: string }) {
                 : "hover:shadow-[0_0_30px_rgba(59,130,246,0.3)]",
             )}
           >
-            {/* The Player Component */}
+            {/* The Player Component - Disable pointer events to prevent native hover overlay */}
             <motion-canvas-player
               ref={playerRef}
               src={src}
-              className="w-full h-full flex items-center justify-center object-contain max-h-screen"
+              className="w-full h-full flex items-center justify-center object-contain max-h-screen pointer-events-none"
             />
 
             {/* Custom Play Button Overlay */}
