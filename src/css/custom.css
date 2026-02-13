@@ -798,8 +798,186 @@ html[data-theme="dark"] body .blog-post-page-wrapper article {
 }
 
 [data-theme="dark"] .markdown code {
+  color: #c5fcf9;
   background-color: rgba(102, 252, 241, 0.1);
   border: 1px solid rgba(102, 252, 241, 0.15);
+}
+
+/* --- Mermaid Diagram Styling: Liquid Metal Aesthetic & Fashionable --- */
+
+/* Base Container */
+.docusaurus-mermaid-container {
+  display: flex !important;
+  justify-content: center !important;
+  margin: 3rem 0;
+  background: transparent !important;
+  padding: 1rem;
+}
+
+.docusaurus-mermaid-container svg {
+  font-family: "Outfit", sans-serif !important;
+  max-width: 85% !important; /* Constrain width */
+  height: auto !important;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  font-size: 0.8rem !important; /* Root shrink: Global text scaling */
+  cursor: zoom-in !important; /* Visual cue: Click to Zoom */
+}
+
+/*
+   ---------------------------
+   LIGHT MODE: Digital Clean
+   ---------------------------
+*/
+[data-theme="light"] .docusaurus-mermaid-container .node rect,
+[data-theme="light"] .docusaurus-mermaid-container .node circle,
+[data-theme="light"] .docusaurus-mermaid-container .node polygon,
+[data-theme="light"] .docusaurus-mermaid-container .statediagram-state rect {
+  fill: rgba(255, 255, 255, 0.8) !important;
+  stroke: #1d1d1f !important;
+  stroke-width: 1.5px !important;
+  filter: drop-shadow(4px 4px 0px rgba(0, 0, 0, 0.1)); /* Pop Art Shadow */
+}
+
+[data-theme="light"] .docusaurus-mermaid-container .cluster rect,
+[data-theme="light"] .docusaurus-mermaid-container .statediagram-cluster rect {
+  fill: rgba(0, 0, 0, 0.02) !important;
+  stroke: #1d1d1f !important;
+  stroke-width: 1.5px !important;
+  stroke-dasharray: 6 4 !important; /* Stylish dashes */
+}
+
+/*
+   ---------------------------
+   DARK MODE: Cyberpunk / Liquid Metal
+   ---------------------------
+*/
+
+/* 1. Typography */
+[data-theme="dark"] .docusaurus-mermaid-container svg {
+  color: #fff !important;
+  font-family: "JetBrains Mono", monospace !important;
+  letter-spacing: -0.02em;
+}
+
+/* 2. Nodes: Neon Glass */
+[data-theme="dark"] .docusaurus-mermaid-container .node rect,
+[data-theme="dark"] .docusaurus-mermaid-container .node circle,
+[data-theme="dark"] .docusaurus-mermaid-container .node polygon,
+[data-theme="dark"] .docusaurus-mermaid-container .statediagram-state rect {
+  fill: rgba(10, 10, 12, 0.7) !important; /* Deep dark fill */
+  stroke: #66fcf1 !important; /* Cyan Neon */
+  stroke-width: 1.5px !important;
+  filter: drop-shadow(0 0 10px rgba(102, 252, 241, 0.25)); /* Glow */
+  rx: 8px !important; /* Rounded corners for rects if supported */
+  ry: 8px !important;
+}
+
+/* 3. Text inside Nodes */
+/* 3. Text inside Nodes */
+[data-theme="dark"] .docusaurus-mermaid-container .node .label {
+  color: #ffffff !important;
+  fill: #ffffff !important;
+  font-weight: 600;
+  text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+  font-size: 0.75rem !important; /* Smaller text avoids cutoff */
+}
+
+/* Specific fix for foreignObject text clipping */
+[data-theme="dark"]
+  .docusaurus-mermaid-container
+  .node
+  .label
+  foreignObject
+  div {
+  line-height: 1.2 !important;
+  font-size: 0.75rem !important;
+  padding: 0 4px !important;
+}
+
+/* 4. Edges: Fluid Energy */
+[data-theme="dark"] .docusaurus-mermaid-container .edgePath .path {
+  stroke: #a6fcf6 !important; /* Lighter Cyan */
+  stroke-width: 2px !important;
+  opacity: 0.8;
+  filter: drop-shadow(0 0 4px rgba(102, 252, 241, 0.4));
+}
+
+[data-theme="dark"] .docusaurus-mermaid-container .marker {
+  fill: #66fcf1 !important;
+  stroke: #66fcf1 !important;
+  stroke-width: 1px !important;
+}
+
+/* 5. Subgraphs / Clusters: Dashed & Architectural */
+[data-theme="dark"] .docusaurus-mermaid-container .cluster rect,
+[data-theme="dark"] .docusaurus-mermaid-container .statediagram-cluster rect {
+  fill: rgba(102, 252, 241, 0.02) !important; /* Subtle tint */
+  stroke: #ec4899 !important; /* Pink/Magenta for contrast */
+  stroke-width: 1.5px !important;
+  stroke-dasharray: 8 6 !important; /* Distinct dashes */
+}
+
+[data-theme="dark"] .docusaurus-mermaid-container .cluster .label,
+[data-theme="dark"] .docusaurus-mermaid-container .statediagram-cluster .label {
+  fill: #ec4899 !important; /* Matching label color */
+  font-weight: bold;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+}
+
+/* 6. Edge Labels: Floating HUD Chips */
+/* Target the inner HTML for edge labels to avoid SVG group issues */
+[data-theme="dark"] .docusaurus-mermaid-container .edgeLabel {
+  /* Reset group styles that interfere */
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+[data-theme="dark"] .docusaurus-mermaid-container .edgeLabel .label,
+[data-theme="dark"] .docusaurus-mermaid-container .labelBkg,
+[data-theme="dark"] .docusaurus-mermaid-container .edgeLabel span {
+  background-color: transparent !important; /* No gray box */
+  color: #ffffff !important;
+  border: none !important;
+  border-bottom: 2px solid #66fcf1 !important; /* The "little horizontal line" */
+  border-radius: 0 !important;
+  padding: 0 4px 2px 4px !important;
+  font-size: 0.85em;
+  font-weight: 600;
+  text-shadow:
+    0 0 4px #000,
+    0 0 8px #000; /* Shadow to lift text off lines */
+  box-shadow: none !important;
+  display: inline-block;
+}
+
+/* Ensure text color applies deeply */
+[data-theme="dark"] .docusaurus-mermaid-container .edgeLabel p {
+  color: #ffffff !important;
+  margin: 0 !important;
+}
+
+/* 7. Sequence Diagram actors */
+[data-theme="dark"] .docusaurus-mermaid-container .actor {
+  /* Inherits node styles usually, but can override */
+  stroke: #ec4899 !important; /* Pink actors */
+  filter: drop-shadow(0 0 8px rgba(236, 72, 153, 0.4));
+}
+[data-theme="dark"] .docusaurus-mermaid-container text.actor > tspan {
+  fill: #fff !important;
+}
+
+/* 8. Sequence Messages */
+[data-theme="dark"] .docusaurus-mermaid-container .messageLine0,
+[data-theme="dark"] .docusaurus-mermaid-container .messageLine1 {
+  stroke: #66fcf1 !important;
+}
+[data-theme="dark"] .docusaurus-mermaid-container .messageText {
+  fill: #e0fcfb !important;
+  font-size: 0.9em;
+  stroke: none !important;
 }
 
 /* 4. Table of Contents - "HUD" Style */
