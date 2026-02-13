@@ -45,3 +45,31 @@ distributed-systems:
   label: Distributed Systems
   permalink: /distributed-systems
   description: Distributed systems architecture
+protobuf:
+  label: Protobuf
+  permalink: /protobuf
+  description: Protocol Buffers serialization
+idl:
+  label: IDL
+  permalink: /idl
+  description: Interface Definition Language
+api-design:
+  label: API Design
+  permalink: /api-design
+  description: API design patterns and best practices
+production:
+  label: Production
+  permalink: /production
+  description: Production environment practices
+health-check:
+  label: Health Check
+  permalink: /health-check
+  description: Service health checking
+load-balancing:
+  label: Load Balancing
+  permalink: /load-balancing
+  description: Load balancing strategies
+observability:
+  label: Observability
+  permalink: /observability
+  description: Monitoring, tracing, and metrics
