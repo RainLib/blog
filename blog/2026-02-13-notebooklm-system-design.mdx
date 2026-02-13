@@ -1,0 +1,1800 @@
+---
+slug: notebooklm-system-design
+title: 构建类 NotebookLM 的智能笔记系统：基于 Rust 的高性能 RAG 架构
+authors: [me]
+tags: [rust, rag, vector-db, grpc, ai-system, distributed-systems]
+description: 深度解析如何使用 Rust、EdgeQuake、Milvus 和 gRPC 构建一个高性能的类 NotebookLM 智能笔记系统，涵盖工作空间隔离、混合检索、Agent 框架和记忆管理的完整架构设计。
+---
+
+# 构建类 NotebookLM 的智能笔记系统：基于 Rust 的高性能 RAG 架构
+
+> "The best notebook is not just a place to store information, but a thinking partner that understands context and helps you reason."
+
+Google NotebookLM 展示了 AI 如何革新我们的知识管理方式。本文将详细设计一个开源替代方案，使用现代化技术栈构建一个**高性能、可扩展、生产级**的智能笔记系统。
+
+{/* truncate */}
+
+---
+
+## 一、系统概览与目标
+
+### 1.1 为什么构建 NotebookLM 替代方案？
+
+Google NotebookLM 的核心价值在于：
+
+1. **工作空间隔离**：每个笔记本是独立的知识库，避免跨域污染
+2. **深度理解**：通过 RAG 和知识图谱实现多跳推理
+3. **交互式对话**：基于上下文的智能问答
+4. **知识发现**：自动关联和洞察生成
+
+然而，作为闭源服务，它存在局限性：
+
+- 数据主权问题（无法私有部署）
+- 定制化受限（无法接入企业知识库）
+- 成本不可控（按用量收费）
+- 扩展性不足（无法集成自定义 Agent）
+
+我们的目标是构建一个**完全开源、可私有部署、高度可扩展**的替代方案。
+
+### 1.2 核心功能需求
+
+| 功能模块         | 需求描述                                                   |
+| ---------------- | ---------------------------------------------------------- |
+| **工作空间隔离** | 支持多租户，每个 Notebook 独立存储、检索、对话历史         |
+| **文档处理**     | PDF、Word、Markdown、网页等多格式解析和分块                |
+| **混合检索**     | 向量检索（语义）+ 全文检索（精确匹配）+ 图检索（关系推理） |
+| **知识图谱**     | 实体识别、关系抽取、多跳推理（EdgeQuake）                  |
+| **Agent 框架**   | 技能注册、工具调用、多 Agent 编排                          |
+| **记忆管理**     | 工作记忆（短期）、对话记忆（中期）、知识记忆（长期）       |
+| **联网搜索**     | 实时网络检索，补充内部知识                                 |
+| **高并发**       | 支持千级并发查询，毫秒级响应                               |
+
+### 1.3 技术栈选型
+
+| 组件           | 技术选型                      | 理由                                                      |
+| -------------- | ----------------------------- | --------------------------------------------------------- |
+| **核心语言**   | Rust                          | 内存安全、高并发、零成本抽象、生产级异步运行时（Tokio）   |
+| **服务通信**   | gRPC (Tonic)                  | 类型安全、高性能、内置负载均衡和健康检查                  |
+| **向量数据库** | Milvus                        | 专为大规模向量检索优化，支持 HNSW/IVF索引，GPU 加速       |
+| **全文检索**   | PostgreSQL + pg_trgm/pgvector | 统一数据层，支持向量+全文+关系查询，避免 ES 运维复杂度    |
+| **知识图谱**   | EdgeQuake                     | 专为 RAG 设计的图数据库，高效多跳推理，支持时序和层级关系 |
+| **嵌入模型**   | BGE-M3 / text-embedding-3     | 多语言、高质量、可私有部署或 API 调用                     |
+| **LLM**        | GPT-4o / Claude 3.5 / Qwen    | 推理能力强，支持长上下文窗口（128k+）                     |
+| **消息队列**   | NATS                          | 轻量级、高性能、支持 Jetstream(持久化) 和流式处理         |
+| **容器编排**   | Kubernetes                    | 服务发现、自动扩缩容、滚动更新                            |
+
+:::tip 为什么不用 Elasticsearch？
+PostgreSQL 15+ 的 `pgvector` 扩展 + `pg_trgm`（三字符全文索引）已经可以满足混合检索需求：
+
+- **向量检索**：pgvector 支持 HNSW 索引，性能接近 Milvus（小规模）
+- **全文检索**：pg_trgm 支持模糊匹配和 BM25 排序
+- **关系查询**：JOIN 可以直接关联元数据、权限、用户信息
+- **运维简化**：减少一个组件，降低复杂度
+
+对于超大规模场景（亿级文档），Milvus 专注向量检索，PostgreSQL 负责元数据和全文，两者配合是更优解。
+:::
+
+---
+
+## 二、系统架构设计
+
+### 2.1 整体架构图
+
+```mermaid
+graph TB
+    subgraph "客户端层"
+        WebUI[Web UI]
+        MobileApp[Mobile App]
+        API[API SDK]
+    end
+
+    subgraph "API 网关层"
+        Gateway[API Gateway<br/>Nginx / Envoy]
+    end
+
+    subgraph "核心服务层 (gRPC)"
+        NotebookSvc[Notebook Service<br/>工作空间管理]
+        IngestionSvc[Ingestion Service<br/>文档解析]
+        EmbeddingSvc[Embedding Service<br/>向量生成]
+        KGSvc[Knowledge Graph Service<br/>EdgeQuake 接口]
+        SearchSvc[Search Service<br/>混合检索]
+        AgentSvc[Agent Service<br/>LLM 编排]
+        MemorySvc[Memory Service<br/>对话记忆]
+    end
+
+    subgraph "数据存储层"
+        Milvus[(Milvus<br/>向量数据库)]
+        PostgreSQL[(PostgreSQL<br/>元数据+全文)]
+        EdgeQuake[(EdgeQuake<br/>知识图谱)]
+        Redis[(Redis<br/>缓存+会话)]
+    end
+
+    subgraph "外部服务"
+        LLM[LLM API<br/>GPT-4o / Claude]
+        Search[Search API<br/>Tavily / Serper]
+    end
+
+    WebUI --> Gateway
+    MobileApp --> Gateway
+    API --> Gateway
+    Gateway --> NotebookSvc
+    Gateway --> SearchSvc
+    Gateway --> AgentSvc
+
+    NotebookSvc --> PostgreSQL
+    IngestionSvc --> EmbeddingSvc
+    IngestionSvc --> KGSvc
+    EmbeddingSvc --> Milvus
+    KGSvc --> EdgeQuake
+    SearchSvc --> Milvus
+    SearchSvc --> PostgreSQL
+    SearchSvc --> EdgeQuake
+    AgentSvc --> MemorySvc
+    AgentSvc --> SearchSvc
+    AgentSvc --> LLM
+    AgentSvc --> Search
+    MemorySvc --> Redis
+    MemorySvc --> PostgreSQL
+
+    style NotebookSvc fill:#4CAF50
+    style SearchSvc fill:#2196F3
+    style AgentSvc fill:#FF9800
+    style Milvus fill:#9C27B0
+    style EdgeQuake fill:#E91E63
+```
+
+### 2.2 工作空间隔离模型
+
+NotebookLM 的核心特性之一是**严格的工作空间隔离**。每个 Notebook 拥有独立的：
+
+- **文档集合**：只能访问当前 Notebook 的文档
+- **向量索引**：Milvus Collection 按 `notebook_id` 分片
+- **知识图谱**：EdgeQuake 中的子图（Subgraph）隔离
+- **对话历史**：独立的会话记录
+- **权限控制**：基于 RBAC 的访问控制
+
+```mermaid
+graph LR
+    subgraph "Notebook A"
+        DocsA[📄 Documents]
+        VectorA[🔍 Vector Index]
+        GraphA[🕸️ Knowledge Graph]
+        ChatA[💬 Chat History]
+    end
+
+    subgraph "Notebook B"
+        DocsB[📄 Documents]
+        VectorB[🔍 Vector Index]
+        GraphB[🕸️ Knowledge Graph]
+        ChatB[💬 Chat History]
+    end
+
+    User1[👤 User 1] -->|Owner| DocsA
+    User1 -->|Query| VectorA
+    User2[👤 User 2] -->|Viewer| DocsA
+    User2 -->|Query| VectorA
+
+    User3[👤 User 3] -->|Owner| DocsB
+    User3 -->|Query| VectorB
+
+    style DocsA fill:#E8F5E9
+    style DocsB fill:#E3F2FD
+    style VectorA fill:#C8E6C9
+    style VectorB fill:#BBDEFB
+```
+
+**隔离实现策略**：
+
+1. **数据层隔离**：
+   - Milvus: 每个 Notebook 对应一个 Collection，命名为 `notebook_{id}`
+   - PostgreSQL: 所有查询强制带 `WHERE notebook_id = ?`
+   - EdgeQuake: 使用 `notebook_id` 作为图的最外层命名空间
+
+2. **查询层隔离**：
+   - 每个请求必须携带 `NotebookCtx`（包含 notebook_id + user_id）
+   - gRPC Interceptor 层验证权限
+   - 所有服务调用通过 Context 传递身份信息
+
+3. **缓存层隔离**：
+   - Redis Key 格式: `notebook:{id}:cache:{key}`
+   - 设置 TTL 自动过期，避免数据泄漏
+
+### 2.3 数据流图
+
+用户上传文档到对话查询的完整数据流：
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant API as API Gateway
+    participant Notebook as Notebook Service
+    participant Ingestion as Ingestion Service
+    participant Embedding as Embedding Service
+    participant KG as Knowledge Graph Service
+    participant MV as Milvus
+    participant EQ as EdgeQuake
+    participant PG as PostgreSQL
+
+    User->>API: 上传文档 (PDF)
+    API->>Notebook: 验证权限
+    Notebook->>Ingestion: 触发文档处理
+
+    par 并行处理
+        Ingestion->>Ingestion: 解析 PDF (文本/表格/图片)
+    and
+        Ingestion->>Ingestion: 分块策略 (RecursiveCharacterTextSplitter)
+    end
+
+    Ingestion->>Embedding: 批量生成向量 (chunks)
+    Embedding->>MV: 存储向量 (Collection: notebook_{id})
+    Embedding-->>PG: 存储元数据 (chunk_text, metadata)
+
+    Ingestion->>KG: 实体识别 + 关系抽取
+    KG->>EQ: 构建子图 (Entities + Relations)
+
+    Note over User,EQ: 文档处理完成，可开始查询
+
+    User->>API: 发起查询 "What is X?"
+    API->>Notebook: 验证并获取 NotebookCtx
+    API->>Search Service: hybrid_search(query, notebook_ctx)
+
+    par 混合检索
+        Search Service->>MV: 向量检索 (Top-K)
+    and
+        Search Service->>PG: 全文检索 (pg_trgm)
+    and
+        Search Service->>EQ: 图推理 (Multi-hop)
+    end
+
+    Search Service-->>API: 返回检索结果
+    API->>Agent Service: generate_answer(query, context)
+    Agent Service->>LLM: 调用 GPT-4o
+    LLM-->>User: 返回答案
+```
+
+---
+
+## 三、核心服务组件设计
+
+### 3.1 Notebook Service（工作空间管理）
+
+**职责**：
+
+- 创建/删除/更新 Notebook
+- 权限管理（RBAC）
+- 成员邀请和角色分配
+- 文档列表和统计信息
+
+**数据模型** (PostgreSQL):
+
+```sql
+-- Notebook 表
+CREATE TABLE notebooks (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    owner_id UUID NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW(),
+    is_deleted BOOLEAN DEFAULT FALSE
+);
+
+-- 权限表
+CREATE TABLE notebook_permissions (
+    notebook_id UUID REFERENCES notebooks(id),
+    user_id UUID NOT NULL,
+    role VARCHAR(50) NOT NULL, -- owner, editor, viewer
+    granted_at TIMESTAMP DEFAULT NOW(),
+    PRIMARY KEY (notebook_id, user_id)
+);
+
+-- 文档表
+CREATE TABLE documents (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    notebook_id UUID REFERENCES notebooks(id),
+    filename VARCHAR(255) NOT NULL,
+    file_type VARCHAR(50),
+    file_size BIGINT,
+    upload_status VARCHAR(50), -- pending, processing, completed, failed
+    chunk_count INT DEFAULT 0,
+    uploaded_at TIMESTAMP DEFAULT NOW()
+);
+
+-- 文档分块表
+CREATE TABLE document_chunks (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    document_id UUID REFERENCES documents(id) ON DELETE CASCADE,
+    notebook_id UUID NOT NULL, -- 冗余字段，加速查询
+    chunk_text TEXT NOT NULL,
+    chunk_index INT NOT NULL,
+    metadata JSONB, -- 存储页码、标题、位置等元信息
+    created_at TIMESTAMP DEFAULT NOW(),
+
+    -- 全文检索索引
+    CONSTRAINT unique_chunk_index UNIQUE (document_id, chunk_index)
+);
+
+CREATE INDEX idx_chunks_notebook ON document_chunks(notebook_id);
+CREATE INDEX idx_chunks_text_trgm ON document_chunks USING GIN (chunk_text gin_trgm_ops);
+```
+
+**gRPC 接口定义**:
+
+```protobuf
+syntax = "proto3";
+
+package notebook.v1;
+
+service NotebookService {
+    rpc CreateNotebook(CreateNotebookRequest) returns (CreateNotebookResponse);
+    rpc GetNotebook(GetNotebookRequest) returns (GetNotebookResponse);
+    rpc ListNotebooks(ListNotebooksRequest) returns (ListNotebooksResponse);
+    rpc DeleteNotebook(DeleteNotebookRequest) returns (DeleteNotebookResponse);
+    rpc InviteMember(InviteMemberRequest) returns (InviteMemberResponse);
+    rpc ListMembers(ListMembersRequest) returns (ListMembersResponse);
+}
+
+message CreateNotebookRequest {
+    string name = 1;
+    string description = 2;
+}
+
+message CreateNotebookResponse {
+    string notebook_id = 1;
+    string name = 2;
+    int64 created_at = 3;
+}
+
+message NotebookContext {
+    string notebook_id = 1;
+    string user_id = 2;
+    string role = 3; // owner, editor, viewer
+}
+```
+
+**Rust 实现示例** (使用 Tonic):
+
+```rust
+use tonic::{Request, Response, Status};
+use uuid::Uuid;
+use sqlx::PgPool;
+
+pub struct NotebookServiceImpl {
+    db: PgPool,
+}
+
+#[tonic::async_trait]
+impl NotebookService for NotebookServiceImpl {
+    async fn create_notebook(
+        &self,
+        request: Request<CreateNotebookRequest>,
+    ) -> Result<Response<CreateNotebookResponse>, Status> {
+        // 1. 从 gRPC metadata 中提取 user_id (由 auth interceptor 注入)
+        let user_id = request
+            .metadata()
+            .get("user-id")
+            .and_then(|v| v.to_str().ok())
+            .ok_or_else(|| Status::unauthenticated("Missing user_id"))?;
+
+        let req = request.into_inner();
+        let notebook_id = Uuid::new_v4();
+
+        // 2. 插入数据库
+        sqlx::query!(
+            r#"
+            INSERT INTO notebooks (id, name, description, owner_id)
+            VALUES ($1, $2, $3, $4)
+            "#,
+            notebook_id,
+            req.name,
+            req.description,
+            Uuid::parse_str(user_id).map_err(|_| Status::invalid_argument("Invalid user_id"))?
+        )
+        .execute(&self.db)
+        .await
+        .map_err(|e| Status::internal(format!("Database error: {}", e)))?;
+
+        // 3. 创建 Milvus Collection
+        self.create_milvus_collection(&notebook_id.to_string()).await?;
+
+        // 4. 在 EdgeQuake 中创建命名空间
+        self.create_knowledge_graph_namespace(&notebook_id.to_string()).await?;
+
+        Ok(Response::new(CreateNotebookResponse {
+            notebook_id: notebook_id.to_string(),
+            name: req.name,
+            created_at: chrono::Utc::now().timestamp(),
+        }))
+    }
+}
+```
+
+:::tip 权限验证的最佳实践
+使用 **gRPC Interceptor** 在请求到达业务逻辑之前验证权限：
+
+```rust
+use tonic::service::Interceptor;
+
+pub struct AuthInterceptor {
+    db: PgPool,
+}
+
+impl Interceptor for AuthInterceptor {
+    fn call(&mut self, mut req: Request<()>) -> Result<Request<()>, Status> {
+        let notebook_id = req.metadata().get("notebook-id")
+            .and_then(|v| v.to_str().ok())
+            .ok_or_else(|| Status::invalid_argument("Missing notebook_id"))?;
+
+        let user_id = req.metadata().get("user-id")
+            .and_then(|v| v.to_str().ok())
+            .ok_or_else(|| Status::unauthenticated("Missing user_id"))?;
+
+        // 查询权限
+        let role = sqlx::query_scalar!(
+            "SELECT role FROM notebook_permissions WHERE notebook_id = $1 AND user_id = $2",
+            Uuid::parse_str(notebook_id).unwrap(),
+            Uuid::parse_str(user_id).unwrap()
+        )
+        .fetch_optional(&self.db)
+        .await
+        .map_err(|_| Status::internal("Permission check failed"))?
+        .ok_or_else(|| Status::permission_denied("No access to this notebook"))?;
+
+        // 将角色注入到 metadata
+        req.metadata_mut().insert("role", role.parse().unwrap());
+        Ok(req)
+    }
+}
+```
+
+:::
+
+---
+
+### 3.2 Ingestion Service（文档处理）
+
+**职责**：
+
+- 支持多格式解析（PDF, DOCX, Markdown, HTML, TXT）
+- 智能分块策略（RecursiveCharacterTextSplitter）
+- 表格、图片提取和 OCR
+- 异步任务队列（避免阻塞）
+
+**文档分块策略**：
+
+```rust
+use text_splitter::TextSplitter;
+
+pub struct ChunkingStrategy {
+    chunk_size: usize,
+    chunk_overlap: usize,
+}
+
+impl Default for ChunkingStrategy {
+    fn default() -> Self {
+        Self {
+            chunk_size: 1000,      // 1000 字符
+            chunk_overlap: 200,    // 200 字符重叠，保留上下文
+        }
+    }
+}
+
+pub async fn split_document(
+    text: &str,
+    strategy: ChunkingStrategy,
+) -> Vec<String> {
+    let splitter = TextSplitter::new(strategy.chunk_size)
+        .with_trim_chunks(true);
+
+    splitter.chunks(text)
+        .map(|chunk| chunk.to_string())
+        .collect()
+}
+```
+
+**为什么需要 chunk_overlap？**
+
+```
+Chunk 1: "...机器学习模型需要大量数据。深度学习..."
+Chunk 2: "深度学习是机器学习的子领域..."
+```
+
+如果没有重叠，"深度学习"这个关键概念会被截断，导致语义丢失。200 字符的重叠确保了边界处的上下文完整性。
+
+**处理流程**：
+
+```mermaid
+stateDiagram-v2
+    [*] --> Uploaded: 用户上传
+    Uploaded --> Parsing: 触发解析
+    Parsing --> Chunking: 提取文本
+    Chunking --> Embedding: 分块完成
+    Chunking --> KGExtraction: 并行实体抽取
+    Embedding --> Completed
+    KGExtraction --> Completed
+    Completed --> [*]
+
+    Parsing --> Failed: 解析失败
+    Failed --> [*]
+```
+
+---
+
+### 3.3 Embedding Service（向量生成）
+
+**职责**：
+
+- 批量向量生成（避免逐个调用 API）
+- 支持多种嵌入模型（BGE-M3, OpenAI, Cohere）
+- 向量归一化和维度验证
+- 存储到 Milvus
+
+**Milvus Schema 设计**:
+
+```python
+from pymilvus import Collection, FieldSchema, CollectionSchema, DataType
+
+# Milvus Collection 定义
+fields = [
+    FieldSchema(name="id", dtype=DataType.VARCHAR, is_primary=True, max_length=36),
+    FieldSchema(name="chunk_id", dtype=DataType.VARCHAR, max_length=36),
+    FieldSchema(name="document_id", dtype=DataType.VARCHAR, max_length=36),
+    FieldSchema(name="embedding", dtype=DataType.FLOAT_VECTOR, dim=1024),  # BGE-M3: 1024维
+    FieldSchema(name="chunk_text", dtype=DataType.VARCHAR, max_length=2000),  # 前2000字符用于检索预览
+]
+
+schema = CollectionSchema(fields, description=f"Notebook vectors")
+collection = Collection(name=f"notebook_{notebook_id}", schema=schema)
+
+# 创建 HNSW 索引
+index_params = {
+    "metric_type": "COSINE",  # 余弦相似度
+    "index_type": "HNSW",
+    "params": {"M": 16, "efConstruction": 200}
+}
+collection.create_index(field_name="embedding", index_params=index_params)
+```
+
+**Rust 向量生成实现**:
+
+```rust
+use reqwest::Client;
+use serde::{Deserialize, Serialize};
+
+#[derive(Serialize)]
+struct EmbeddingRequest {
+    input: Vec<String>,
+    model: String,
+}
+
+#[derive(Deserialize)]
+struct EmbeddingResponse {
+    data: Vec<EmbeddingData>,
+}
+
+#[derive(Deserialize)]
+struct EmbeddingData {
+    embedding: Vec<f32>,
+}
+
+pub struct EmbeddingService {
+    client: Client,
+    api_key: String,
+    model: String,
+}
+
+impl EmbeddingService {
+    pub async fn generate_embeddings(
+        &self,
+        texts: Vec<String>,
+    ) -> Result<Vec<Vec<f32>>, Box<dyn std::error::Error>> {
+        // 批量处理，每次最多 100 个
+        let mut all_embeddings = Vec::new();
+
+        for chunk in texts.chunks(100) {
+            let request = EmbeddingRequest {
+                input: chunk.to_vec(),
+                model: self.model.clone(),
+            };
+
+            let response = self.client
+                .post("https://api.openai.com/v1/embeddings")
+                .header("Authorization", format!("Bearer {}", self.api_key))
+                .json(&request)
+                .send()
+                .await?
+                .json::<EmbeddingResponse>()
+                .await?;
+
+            all_embeddings.extend(
+                response.data.into_iter().map(|d| d.embedding)
+            );
+        }
+
+        Ok(all_embeddings)
+    }
+
+    // 向量归一化（对于余弦相似度很重要）
+    pub fn normalize(embedding: &mut Vec<f32>) {
+        let norm: f32 = embedding.iter().map(|x| x * x).sum::<f32>().sqrt();
+        if norm > 0.0 {
+            embedding.iter_mut().for_each(|x| *x /= norm);
+        }
+    }
+}
+```
+
+---
+
+### 3.4 Knowledge Graph Service（知识图谱）
+
+**职责**：
+
+- 实体识别（NER）
+- 关系抽取（Relation Extraction）
+- 多跳推理查询
+- EdgeQuake 图数据库操作
+
+**EdgeQuake 图模型**:
+
+```
+Notebook (命名空间)
+  ├── Document (文档节点)
+  │     ├── contains → Chunk (分块节点)
+  │     └── mentions → Entity (实体节点)
+  └── Entity
+        ├── type: Person | Organization | Concept | Event
+        ├── relates_to → Entity (关系边)
+        └── appears_in → Chunk (出现位置)
+```
+
+**实体抽取示例** (使用 LLM):
+
+```rust
+pub async fn extract_entities(
+    &self,
+    chunk_text: &str,
+) -> Result<Vec<Entity>, Box<dyn std::error::Error>> {
+    let prompt = format!(
+        r#"Extract all named entities from the following text.
+        Return JSON array with format: [{{"name": "...", "type": "Person|Organization|Concept", "description": "..."}}]
+
+        Text: {}
+        "#,
+        chunk_text
+    );
+
+    let response = self.llm_client.complete(prompt).await?;
+    let entities: Vec<Entity> = serde_json::from_str(&response)?;
+
+    Ok(entities)
+}
+```
+
+**多跳推理查询**:
+
+```cypher
+// EdgeQuake Cypher 查询示例
+// 问题: "谁和 Elon Musk 有关系，并且在这个笔记本中被提到？"
+
+MATCH (notebook:Notebook {id: $notebook_id})
+-[:CONTAINS]->(doc:Document)
+-[:MENTIONS]->(entity1:Entity {name: "Elon Musk"})
+-[:RELATES_TO*1..2]->(entity2:Entity)
+<-[:MENTIONS]-(doc2:Document)
+<-[:CONTAINS]-(notebook)
+RETURN DISTINCT entity2.name, entity2.type, entity2.description
+LIMIT 10
+```
+
+---
+
+### 3.5 Search Service（混合检索）
+
+这是系统的**核心模块**，整合三种检索方式：
+
+1. **向量检索**（语义相似）：Milvus
+2. **全文检索**（精确匹配）：PostgreSQL pg_trgm
+3. **图检索**（关系推理）：EdgeQuake
+
+**混合检索架构**:
+
+```mermaid
+graph LR
+    Query[用户查询] --> Rewrite[查询改写<br/>LLM优化]
+    Rewrite --> Parallel{并行检索}
+
+    Parallel -->|路径1| Vector[向量检索<br/>Milvus HNSW]
+    Parallel -->|路径2| Fulltext[全文检索<br/>PostgreSQL]
+    Parallel -->|路径3| Graph[图检索<br/>EdgeQuake]
+
+    Vector --> VectorResults[Top-20 相似块]
+    Fulltext --> FulltextResults[Top-10 精确匹配]
+    Graph --> GraphResults[Top-5 实体关系]
+
+    VectorResults --> Rerank[重排序<br/>RRF + LLM Reranker]
+    FulltextResults --> Rerank
+    GraphResults --> Rerank
+
+    Rerank --> FinalResults[最终 Top-10]
+
+    style Vector fill:#9C27B0
+    style Fulltext fill:#2196F3
+    style Graph fill:#E91E63
+    style Rerank fill:#FF9800
+```
+
+**Rust 混合检索实现**:
+
+```rust
+use futures::future::join_all;
+
+pub struct SearchService {
+    milvus_client: MilvusClient,
+    pg_pool: PgPool,
+    edgequake_client: EdgeQuakeClient,
+    embedding_service: EmbeddingService,
+}
+
+#[derive(Debug)]
+pub struct SearchResult {
+    chunk_id: String,
+    chunk_text: String,
+    score: f32,
+    source: SearchSource,  // Vector | Fulltext | Graph
+}
+
+#[derive(Debug)]
+pub enum SearchSource {
+    Vector,
+    Fulltext,
+    Graph,
+}
+
+impl SearchService {
+    pub async fn hybrid_search(
+        &self,
+        query: &str,
+        notebook_ctx: &NotebookContext,
+        limit: usize,
+    ) -> Result<Vec<SearchResult>, Box<dyn std::error::Error>> {
+        // 并行执行三种检索
+        let (vector_results, fulltext_results, graph_results) = tokio::join!(
+            self.vector_search(query, notebook_ctx, 20),
+            self.fulltext_search(query, notebook_ctx, 10),
+            self.graph_search(query, notebook_ctx, 5)
+        );
+
+        // 合并结果
+        let mut all_results = Vec::new();
+        all_results.extend(vector_results?);
+        all_results.extend(fulltext_results?);
+        all_results.extend(graph_results?);
+
+        // RRF (Reciprocal Rank Fusion) 重排序
+        let reranked = self.reciprocal_rank_fusion(all_results);
+
+        // LLM Reranker 进一步优化
+        let final_results = self.llm_rerank(query, reranked, limit).await?;
+
+        Ok(final_results)
+    }
+
+    async fn vector_search(
+        &self,
+        query: &str,
+        ctx: &NotebookContext,
+        limit: usize,
+    ) -> Result<Vec<SearchResult>, Box<dyn std::error::Error>> {
+        // 1. 生成查询向量
+        let query_embedding = self.embedding_service
+            .generate_embeddings(vec![query.to_string()])
+            .await?
+            .into_iter()
+            .next()
+            .ok_or("Empty embedding")?;
+
+        // 2. Milvus 检索
+        let collection_name = format!("notebook_{}", ctx.notebook_id);
+        let search_params = json!({
+            "metric_type": "COSINE",
+            "params": {"ef": 64}  // HNSW 参数
+        });
+
+        let results = self.milvus_client.search(
+            &collection_name,
+            vec![query_embedding],
+            "embedding",
+            search_params,
+            limit,
+            vec!["chunk_id", "chunk_text"]
+        ).await?;
+
+        Ok(results.into_iter().map(|r| SearchResult {
+            chunk_id: r.get("chunk_id"),
+            chunk_text: r.get("chunk_text"),
+            score: r.distance,
+            source: SearchSource::Vector,
+        }).collect())
+    }
+
+    async fn fulltext_search(
+        &self,
+        query: &str,
+        ctx: &NotebookContext,
+        limit: usize,
+    ) -> Result<Vec<SearchResult>, Box<dyn std::error::Error>> {
+        // PostgreSQL pg_trgm 三字符索引搜索
+        let results = sqlx::query!(
+            r#"
+            SELECT
+                id as chunk_id,
+                chunk_text,
+                similarity(chunk_text, $1) as score
+            FROM document_chunks
+            WHERE notebook_id = $2
+            AND chunk_text % $1  -- % 操作符表示相似度匹配
+            ORDER BY score DESC
+            LIMIT $3
+            "#,
+            query,
+            Uuid::parse_str(&ctx.notebook_id)?,
+            limit as i64
+        )
+        .fetch_all(&self.pg_pool)
+        .await?;
+
+        Ok(results.into_iter().map(|r| SearchResult {
+            chunk_id: r.chunk_id.to_string(),
+            chunk_text: r.chunk_text,
+            score: r.score.unwrap_or(0.0) as f32,
+            source: SearchSource::Fulltext,
+        }).collect())
+    }
+
+    async fn graph_search(
+        &self,
+        query: &str,
+        ctx: &NotebookContext,
+        limit: usize,
+    ) -> Result<Vec<SearchResult>, Box<dyn std::error::Error>> {
+        // 1. 先用 NER 提取查询中的实体
+        let entities = self.extract_query_entities(query).await?;
+
+        if entities.is_empty() {
+            return Ok(Vec::new());
+        }
+
+        // 2. 在知识图谱中查找相关实体和块
+        let cypher = format!(
+            r#"
+            MATCH (notebook:Notebook {{id: $notebook_id}})
+            -[:CONTAINS]->(doc:Document)
+            -[:MENTIONS]->(entity:Entity)
+            WHERE entity.name IN $entity_names
+            MATCH (entity)-[:RELATES_TO*0..2]->(related:Entity)
+            <-[:MENTIONS]-(chunk:Chunk)
+            RETURN DISTINCT chunk.id, chunk.text, COUNT(*) as relevance
+            ORDER BY relevance DESC
+            LIMIT $limit
+            "#
+        );
+
+        let results = self.edgequake_client.query(cypher, json!({
+            "notebook_id": ctx.notebook_id,
+            "entity_names": entities,
+            "limit": limit
+        })).await?;
+
+        Ok(results.into_iter().map(|r| SearchResult {
+            chunk_id: r["chunk.id"].as_str().unwrap().to_string(),
+            chunk_text: r["chunk.text"].as_str().unwrap().to_string(),
+            score: r["relevance"].as_f64().unwrap() as f32,
+            source: SearchSource::Graph,
+        }).collect())
+    }
+
+    // RRF 重排序算法
+    fn reciprocal_rank_fusion(
+        &self,
+        mut results: Vec<SearchResult>,
+    ) -> Vec<SearchResult> {
+        use std::collections::HashMap;
+
+        let k = 60.0;  // RRF 常数
+        let mut scores: HashMap<String, f32> = HashMap::new();
+
+        // 按来源分组并重新排序
+        let mut by_source: HashMap<SearchSource, Vec<SearchResult>> = HashMap::new();
+        for result in results {
+            by_source.entry(result.source).or_insert_with(Vec::new).push(result);
+        }
+
+        // 计算 RRF 分数
+        for (source, mut source_results) in by_source {
+            source_results.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap());
+
+            for (rank, result) in source_results.iter().enumerate() {
+                let rrf_score = 1.0 / (k + (rank as f32) + 1.0);
+                *scores.entry(result.chunk_id.clone()).or_insert(0.0) += rrf_score;
+            }
+        }
+
+        // 按 RRF 分数排序
+        let mut final_results: Vec<_> = scores.into_iter()
+            .map(|(chunk_id, score)| (chunk_id, score))
+            .collect();
+        final_results.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
+
+        // TODO: 返回完整的 SearchResult（需要从原始结果中查找）
+        vec![]
+    }
+}
+```
+
+:::tip 为什么使用 RRF (Reciprocal Rank Fusion)?
+RRF 是一种无需训练的融合算法，公式为：
+
+$$
+\text\{RRF\}(d) = \sum_\{r \in R\} \frac\{1\}\{k + \text\{rank\}_r(d)\}
+$$
+
+- **优点**：简单、有效、不需要权重调优
+- **替代方案**：学习型方法（如 LambdaMART）精度更高，但需要标注数据
+
+对于 MVP 版本，RRF 是最佳选择。
+:::
+
+---
+
+## 四、Agent 框架与编排
+
+### 4.1 Agent Service（LLM 编排）
+
+**职责**：
+
+- LLM 调用和流式响应
+- 工具调用（Tool Calling / Function Calling）
+- 技能注册和管理
+- 多 Agent 编排
+- 联网搜索集成
+
+**Agent 执行流程**:
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Agent as Agent Service
+    participant Memory as Memory Service
+    participant Search as Search Service
+    participant Tools as Tool Registry
+    participant LLM as LLM API
+
+    User->>Agent: 发起查询
+    Agent->>Memory: 获取对话历史
+    Memory-->>Agent: 返回最近 10 轮对话
+
+    Agent->>Search: hybrid_search(query)
+    Search-->>Agent: Top-K 检索结果
+
+    Agent->>Agent: 构建 Prompt (System + History + Context)
+    Agent->>LLM: 请求 (enable_tool_calling = true)
+
+    alt LLM 返回文本回答
+        LLM-->>Agent: 直接回答
+        Agent->>Memory: 存储对话
+        Agent-->>User: 返回答案
+    else LLM 调用工具
+        LLM-->>Agent: tool_call: search_web("latest news")
+        Agent->>Tools: 执行 search_web
+        Tools-->>Agent: 工具执行结果
+        Agent->>LLM: 提交工具结果
+        LLM-->>Agent: 最终回答
+        Agent->>Memory: 存储对话
+        Agent-->>User: 返回答案
+    end
+```
+
+**Rust 实现**:
+
+```rust
+use async_stream::stream;
+use futures::Stream;
+use serde_json::json;
+
+pub struct AgentService {
+    llm_client: LLMClient,
+    search_service: Arc<SearchService>,
+    memory_service: Arc<MemoryService>,
+    tool_registry: ToolRegistry,
+}
+
+pub struct AgentRequest {
+    pub query: String,
+    pub notebook_ctx: NotebookContext,
+    pub session_id: String,
+    pub enable_tools: bool,
+}
+
+impl AgentService {
+    pub async fn generate(
+        &self,
+        request: AgentRequest,
+    ) -> impl Stream<Item = Result<String, AgentError>> {
+        let query = request.query.clone();
+        let ctx = request.notebook_ctx.clone();
+
+        stream! {
+            // 1. 获取对话历史
+            let history = self.memory_service
+                .get_conversation_history(&request.session_id, 10)
+                .await?;
+
+            // 2. 检索相关上下文
+            let search_results = self.search_service
+                .hybrid_search(&query, &ctx, 10)
+                .await?;
+
+            // 3. 构建 Prompt
+            let system_prompt = self.build_system_prompt(&ctx);
+            let context_prompt = self.format_context(&search_results);
+
+            let messages = vec![
+                Message::system(&system_prompt),
+                Message::user(&context_prompt),
+            ];
+            messages.extend(history);
+            messages.push(Message::user(&query));
+
+            // 4. 准备工具定义
+            let tools = if request.enable_tools {
+                Some(self.tool_registry.get_tool_definitions())
+            } else {
+                None
+            };
+
+            // 5. 调用 LLM（流式）
+            let mut stream = self.llm_client.stream_chat(messages, tools)?;
+
+            let mut full_response = String::new();
+            let mut tool_calls = Vec::new();
+
+            while let Some(chunk) = stream.next().await {
+                match chunk? {
+                    StreamChunk::Text(text) => {
+                        full_response.push_str(&text);
+                        yield Ok(text);  // 流式返回给用户
+                    }
+                    StreamChunk::ToolCall(call) => {
+                        tool_calls.push(call);
+                    }
+                }
+            }
+
+            // 6. 如果有工具调用，执行工具并继续对话
+            if !tool_calls.is_empty() {
+                let tool_results = self.execute_tools(tool_calls).await?;
+
+                // 递归调用 LLM（带工具结果）
+                let follow_up = self.llm_client.complete_with_tool_results(
+                    messages,
+                    tool_results
+                ).await?;
+
+                full_response = follow_up.clone();
+                yield Ok(follow_up);
+            }
+
+            // 7. 存储对话到记忆
+            self.memory_service.store_conversation(
+                &request.session_id,
+                &query,
+                &full_response
+            ).await?;
+        }
+    }
+
+    fn build_system_prompt(&self, ctx: &NotebookContext) -> String {
+        format!(
+            r#"You are an AI assistant for Notebook "{}".
+
+Your capabilities:
+- Answer questions based on documents in this notebook
+- Perform multi-hop reasoning using knowledge graph
+- Search the web when needed (use search_web tool)
+- Cite your sources with [doc_id: chunk_id]
+
+Guidelines:
+- Always ground your answers in the provided context
+- If context is insufficient, say "Based on the documents in this notebook, I don't have enough information..."
+- For factual questions, cite specific document references
+- For web search, only call the tool when explicitly needed
+            "#,
+            ctx.notebook_id
+        )
+    }
+}
+```
+
+### 4.2 Skill Registry（技能管理）
+
+**技能定义**（JSON Schema）:
+
+```json
+{
+  "skill_id": "search_web",
+  "name": "Web Search",
+  "description": "Search the web for real-time information using Tavily API",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "query": {
+        "type": "string",
+        "description": "The search query"
+      },
+      "max_results": {
+        "type": "integer",
+        "description": "Maximum number of results to return",
+        "default": 5
+      }
+    },
+    "required": ["query"]
+  },
+  "handler": "crate::skills::web_search::execute"
+}
+```
+
+**技能实现**:
+
+```rust
+use async_trait::async_trait;
+
+#[async_trait]
+pub trait Skill: Send + Sync {
+    fn metadata(&self) -> SkillMetadata;
+    async fn execute(&self, params: serde_json::Value) -> Result<SkillOutput, SkillError>;
+}
+
+pub struct WebSearchSkill {
+    api_key: String,
+    client: reqwest::Client,
+}
+
+#[async_trait]
+impl Skill for WebSearchSkill {
+    fn metadata(&self) -> SkillMetadata {
+        SkillMetadata {
+            skill_id: "search_web".to_string(),
+            name: "Web Search".to_string(),
+            description: "Search the web for real-time information".to_string(),
+            parameters: json!({
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string"},
+                    "max_results": {"type": "integer", "default": 5}
+                },
+                "required": ["query"]
+            }),
+        }
+    }
+
+    async fn execute(&self, params: serde_json::Value) -> Result<SkillOutput, SkillError> {
+        let query: String = serde_json::from_value(params["query"].clone())?;
+        let max_results: usize = params.get("max_results")
+            .and_then(|v| v.as_u64())
+            .unwrap_or(5) as usize;
+
+        // 调用 Tavily API
+        let response = self.client
+            .post("https://api.tavily.com/search")
+            .json(&json!({
+                "api_key": self.api_key,
+                "query": query,
+                "max_results": max_results
+            }))
+            .send()
+            .await?
+            .json::<TavilyResponse>()
+            .await?;
+
+        Ok(SkillOutput {
+            result: json!({
+                "results": response.results,
+                "query": query
+            }),
+            citations: response.results.iter().map(|r| r.url.clone()).collect(),
+        })
+    }
+}
+
+// 技能注册表
+pub struct ToolRegistry {
+    skills: HashMap<String, Arc<dyn Skill>>,
+}
+
+impl ToolRegistry {
+    pub fn new() -> Self {
+        let mut registry = Self {
+            skills: HashMap::new(),
+        };
+
+        // 注册内置技能
+        registry.register(Arc::new(WebSearchSkill::new()));
+        registry.register(Arc::new(CalculatorSkill::new()));
+        registry.register(Arc::new(CodeInterpreterSkill::new()));
+
+        registry
+    }
+
+    pub fn register(&mut self, skill: Arc<dyn Skill>) {
+        let metadata = skill.metadata();
+        self.skills.insert(metadata.skill_id.clone(), skill);
+    }
+
+    pub fn get_tool_definitions(&self) -> Vec<ToolDefinition> {
+        self.skills.values().map(|s| {
+            let meta = s.metadata();
+            ToolDefinition {
+                name: meta.skill_id,
+                description: meta.description,
+                parameters: meta.parameters,
+            }
+        }).collect()
+    }
+}
+```
+
+---
+
+### 4.3 Multi-Agent Orchestration（多 Agent 编排）
+
+对于复杂任务，可以使用多个专门化的 Agent 协作完成：
+
+```mermaid
+graph TD
+    User[用户请求] --> Router[Router Agent<br/>任务路由]
+
+    Router -->|研究类任务| Researcher[Researcher Agent<br/>信息收集]
+    Router -->|分析类任务| Analyst[Analyst Agent<br/>数据分析]
+    Router -->|创作类任务| Writer[Writer Agent<br/>内容生成]
+
+    Researcher --> KG[Knowledge Graph]
+    Researcher --> Web[Web Search]
+
+    Analyst --> Search[Hybrid Search]
+    Analyst --> Code[Code Interpreter]
+
+    Writer --> Memory[Memory Service]
+    Writer --> Search
+
+    Researcher --> Synthesizer[Synthesizer Agent<br/>结果整合]
+    Analyst --> Synthesizer
+    Writer --> Synthesizer
+
+    Synthesizer --> User
+
+    style Router fill:#4CAF50
+    style Researcher fill:#2196F3
+    style Analyst fill:#FF9800
+    style Writer fill:#9C27B0
+```
+
+---
+
+## 五、Memory 架构设计
+
+### 5.1 三层记忆模型
+
+NotebookLM 的记忆管理借鉴了人类认知模型：
+
+```mermaid
+graph TB
+    subgraph "工作记忆 (Working Memory)"
+        WM[当前对话上下文<br/>最近 10 轮对话<br/>存储: Redis<br/>TTL: 1 小时]
+    end
+
+    subgraph "短期记忆 (Short-term Memory)"
+        STM[会话历史<br/>完整对话记录<br/>存储: PostgreSQL<br/>保留: 30 天]
+    end
+
+    subgraph "长期记忆 (Long-term Memory)"
+        LTM1[知识图谱<br/>实体+关系<br/>存储: EdgeQuake]
+        LTM2[向量索引<br/>语义记忆<br/>存储: Milvus]
+        LTM3[元数据<br/>文档+块<br/>存储: PostgreSQL]
+    end
+
+    WM -->|总结存储| STM
+    STM -->|重要信息抽取| LTM1
+    STM -->|向量化| LTM2
+
+    Query[用户查询] -.->|检索| WM
+    Query -.->|检索| STM
+    Query -.->|检索| LTM1
+    Query -.->|检索| LTM2
+
+    style WM fill:#4CAF50
+    style STM fill:#2196F3
+    style LTM1 fill:#FF9800
+    style LTM2 fill:#9C27B0
+```
+
+### 5.2 Memory Service 实现
+
+```rust
+pub struct MemoryService {
+    redis: redis::Client,
+    pg_pool: PgPool,
+}
+
+pub struct ConversationTurn {
+    pub role: String,  // user | assistant
+    pub content: String,
+    pub timestamp: i64,
+}
+
+impl MemoryService {
+    // 存储对话
+    pub async fn store_conversation(
+        &self,
+        session_id: &str,
+        user_query: &str,
+        assistant_response: &str,
+    ) -> Result<(), MemoryError> {
+        let timestamp = chrono::Utc::now().timestamp();
+
+        // 1. 存储到工作记忆 (Redis List)
+        let mut conn = self.redis.get_async_connection().await?;
+
+        conn.rpush(
+            format!("session:{}:history", session_id),
+            json!({
+                "role": "user",
+                "content": user_query,
+                "timestamp": timestamp
+            }).to_string()
+        ).await?;
+
+        conn.rpush(
+            format!("session:{}:history", session_id),
+            json!({
+                "role": "assistant",
+                "content": assistant_response,
+                "timestamp": timestamp
+            }).to_string()
+        ).await?;
+
+        // 设置 TTL (1 小时)
+        conn.expire(format!("session:{}:history", session_id), 3600).await?;
+
+        // 2. 持久化到短期记忆 (PostgreSQL)
+        sqlx::query!(
+            r#"
+            INSERT INTO conversation_history (session_id, user_query, assistant_response, created_at)
+            VALUES ($1, $2, $3, to_timestamp($4))
+            "#,
+            session_id,
+            user_query,
+            assistant_response,
+            timestamp
+        )
+        .execute(&self.pg_pool)
+        .await?;
+
+        Ok(())
+    }
+
+    // 获取对话历史（优先从 Redis，fallback 到 PostgreSQL）
+    pub async fn get_conversation_history(
+        &self,
+        session_id: &str,
+        limit: usize,
+    ) -> Result<Vec<ConversationTurn>, MemoryError> {
+        // 1. 尝试从 Redis 读取
+        let mut conn = self.redis.get_async_connection().await?;
+        let cached: Vec<String> = conn.lrange(
+            format!("session:{}:history", session_id),
+            -(limit as isize * 2),  // user + assistant
+            -1
+        ).await?;
+
+        if !cached.is_empty() {
+            return Ok(cached.into_iter()
+                .filter_map(|s| serde_json::from_str(&s).ok())
+                .collect());
+        }
+
+        // 2. Fallback 到 PostgreSQL
+        let rows = sqlx::query!(
+            r#"
+            SELECT user_query, assistant_response, EXTRACT(EPOCH FROM created_at) as timestamp
+            FROM conversation_history
+            WHERE session_id = $1
+            ORDER BY created_at DESC
+            LIMIT $2
+            "#,
+            session_id,
+            limit as i64
+        )
+        .fetch_all(&self.pg_pool)
+        .await?;
+
+        let mut turns = Vec::new();
+        for row in rows.into_iter().rev() {
+            turns.push(ConversationTurn {
+                role: "user".to_string(),
+                content: row.user_query,
+                timestamp: row.timestamp.unwrap() as i64,
+            });
+            turns.push(ConversationTurn {
+                role: "assistant".to_string(),
+                content: row.assistant_response,
+                timestamp: row.timestamp.unwrap() as i64,
+            });
+        }
+
+        Ok(turns)
+    }
+
+    // 对话总结（压缩长期对话）
+    pub async fn summarize_conversation(
+        &self,
+        session_id: &str,
+        llm_client: &LLMClient,
+    ) -> Result<String, MemoryError> {
+        let history = self.get_conversation_history(session_id, 100).await?;
+
+        let conversation_text = history.iter()
+            .map(|turn| format!("{}: {}", turn.role, turn.content))
+            .collect::<Vec<_>>()
+            .join("\n");
+
+        let prompt = format!(
+            r#"Summarize the following conversation in 3-5 sentences, capturing key topics and decisions:
+
+{}
+            "#,
+            conversation_text
+        );
+
+        let summary = llm_client.complete(prompt).await?;
+
+        // 存储总结到 PostgreSQL
+        sqlx::query!(
+            "INSERT INTO conversation_summaries (session_id, summary) VALUES ($1, $2)",
+            session_id,
+            summary
+        )
+        .execute(&self.pg_pool)
+        .await?;
+
+        Ok(summary)
+    }
+}
+```
+
+### 5.3 Memory Retrieval Strategy（记忆检索策略）
+
+结合三个维度选择记忆：
+
+1. **Recency（新近度）**：最近的对话权重更高
+2. **Relevance（相关度）**：与当前查询语义相似的历史对话
+3. **Importance（重要度）**：用户明确标记的重要信息
+
+```rust
+pub async fn retrieve_relevant_memory(
+    &self,
+    query: &str,
+    session_id: &str,
+    limit: usize,
+) -> Result<Vec<ConversationTurn>, MemoryError> {
+    // 1. 获取最近 5 轮对话（Recency）
+    let recent = self.get_conversation_history(session_id, 5).await?;
+
+    // 2. 向量检索历史对话（Relevance）
+    let query_embedding = self.embedding_service
+        .generate_embeddings(vec![query.to_string()])
+        .await?[0].clone();
+
+    let similar_turns = self.vector_search_conversation_history(
+        session_id,
+        query_embedding,
+        5
+    ).await?;
+
+    // 3. 合并去重
+    let mut all_turns = recent;
+    all_turns.extend(similar_turns);
+
+    // 去重并排序
+    all_turns.sort_by_key(|t| -t.timestamp);
+    all_turns.dedup_by_key(|t| t.timestamp);
+    all_turns.truncate(limit);
+
+    Ok(all_turns)
+}
+```
+
+---
+
+## 六、Deployment 与监控
+
+### 6.1 Kubernetes 部署架构
+
+```yaml
+# Deployment 示例: Notebook Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notebook-service
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: notebook-service
+  template:
+    metadata:
+      labels:
+        app: notebook-service
+    spec:
+      containers:
+        - name: notebook-service
+          image: notebooklm/notebook-service:v1.0
+          ports:
+            - containerPort: 50051
+              name: grpc
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: url
+            - name: RUST_LOG
+              value: "info"
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "200m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            grpc:
+              port: 50051
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            grpc:
+              port: 50051
+            initialDelaySeconds: 5
+            periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: notebook-service
+spec:
+  selector:
+    app: notebook-service
+  ports:
+    - port: 50051
+      targetPort: 50051
+      name: grpc
+  type: ClusterIP
+```
+
+### 6.2 Horizontal Pod Autoscaling（HPA）
+
+```yaml
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: agent-service-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: agent-service
+  minReplicas: 2
+  maxReplicas: 20
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Pods
+      pods:
+        metric:
+          name: grpc_request_duration_seconds
+        target:
+          type: AverageValue
+          averageValue: "500m" # 500ms
+```
+
+### 6.3 Observability（可观测性）
+
+使用 **OpenTelemetry + Prometheus + Grafana** 监控：
+
+**关键指标**：
+
+| 指标                      | 说明                 | 告警阈值 |
+| ------------------------- | -------------------- | -------- |
+| `grpc_request_total`      | gRPC 请求总数        | -        |
+| `grpc_request_duration`   | gRPC 请求延迟（P95） | \> 1s    |
+| `milvus_search_latency`   | Milvus 检索延迟      | \> 500ms |
+| `postgres_query_duration` | PostgreSQL 查询延迟  | \> 200ms |
+| `llm_token_usage`         | LLM Token 消耗       | -        |
+| `embedding_batch_size`    | 向量生成批次大小     | -        |
+| `memory_usage_bytes`      | 服务内存使用         | \> 80%   |
+| `search_hybrid_recall@10` | 混合检索召回率@10    | \< 0.7   |
+
+**Rust OpenTelemetry 集成**:
+
+```rust
+use opentelemetry::trace::{Tracer, Span};
+use opentelemetry::global;
+
+pub async fn hybrid_search_with_trace(
+    &self,
+    query: &str,
+    ctx: &NotebookContext,
+) -> Result<Vec<SearchResult>, SearchError> {
+    let tracer = global::tracer("search-service");
+    let mut span = tracer.start("hybrid_search");
+
+    span.set_attribute("notebook_id", ctx.notebook_id.clone());
+    span.set_attribute("query_length", query.len() as i64);
+
+    // 执行检索
+    let start = std::time::Instant::now();
+    let results = self.hybrid_search(query, ctx, 10).await?;
+    let duration = start.elapsed();
+
+    // 记录指标
+    span.set_attribute("result_count", results.len() as i64);
+    span.set_attribute("duration_ms", duration.as_millis() as i64);
+
+    span.end();
+
+    Ok(results)
+}
+```
+
+---
+
+## 七、Implementation Roadmap（实施路线图）
+
+### Phase 1: MVP (4-6 weeks)
+
+**目标**：验证核心功能，单 Notebook 支持
+
+| 模块                  | 功能                                 | 天数 |
+| --------------------- | ------------------------------------ | ---- |
+| **Notebook Service**  | 创建/删除 Notebook，基础权限         | 3    |
+| **Ingestion Service** | PDF 解析，基础分块（固定大小）       | 5    |
+| **Embedding Service** | OpenAI API 集成，Milvus 向量存储     | 3    |
+| **Search Service**    | 向量检索 + PostgreSQL 全文检索       | 5    |
+| **Agent Service**     | 基础 LLM 调用（OpenAI），无工具      | 4    |
+| **Memory Service**    | Redis 会话缓存 + PostgreSQL 历史存储 | 3    |
+| **Frontend**          | 基础 UI（上传、查询、对话）          | 7    |
+| **集成测试**          | E2E 测试，性能基准                   | 5    |
+
+**交付物**：
+
+- 支持单个 Notebook 的文档上传和对话
+- 向量 + 全文混合检索
+- 基础对话记忆
+- Docker Compose 本地部署
+
+---
+
+### Phase 2: Production Features (6-8 weeks)
+
+**目标**：多租户、知识图谱、高级功能
+
+| 模块                   | 功能                                 | 天数 |
+| ---------------------- | ------------------------------------ | ---- |
+| **权限系统**           | RBAC，成员邀请，角色管理             | 5    |
+| **Knowledge Graph**    | EdgeQuake 集成，实体识别，关系抽取   | 10   |
+| **Agent Framework**    | 工具调用，技能注册（Web Search）     | 7    |
+| **Memory Enhancement** | 对话总结，长期记忆检索策略           | 5    |
+| **文档处理增强**       | DOCX/Markdown 支持，OCR，表格提取    | 7    |
+| **Observability**      | OpenTelemetry，Prometheus，Grafana   | 5    |
+| **Kubernetes 部署**    | Helm Charts，HPA，Service Mesh       | 7    |
+| **性能优化**           | 缓存策略，批处理优化，数据库索引调优 | 5    |
+
+**交付物**：
+
+- 多租户隔离
+- 知识图谱推理
+- 联网搜索
+- 生产级监控
+- Kubernetes 部署方案
+
+---
+
+### Phase 3: Advanced Features (8-10 weeks)
+
+**目标**：差异化功能，企业部署
+
+| 模块             | 功能                                      | 天数 |
+| ---------------- | ----------------------------------------- | ---- |
+| **Multi-Agent**  | 多 Agent 协作，任务分解                   | 10   |
+| **私有模型支持** | BGE-M3 私有部署，Ollama/vLLM 集成         | 7    |
+| **实时协作**     | WebSocket，多用户同时编辑                 | 8    |
+| **数据导出**     | Markdown/PDF 导出，Notion/Obsidian 集成   | 5    |
+| **高级分析**     | 知识图谱可视化，文档关系分析              | 7    |
+| **企业级安全**   | SSO (SAML/OIDC)，审计日志，数据加密       | 10   |
+| **成本优化**     | Embedding 缓存，LLM 路由（小模型+大模型） | 5    |
+
+**交付物**：
+
+- 企业级认证和审计
+- 私有化部署方案
+- 高级分析能力
+- 成本可控的推理架构
+
+---
+
+## 八、References & Resources
+
+### 技术文档
+
+1. **Milvus Documentation**: [https://milvus.io/docs](https://milvus.io/docs)
+2. **EdgeQuake (假想图数据库)**: 替代方案可使用 Neo4j、Nebula Graph
+3. **PostgreSQL Full-Text Search**: [https://www.postgresql.org/docs/current/textsearch.html](https://www.postgresql.org/docs/current/textsearch.html)
+4. **Tonic (Rust gRPC)**: [https://github.com/hyperium/tonic](https://github.com/hyperium/tonic)
+5. **LangChain RAG Best Practices**: [https://python.langchain.com/docs/use_cases/question_answering/](https://python.langchain.com/docs/use_cases/question_answering/)
+
+### 学术论文
+
+1. **RAG Survey (2023)**: "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks" - Lewis et al.
+2. **Hybrid Search**: "Fusion Retrieval for Dense and Sparse Representations" - SIGIR 2021
+3. **Knowledge Graph RAG**: "Graph-Augmented Language Models" - NeurIPS 2023
+
+### 开源项目参考
+
+1. **LangChain**: Python RAG 框架
+2. **LlamaIndex**: 文档索引和检索
+3. **Haystack**: 企业级 NLP 流水线
+4. **Qdrant**: Rust 向量数据库（Milvus 替代）
+5. **pgvector**: PostgreSQL 向量扩展
+
+### 相关博客
+
+1. **Building Production RAG Systems**: [https://www.anthropic.com/research/rag](https://www.anthropic.com/research/rag)
+2. **Hybrid Search at Scale**: Pinecone Engineering Blog
+3. **gRPC Best Practices in Rust**: [https://tokio.rs](https://tokio.rs)
+
+---
+
+## 总结
+
+本文详细设计了一个类 NotebookLM 的智能笔记系统，核心特性包括：
+
+✅ **严格的工作空间隔离**：基于 Notebook 的多租户架构
+✅ **高性能混合检索**：Milvus 向量 + PostgreSQL 全文 + EdgeQuake 图
+✅ **Production-Ready**：Rust 高并发，gRPC 微服务，Kubernetes 部署
+✅ **Advanced AI**：Agent 框架，技能管理，多层记忆模型
+✅ **可扩展性**：模块化设计，易于集成自定义组件
+
+**关键技术决策**：
+
+1. **Rust 而非 Python**：零成本抽象 + 内存安全 + 异步高并发
+2. **PostgreSQL 而非 Elasticsearch**：统一数据层，降低运维复杂度
+3. **gRPC 而非 HTTP**：类型安全，低延迟，内置 Load Balancing
+4. **EdgeQuake 而非传统图数据库**：专为 RAG 优化的图推理引擎
+
+**下一步行动**：
+
+1. Fork 本设计并根据业务需求调整
+2. 按 Phase 1 → 2 → 3 逐步实施
+3. 持续优化检索质量（A/B 测试 RRF vs LambdaMART）
+4. 收集用户反馈，迭代产品功能
+
+期待看到更多开源的 NotebookLM 替代方案出现！🚀
+
+---
+
+**关注我的博客**获取更多 AI 系统架构设计，欢迎在评论区讨论技术选型和实现细节！

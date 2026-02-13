@@ -673,8 +673,9 @@ html[data-theme="dark"] body .blog-post-page-wrapper article {
 }
 
 .markdown thead tr {
-  background: rgba(var(--ifm-color-primary-rgb), 0.05) !important;
+  background: rgba(var(--ifm-color-primary-rgb), 0.1) !important;
   backdrop-filter: blur(8px);
+  border-bottom: 2px solid var(--glass-border);
 }
 
 .markdown th {
@@ -685,27 +686,70 @@ html[data-theme="dark"] body .blog-post-page-wrapper article {
   letter-spacing: 0.05em;
   padding: 1rem !important;
   border: none !important;
+  border-right: 1px solid var(--glass-border) !important; /* Vertical separator */
   border-bottom: 2px solid var(--glass-border) !important;
+}
+
+.markdown th:last-child {
+  border-right: none !important;
 }
 
 .markdown td {
   padding: 1rem !important;
   border: none !important;
+  border-right: 1px solid var(--glass-border) !important; /* Vertical separator */
   border-bottom: 1px solid var(--glass-border) !important;
   font-size: 0.95rem;
   transition: all 0.2s ease;
+}
+
+.markdown td:last-child {
+  border-right: none !important;
 }
 
 .markdown tr:last-child td {
   border-bottom: none !important;
 }
 
+/* Zebra Striping */
+.markdown tr:nth-child(even) {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+[data-theme="dark"] .markdown tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.02);
+}
+
 .markdown tr:hover td {
-  background: rgba(var(--ifm-color-primary-rgb), 0.03);
+  background: rgba(var(--ifm-color-primary-rgb), 0.05);
 }
 
 [data-theme="dark"] .markdown tr:hover td {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Fix Mermaid diagrams getting cut off */
+/* Fix Mermaid diagrams getting cut off */
+.docusaurus-mermaid-container {
+  display: flex !important;
+  justify-content: center !important;
+  overflow-x: auto !important; /* Allow scrolling if too wide */
+  margin: 2rem 0;
+  padding: 1rem 0;
+}
+
+.docusaurus-mermaid-container svg {
+  max-width: 100% !important;
+  height: auto !important;
+}
+
+/* Reset p tag styles inside Mermaid to prevent markdown styles from affecting diagrams */
+.docusaurus-mermaid-container p {
+  font-size: unset !important;
+  line-height: unset !important;
+  margin: 0 !important;
+  color: inherit !important;
+  opacity: 1 !important;
 }
 
 /* Code Language Badge */
