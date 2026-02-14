@@ -1,75 +1,75 @@
 facebook:
   label: Facebook
   permalink: /facebook
-  description: Facebook tag description
+  description: Facebook 标签描述
 
 hello:
-  label: Hello
+  label: 你好
   permalink: /hello
-  description: Hello tag description
+  description: 你好标签描述
 
 docusaurus:
   label: Docusaurus
   permalink: /docusaurus
-  description: Docusaurus tag description
+  description: Docusaurus 标签描述
 
 hola:
   label: Hola
   permalink: /hola
-  description: Hola tag description
+  description: Hola 标签描述
 grpc:
   label: gRPC
   permalink: /grpc
-  description: gRPC framework
+  description: gRPC 框架
 http2:
   label: HTTP/2
   permalink: /http2
-  description: HTTP/2 protocol
+  description: HTTP/2 协议
 protocol:
-  label: Protocol
+  label: 协议
   permalink: /protocol
-  description: Protocol details
+  description: 协议详情
 deep-dive:
-  label: Deep Dive
+  label: 深度解析
   permalink: /deep-dive
-  description: In-depth technical articles
+  description: 深度技术文章
 java:
   label: Java
   permalink: /java
-  description: Java programming language
+  description: Java 编程语言
 netty:
   label: Netty
   permalink: /netty
-  description: Netty framework
+  description: Netty 框架
 distributed-systems:
-  label: Distributed Systems
+  label: 分布式系统
   permalink: /distributed-systems
-  description: Distributed systems architecture
+  description: 分布式系统架构
 protobuf:
   label: Protobuf
   permalink: /protobuf
-  description: Protocol Buffers serialization
+  description: Protocol Buffers 序列化
 idl:
   label: IDL
   permalink: /idl
-  description: Interface Definition Language
+  description: 接口定义语言
 api-design:
-  label: API Design
+  label: API 设计
   permalink: /api-design
-  description: API design patterns and best practices
+  description: API 设计模式与最佳实践
 production:
-  label: Production
+  label: 生产环境
   permalink: /production
-  description: Production environment practices
+  description: 生产环境实践
 health-check:
-  label: Health Check
+  label: 健康检查
   permalink: /health-check
-  description: Service health checking
+  description: 服务健康检查
 load-balancing:
-  label: Load Balancing
+  label: 负载均衡
   permalink: /load-balancing
-  description: Load balancing strategies
+  description: 负载均衡策略
 observability:
-  label: Observability
+  label: 可观测性
   permalink: /observability
-  description: Monitoring, tracing, and metrics
+  description: 监控、追踪与指标

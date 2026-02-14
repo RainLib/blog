@@ -1,27 +1,27 @@
 ai:
-  label: 人工智能
+  label: Artificial Intelligence
   color: "#10b981" # Emerald 500
-  description: AI 工具和模型
+  description: AI tools and models
 devtools:
-  label: 开发者工具
+  label: Developer Tools
   color: "#3b82f6" # Blue 500
 design:
-  label: 设计
+  label: Design
   color: "#f43f5e" # Rose 500
 library:
-  label: 库/框架
+  label: Library
   color: "#8b5cf6" # Violet 500
 search:
-  label: 搜索
+  label: Search
   color: "#f59e0b" # Amber 500
 animation:
-  label: 动画
+  label: Animation
   color: "#ec4899" # Pink 500
 react:
   label: React
   color: "#06b6d4" # Cyan 500
 tools:
-  label: 工具
+  label: Tools
   color: "#6366f1" # Indigo 500
 protobuf:
   label: Protobuf
@@ -30,8 +30,8 @@ idl:
   label: IDL
   color: "#f472b6" # Pink 400
 api-design:
-  label: API 设计
+  label: API Design
   color: "#fb923c" # Orange 400
 development:
-  label: 开发
+  label: Development
   color: "#0ea5e9" # Sky 500

@@ -1,26 +1,30 @@
 {
-  "link.title.探索": {
-    "message": "Explore",
-    "description": "The title of the footer links column with title=探索 in the footer"
-  },
-  "link.item.label.博客": {
-    "message": "Blog",
-    "description": "The label of footer link with label=博客 linking to /blog"
-  },
-  "link.item.label.GitHub": {
-    "message": "GitHub",
-    "description": "The label of footer link with label=GitHub linking to https://github.com/RainLib"
-  },
-  "copyright": {
-    "message": "© 2026 RainLib. Built for the Future.",
-    "description": "The footer copyright"
-  },
-  "link.title.Explore": {
-    "message": "Explore",
-    "description": "The title of the footer links column with title=Explore in the footer"
-  },
-  "link.item.label.Blog": {
-    "message": "Blog",
-    "description": "The label of footer link with label=Blog linking to /blog"
-  }
+    "link.title.探索": {
+        "message": "Explore",
+        "description": "The title of the footer links column with title=探索 in the footer"
+    },
+    "link.item.label.博客": {
+        "message": "Blog",
+        "description": "The label of footer link with label=博客 linking to /blog"
+    },
+    "link.item.label.GitHub": {
+        "message": "GitHub",
+        "description": "The label of footer link with label=GitHub linking to https://github.com/RainLib"
+    },
+    "copyright": {
+        "message": "© 2026 RainLib. Built for the Future.",
+        "description": "The footer copyright"
+    },
+    "link.title.Explore": {
+        "message": "Explore",
+        "description": "The title of the footer links column with title=Explore in the footer"
+    },
+    "link.item.label.Blog": {
+        "message": "Blog",
+        "description": "The label of footer link with label=Blog linking to /blog"
+    },
+    "link.item.label.推荐": {
+        "message": "Recommend",
+        "description": "The label of footer link with label=Recommend linking to /recommend"
+    }
 }

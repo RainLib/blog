@@ -123,14 +123,14 @@ const config: Config = {
       style: "dark",
       links: [
         {
-          title: "Explore",
+          title: "探索",
           items: [
             {
-              label: "Blog",
+              label: "博客",
               to: "/blog",
             },
             {
-              label: "Recommend",
+              label: "推荐",
               to: "/recommend",
             },
           ],
