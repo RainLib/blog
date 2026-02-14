@@ -833,25 +833,43 @@ html[data-theme="dark"] body .blog-post-page-wrapper article {
 
 /*
    ---------------------------
-   LIGHT MODE: Digital Clean
+   LIGHT MODE: Digital Clean (High Contrast)
    ---------------------------
 */
 [data-theme="light"] .docusaurus-mermaid-container .node rect,
 [data-theme="light"] .docusaurus-mermaid-container .node circle,
 [data-theme="light"] .docusaurus-mermaid-container .node polygon,
 [data-theme="light"] .docusaurus-mermaid-container .statediagram-state rect {
-  fill: rgba(255, 255, 255, 0.8) !important;
-  stroke: #1d1d1f !important;
+  fill: #ffffff !important;
+  stroke: #333333 !important;
   stroke-width: 1.5px !important;
-  filter: drop-shadow(4px 4px 0px rgba(0, 0, 0, 0.1)); /* Pop Art Shadow */
+  filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+[data-theme="light"] .docusaurus-mermaid-container .node .label {
+  color: #333333 !important;
+  fill: #333333 !important;
+  font-weight: 500;
+}
+
+/* Edges in Light Mode */
+[data-theme="light"] .docusaurus-mermaid-container .edgePath .path {
+  stroke: #555555 !important;
+  stroke-width: 1.5px !important;
+  opacity: 1;
+}
+
+[data-theme="light"] .docusaurus-mermaid-container .marker {
+  fill: #555555 !important;
+  stroke: #555555 !important;
 }
 
 [data-theme="light"] .docusaurus-mermaid-container .cluster rect,
 [data-theme="light"] .docusaurus-mermaid-container .statediagram-cluster rect {
   fill: rgba(0, 0, 0, 0.02) !important;
-  stroke: #1d1d1f !important;
+  stroke: #cccccc !important;
   stroke-width: 1.5px !important;
-  stroke-dasharray: 6 4 !important; /* Stylish dashes */
+  stroke-dasharray: 4 4 !important;
 }
 
 /*
