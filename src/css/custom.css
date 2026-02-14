@@ -31,6 +31,20 @@
   --glass-border: rgba(0, 0, 0, 0.08);
   --glass-shadow: rgba(0, 0, 0, 0.03);
   --neon-glow: rgba(16, 98, 205, 0.15);
+
+  /* --- Mermaid Haus Theme Variables --- */
+  --mermaid-node-bg: #ffffff;
+  --mermaid-node-border: #333333;
+  --mermaid-node-glow: none;
+  --mermaid-text-color: #1d1d1f;
+  --mermaid-edge-color: #888888;
+  --mermaid-edge-glow: none;
+  --mermaid-font-family: "Inter", "Outfit", sans-serif;
+  --mermaid-cluster-bg: rgba(0, 0, 0, 0.02);
+  --mermaid-cluster-border: #cccccc;
+  --mermaid-actor-border: #333333;
+  --mermaid-msg-color: #333333;
+  --mermaid-font-size: 0.9rem;
 }
 
 [data-theme="dark"] {
@@ -50,12 +64,23 @@
   --ifm-heading-color: #ffffff;
   --ifm-link-color: #66fcf1;
 
-  /* Glass - Ambient & Deep */
-  --glass-bg: rgba(31, 40, 51, 0.6);
-  --glass-border: rgba(102, 252, 241, 0.15);
   --glass-shadow: rgba(0, 0, 0, 0.3);
   --neon-glow: rgba(102, 252, 241, 0.4);
   --neon-pink: #d90166; /* Muted Magenta */
+
+  /* --- Mermaid Haus Theme Variables (Dark Mode) --- */
+  --mermaid-node-bg: rgba(10, 10, 12, 0.85);
+  --mermaid-node-border: #66fcf1;
+  --mermaid-node-glow: drop-shadow(0 0 6px rgba(102, 252, 241, 0.3));
+  --mermaid-text-color: #ffffff;
+  --mermaid-edge-color: #c5fcf9;
+  --mermaid-edge-glow: none; /* Removed glow from edges to reduce clutter */
+  --mermaid-font-family: "JetBrains Mono", monospace;
+  --mermaid-cluster-bg: rgba(102, 252, 241, 0.02);
+  --mermaid-cluster-border: #ec4899;
+  --mermaid-actor-border: #ec4899;
+  --mermaid-msg-color: #e0fcfb;
+  --mermaid-font-size: 0.95rem;
 }
 
 /* Glassmorphism Utilities */
@@ -847,9 +872,8 @@ html[data-theme="dark"] body .blog-post-page-wrapper article {
   border: 1px solid rgba(102, 252, 241, 0.15);
 }
 
-/* --- Mermaid Diagram Styling: Liquid Metal Aesthetic & Fashionable --- */
+/* --- Mermaid Diagram Styling: Liquid Metal Aesthetic (Haus Theme) --- */
 
-/* Base Container */
 .docusaurus-mermaid-container {
   display: flex !important;
   justify-content: center !important;
@@ -859,193 +883,116 @@ html[data-theme="dark"] body .blog-post-page-wrapper article {
 }
 
 .docusaurus-mermaid-container svg {
-  font-family: "Outfit", sans-serif !important;
-  max-width: 85% !important; /* Constrain width */
+  font-family: var(--mermaid-font-family) !important;
+  max-width: 85% !important;
   height: auto !important;
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-  font-size: 0.8rem !important; /* Root shrink: Global text scaling */
-  cursor: zoom-in !important; /* Visual cue: Click to Zoom */
-
-  /* Dynamic Sizing: Contrain height to avoid huge vertical scroll, allow width to auto-scale */
+  font-size: 0.8rem !important;
+  cursor: zoom-in !important;
   max-height: 50vh !important;
   width: auto !important;
   margin: 0 auto;
   display: block;
+  color: var(--mermaid-text-color) !important;
 }
 
-/* User Request: Removed fixed 50% width rule in favor of dynamic max-height */
-
-/*
-   ---------------------------
-   LIGHT MODE: Digital Clean (High Contrast)
-   ---------------------------
-*/
-[data-theme="light"] .docusaurus-mermaid-container .node rect,
-[data-theme="light"] .docusaurus-mermaid-container .node circle,
-[data-theme="light"] .docusaurus-mermaid-container .node polygon,
-[data-theme="light"] .docusaurus-mermaid-container .statediagram-state rect {
-  fill: #ffffff !important;
-  stroke: #333333 !important;
+/* 1. Nodes: Aesthetic Logic */
+.docusaurus-mermaid-container .node rect,
+.docusaurus-mermaid-container .node circle,
+.docusaurus-mermaid-container .node polygon,
+.docusaurus-mermaid-container .statediagram-state rect {
+  fill: var(--mermaid-node-bg) !important;
+  stroke: var(--mermaid-node-border) !important;
   stroke-width: 1.5px !important;
-  filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.1));
-}
-
-[data-theme="light"] .docusaurus-mermaid-container .node .label {
-  color: #333333 !important;
-  fill: #333333 !important;
-  font-weight: 500;
-}
-
-/* Edges in Light Mode */
-[data-theme="light"] .docusaurus-mermaid-container .edgePath .path {
-  stroke: #555555 !important;
-  stroke-width: 1.5px !important;
-  opacity: 1;
-}
-
-[data-theme="light"] .docusaurus-mermaid-container .marker {
-  fill: #555555 !important;
-  stroke: #555555 !important;
-}
-
-[data-theme="light"] .docusaurus-mermaid-container .cluster rect,
-[data-theme="light"] .docusaurus-mermaid-container .statediagram-cluster rect {
-  fill: rgba(0, 0, 0, 0.02) !important;
-  stroke: #cccccc !important;
-  stroke-width: 1.5px !important;
-  stroke-dasharray: 4 4 !important;
-}
-
-/*
-   ---------------------------
-   DARK MODE: Cyberpunk / Liquid Metal
-   ---------------------------
-*/
-
-/* 1. Typography */
-[data-theme="dark"] .docusaurus-mermaid-container svg {
-  color: #fff !important;
-  font-family: "JetBrains Mono", monospace !important;
-  letter-spacing: -0.02em;
-}
-
-/* 2. Nodes: Neon Glass */
-[data-theme="dark"] .docusaurus-mermaid-container .node rect,
-[data-theme="dark"] .docusaurus-mermaid-container .node circle,
-[data-theme="dark"] .docusaurus-mermaid-container .node polygon,
-[data-theme="dark"] .docusaurus-mermaid-container .statediagram-state rect {
-  fill: rgba(10, 10, 12, 0.7) !important; /* Deep dark fill */
-  stroke: #66fcf1 !important; /* Cyan Neon */
-  stroke-width: 1.5px !important;
-  filter: drop-shadow(0 0 10px rgba(102, 252, 241, 0.25)); /* Glow */
-  rx: 8px !important; /* Rounded corners for rects if supported */
+  filter: var(--mermaid-node-glow) !important;
+  rx: 8px !important;
   ry: 8px !important;
 }
 
-/* 3. Text inside Nodes */
-/* 3. Text inside Nodes */
-[data-theme="dark"] .docusaurus-mermaid-container .node .label {
-  color: #ffffff !important;
-  fill: #ffffff !important;
+/* 2. Text Logic */
+.docusaurus-mermaid-container .node .label {
+  color: var(--mermaid-text-color) !important;
+  fill: var(--mermaid-text-color) !important;
   font-weight: 600;
-  text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
-  font-size: 0.75rem !important; /* Smaller text avoids cutoff */
+  text-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+  font-size: var(--mermaid-font-size) !important;
 }
 
-/* Specific fix for foreignObject text clipping */
-[data-theme="dark"]
-  .docusaurus-mermaid-container
-  .node
-  .label
-  foreignObject
-  div {
+.docusaurus-mermaid-container .node .label foreignObject div {
   line-height: 1.2 !important;
   font-size: 0.75rem !important;
   padding: 0 4px !important;
 }
 
-/* 4. Edges: Fluid Energy */
-[data-theme="dark"] .docusaurus-mermaid-container .edgePath .path {
-  stroke: #a6fcf6 !important; /* Lighter Cyan */
+/* 3. Edges Logic */
+.docusaurus-mermaid-container .edgePath .path {
+  stroke: var(--mermaid-edge-color) !important;
   stroke-width: 2px !important;
   opacity: 0.8;
-  filter: drop-shadow(0 0 4px rgba(102, 252, 241, 0.4));
+  filter: var(--mermaid-edge-glow) !important;
 }
 
-[data-theme="dark"] .docusaurus-mermaid-container .marker {
-  fill: #66fcf1 !important;
-  stroke: #66fcf1 !important;
+.docusaurus-mermaid-container .marker {
+  fill: var(--mermaid-node-border) !important;
+  stroke: var(--mermaid-node-border) !important;
   stroke-width: 1px !important;
 }
 
-/* 5. Subgraphs / Clusters: Dashed & Architectural */
-[data-theme="dark"] .docusaurus-mermaid-container .cluster rect,
-[data-theme="dark"] .docusaurus-mermaid-container .statediagram-cluster rect {
-  fill: rgba(102, 252, 241, 0.02) !important; /* Subtle tint */
-  stroke: #ec4899 !important; /* Pink/Magenta for contrast */
+/* 4. Subgraphs / Clusters */
+.docusaurus-mermaid-container .cluster rect,
+.docusaurus-mermaid-container .statediagram-cluster rect {
+  fill: var(--mermaid-cluster-bg) !important;
+  stroke: var(--mermaid-cluster-border) !important;
   stroke-width: 1.5px !important;
-  stroke-dasharray: 8 6 !important; /* Distinct dashes */
+  stroke-dasharray: 8 6 !important;
 }
 
-[data-theme="dark"] .docusaurus-mermaid-container .cluster .label,
-[data-theme="dark"] .docusaurus-mermaid-container .statediagram-cluster .label {
-  fill: #ec4899 !important; /* Matching label color */
+.docusaurus-mermaid-container .cluster .label,
+.docusaurus-mermaid-container .statediagram-cluster .label {
+  fill: var(--mermaid-cluster-border) !important;
   font-weight: bold;
   text-transform: uppercase;
   font-size: 0.8rem;
   letter-spacing: 0.1em;
 }
 
-/* 6. Edge Labels: Floating HUD Chips */
-/* Target the inner HTML for edge labels to avoid SVG group issues */
-[data-theme="dark"] .docusaurus-mermaid-container .edgeLabel {
-  /* Reset group styles that interfere */
+/* 5. Edge Labels */
+.docusaurus-mermaid-container .edgeLabel {
   background-color: transparent !important;
   border: none !important;
-  box-shadow: none !important;
 }
 
-[data-theme="dark"] .docusaurus-mermaid-container .edgeLabel .label,
-[data-theme="dark"] .docusaurus-mermaid-container .labelBkg,
-[data-theme="dark"] .docusaurus-mermaid-container .edgeLabel span {
-  background-color: transparent !important; /* No gray box */
-  color: #ffffff !important;
+.docusaurus-mermaid-container .edgeLabel .label,
+.docusaurus-mermaid-container .labelBkg,
+.docusaurus-mermaid-container .edgeLabel span {
+  background-color: transparent !important;
+  color: var(--mermaid-text-color) !important;
   border: none !important;
-  border-bottom: 2px solid #66fcf1 !important; /* The "little horizontal line" */
+  border-bottom: 2px solid var(--mermaid-node-border) !important;
   border-radius: 0 !important;
   padding: 0 4px 2px 4px !important;
   font-size: 0.85em;
   font-weight: 600;
-  text-shadow:
-    0 0 4px #000,
-    0 0 8px #000; /* Shadow to lift text off lines */
-  box-shadow: none !important;
-  display: inline-block;
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
 }
 
-/* Ensure text color applies deeply */
-[data-theme="dark"] .docusaurus-mermaid-container .edgeLabel p {
-  color: #ffffff !important;
-  margin: 0 !important;
+/* 6. Sequence Specifics */
+.docusaurus-mermaid-container .actor {
+  stroke: var(--mermaid-actor-border) !important;
+  filter: var(--mermaid-node-glow) !important;
 }
 
-/* 7. Sequence Diagram actors */
-[data-theme="dark"] .docusaurus-mermaid-container .actor {
-  /* Inherits node styles usually, but can override */
-  stroke: #ec4899 !important; /* Pink actors */
-  filter: drop-shadow(0 0 8px rgba(236, 72, 153, 0.4));
-}
-[data-theme="dark"] .docusaurus-mermaid-container text.actor > tspan {
-  fill: #fff !important;
+.docusaurus-mermaid-container text.actor > tspan {
+  fill: var(--mermaid-text-color) !important;
 }
 
-/* 8. Sequence Messages */
-[data-theme="dark"] .docusaurus-mermaid-container .messageLine0,
-[data-theme="dark"] .docusaurus-mermaid-container .messageLine1 {
-  stroke: #66fcf1 !important;
+.docusaurus-mermaid-container .messageLine0,
+.docusaurus-mermaid-container .messageLine1 {
+  stroke: var(--mermaid-node-border) !important;
 }
-[data-theme="dark"] .docusaurus-mermaid-container .messageText {
-  fill: #e0fcfb !important;
+
+.docusaurus-mermaid-container .messageText {
+  fill: var(--mermaid-msg-color) !important;
   font-size: 0.9em;
   stroke: none !important;
 }
@@ -1232,4 +1179,50 @@ html body .blog-post-page-wrapper .container {
   max-width: 100vw !important;
   max-height: 100vh !important;
   object-fit: contain !important;
+}
+
+/* --- Mermaid Lightbox / Zoom Modal --- */
+#mermaid-modal {
+  background-color: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+}
+
+#mermaid-modal[data-theme="light"] {
+  background-color: rgba(255, 255, 255, 0.7) !important;
+}
+
+#mermaid-modal[data-theme="dark"] {
+  background-color: rgba(10, 10, 12, 0.85) !important;
+}
+
+/* Control Buttons Theme-aware colors */
+#mermaid-modal .mermaid-modal-controls button {
+  color: #333 !important;
+}
+
+#mermaid-modal[data-theme="dark"] .mermaid-modal-controls button {
+  color: #e0e0e0 !important;
+}
+
+#mermaid-modal .mermaid-modal-controls button:hover {
+  background-color: rgba(var(--ifm-color-primary-rgb), 0.1) !important;
+  color: var(--ifm-color-primary) !important;
+}
+
+#mermaid-modal[data-theme="dark"]
+  .mermaid-modal-controls
+  div[style*="background-color"] {
+  background-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* SVG in modal — override page-level sizing constraints.
+ * The cloned SVG retains its original embedded <style> so it renders
+ * identically to the page; we only need to remove the 50vh/85% caps. */
+#mermaid-modal .docusaurus-mermaid-container svg {
+  max-width: 95vw !important;
+  max-height: 95vh !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
 }

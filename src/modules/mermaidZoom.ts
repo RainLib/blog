@@ -30,12 +30,10 @@ if (ExecutionEnvironment.canUseDOM) {
       left: "0",
       width: "100vw",
       height: "100vh",
-      backgroundColor: "rgba(10, 10, 12, 0.95)",
       zIndex: "9999",
       display: "none",
       opacity: "0",
       transition: "opacity 0.3s ease",
-      backdropFilter: "blur(5px)",
       overflow: "hidden",
     });
 
@@ -253,10 +251,16 @@ if (ExecutionEnvironment.canUseDOM) {
     window.addEventListener("mouseup", onMouseUp);
   };
 
-  const openModal = (clonedSvg: SVGElement) => {
+  const openModal = (clonedSvg: SVGElement, originalClasses: string[] = []) => {
     const modal = document.getElementById("mermaid-modal");
     const content = document.getElementById("mermaid-modal-content");
     if (!modal || !content) return;
+
+    // Sync theme attributes from html tag
+    const html = document.documentElement;
+    modal.setAttribute("data-theme", html.getAttribute("data-theme") || "dark");
+    modal.className = html.className; // Sync classes like 'theme-dark' or 'theme-light'
+    modal.classList.add("mermaid-zoom-active");
 
     // Reset State
     scale = 1;
@@ -269,31 +273,78 @@ if (ExecutionEnvironment.canUseDOM) {
     // Inject Content
     content.innerHTML = "";
 
-    // Create wrapper
-    const wrapper = document.createElement("div");
-    wrapper.className = "docusaurus-mermaid-container";
-    wrapper.style.width = "100%";
-    wrapper.style.height = "100%";
-    wrapper.style.display = "flex";
-    wrapper.style.justifyContent = "center";
-    wrapper.style.alignItems = "center";
+    // Create wrapper to preserve CSS context
+    const outerWrapper = document.createElement("div");
+    outerWrapper.className = "blog-post-page-wrapper";
+    outerWrapper.style.width = "100%";
+    outerWrapper.style.height = "100%";
+    outerWrapper.style.display = "flex";
+    outerWrapper.style.justifyContent = "center";
+    outerWrapper.style.alignItems = "center";
 
-    // Disable native dragging on wrapper
-    wrapper.ondragstart = () => false;
+    const innerWrapper = document.createElement("div");
+    innerWrapper.className = "markdown";
+    innerWrapper.style.width = "100%";
+    innerWrapper.style.height = "100%";
+    innerWrapper.style.display = "flex";
+    innerWrapper.style.justifyContent = "center";
+    innerWrapper.style.alignItems = "center";
 
-    // Styling ensuring fit
-    clonedSvg.style.maxWidth = "90vw";
-    clonedSvg.style.maxHeight = "90vh";
+    const containerWrapper = document.createElement("div");
+    containerWrapper.className = "docusaurus-mermaid-container";
+    // Inherit classes from original container for parity (e.g. CSS Modules classes)
+    originalClasses.forEach((cls) => {
+      if (cls && cls !== "docusaurus-mermaid-container") {
+        containerWrapper.classList.add(cls);
+      }
+    });
+    containerWrapper.style.width = "100%";
+    containerWrapper.style.height = "100%";
+    containerWrapper.style.display = "flex";
+    containerWrapper.style.justifyContent = "center";
+    containerWrapper.style.alignItems = "center";
+
+    // Disable native dragging
+    containerWrapper.ondragstart = () => false;
+
+    // Fix duplicate SVG ID conflict: the cloned SVG has the same ID as the
+    // page SVG, and its embedded <style> uses ID-scoped selectors (e.g.
+    // `#mermaid-svg-xxx .node rect { ... }`). Two SVGs with the same ID causes
+    // style conflicts. Assign a unique ID to the clone and update its <style>.
+    const originalId = clonedSvg.getAttribute("id");
+    if (originalId) {
+      const newId = originalId + "_zoom";
+      clonedSvg.setAttribute("id", newId);
+      // Update embedded <style> blocks to reference the new ID
+      clonedSvg.querySelectorAll("style").forEach((styleEl) => {
+        styleEl.textContent = (styleEl.textContent || "").replace(
+          new RegExp(`#${CSS.escape(originalId)}`, "g"),
+          `#${newId}`,
+        );
+      });
+      // Update any aria-roledescription or data attributes that reference the ID
+      clonedSvg.querySelectorAll(`[id^="${originalId}"]`).forEach((el) => {
+        const id = el.getAttribute("id");
+        if (id) {
+          el.setAttribute("id", id.replace(originalId, newId));
+        }
+      });
+    }
+
+    // Styling ensuring fit — allow zoom scaling without page constraints
+    clonedSvg.style.maxWidth = "95vw";
+    clonedSvg.style.maxHeight = "95vh";
     clonedSvg.style.height = "auto";
     clonedSvg.style.width = "auto";
     clonedSvg.style.background = "transparent";
-    // Disable native dragging on SVG (Critical fix!)
-    clonedSvg.style.pointerEvents = "auto"; // Ensure clicks work
+    clonedSvg.style.pointerEvents = "auto";
     clonedSvg.setAttribute("draggable", "false");
     clonedSvg.ondragstart = () => false;
 
-    wrapper.appendChild(clonedSvg);
-    content.appendChild(wrapper);
+    containerWrapper.appendChild(clonedSvg);
+    innerWrapper.appendChild(containerWrapper);
+    outerWrapper.appendChild(innerWrapper);
+    content.appendChild(outerWrapper);
 
     // Show
     modal.style.display = "block";
@@ -330,7 +381,8 @@ if (ExecutionEnvironment.canUseDOM) {
       container.addEventListener("click", (e) => {
         e.preventDefault();
         const clonedSvg = svg.cloneNode(true) as SVGElement;
-        openModal(clonedSvg);
+        const classes = Array.from(container.classList);
+        openModal(clonedSvg, classes);
       });
     });
   };
