@@ -192,6 +192,41 @@
   animation: float 6s ease-in-out infinite;
 }
 
+/* Premium Card Glow - Synchronized using pseudo-elements */
+.premium-card-glow {
+  position: relative;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.premium-card-glow::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  background: var(--glow-bg, linear-gradient(to right, #ec4899, #8b5cf6));
+  border-radius: inherit;
+  filter: blur(15px);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.premium-card-glow:hover {
+  transform: translateY(-5px);
+}
+
+.premium-card-glow:hover::before {
+  opacity: 0.7;
+}
+
+.glow-emerald::before {
+  --glow-bg: linear-gradient(to right, #10b981, #06b6d4);
+}
+
+.glow-pink::before {
+  --glow-bg: linear-gradient(to right, #ec4899, #8b5cf6);
+}
+
 .hero-button-primary {
   background-color: var(--ifm-color-primary) !important;
   color: #ffffff !important;

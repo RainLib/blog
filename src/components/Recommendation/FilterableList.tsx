@@ -57,7 +57,6 @@ export default function FilterableList({ recommendations, tags }: Props) {
 
   return (
     <div>
-      {/* Tag Filters */}
       {/* Tag Filters - Floating Island */}
       <div className="flex justify-center mb-12 sticky top-16 z-30">
         <div className="bg-white/70 dark:bg-[#09090b]/90 backdrop-blur-xl rounded-full border border-black/5 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.4)] p-1.5 flex flex-wrap gap-1 max-w-[90vw] overflow-x-auto no-scrollbar justify-center">
@@ -112,7 +111,7 @@ export default function FilterableList({ recommendations, tags }: Props) {
         variants={container}
         initial="hidden"
         animate="show"
-        className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6"
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
       >
         <AnimatePresence mode="popLayout">
           {visibleItems.map((item) => (
@@ -123,131 +122,121 @@ export default function FilterableList({ recommendations, tags }: Props) {
               initial="hidden"
               animate="show"
               exit={{ opacity: 0, scale: 0.9 }}
-              whileHover="hover"
-              className="group relative break-inside-avoid mb-6"
+              className="break-inside-avoid mb-6 h-full group"
             >
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-pink-500 to-violet-500 rounded-2xl opacity-0 group-hover:opacity-100 transition duration-500 blur-md group-hover:blur-lg"></div>
-              <motion.div
-                variants={{
-                  hover: {
-                    y: -5,
-                    boxShadow:
-                      "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)",
-                  },
-                }}
-                transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                className="relative h-full bg-white dark:bg-[#18181b]/90 backdrop-blur-sm rounded-xl p-6 flex flex-col border border-zinc-200 dark:border-zinc-800 transition-colors duration-300 group-hover:border-pink-500/30 overflow-hidden"
-              >
-                {/* Shine Effect */}
-                <motion.div
-                  variants={{
-                    show: { x: "-100%", opacity: 0 },
-                    hover: {
-                      x: ["-100%", "200%"],
-                      opacity: 1,
-                      transition: {
-                        repeat: Infinity,
-                        duration: 1.5,
-                        ease: "linear",
-                      },
-                    },
-                  }}
-                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent z-10 pointer-events-none -translate-x-full"
-                ></motion.div>
-
-                <div className="flex items-start justify-between mb-4 relative z-20">
-                  <div className="flex items-center gap-3">
-                    <motion.div
-                      variants={{
-                        hover: {
-                          scale: 1.25,
-                          rotate: 12,
+              <div className="premium-card-glow glow-pink h-full rounded-xl">
+                <div className="relative h-full bg-white dark:bg-[#18181b]/90 backdrop-blur-sm rounded-xl p-6 flex flex-col border border-zinc-200 dark:border-zinc-800 transition-colors duration-300 group-hover:border-pink-500/30 overflow-hidden">
+                  {/* Shine Effect */}
+                  <motion.div
+                    variants={{
+                      show: { x: "-100%", opacity: 0 },
+                      hover: {
+                        x: ["-100%", "200%"],
+                        opacity: 1,
+                        transition: {
+                          repeat: Infinity,
+                          duration: 1.5,
+                          ease: "linear",
                         },
-                      }}
-                      transition={{
-                        type: "spring",
-                        stiffness: 300,
-                        damping: 15,
-                      }}
-                      className="w-12 h-12 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 flex items-center justify-center overflow-hidden shadow-sm dark:shadow-none"
-                    >
-                      {item.icon?.startsWith("http") ||
-                      item.icon?.startsWith("/") ? (
-                        <img
-                          src={item.icon}
-                          alt={item.title}
-                          className="w-full h-full object-contain p-2"
-                        />
-                      ) : (
-                        <span className="text-2xl">{item.icon}</span>
-                      )}
-                    </motion.div>
-                    <div>
-                      <h3 className="font-bold text-base m-0 text-zinc-900 dark:text-zinc-100 line-clamp-1">
-                        {item.title}
-                      </h3>
-                      <div className="text-[10px] text-zinc-400 font-mono mt-0.5">
-                        {item.date
-                          ? new Date(item.date).toLocaleDateString(
-                              i18n.currentLocale,
-                              {
-                                year: "numeric",
-                                month: "short",
-                                day: "numeric",
-                              },
-                            )
-                          : "Recently"}
-                      </div>
-                      <div className="flex flex-wrap gap-1 mt-1.5">
-                        {item.tags?.slice(0, 2).map((tag) => (
-                          <span
-                            key={tag}
-                            className="text-[10px] font-mono px-1.5 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-500"
-                          >
-                            <Translate
-                              id={`recommend.tag.${tag.toLowerCase()}`}
+                      },
+                    }}
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent z-10 pointer-events-none -translate-x-full"
+                  ></motion.div>
+
+                  <div className="flex items-start justify-between mb-4 relative z-20">
+                    <div className="flex items-center gap-3">
+                      <motion.div
+                        variants={{
+                          hover: {
+                            scale: 1.25,
+                            rotate: 12,
+                          },
+                        }}
+                        transition={{
+                          type: "spring",
+                          stiffness: 300,
+                          damping: 15,
+                        }}
+                        className="w-12 h-12 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 flex items-center justify-center overflow-hidden shadow-sm dark:shadow-none"
+                      >
+                        {item.icon?.startsWith("http") ||
+                        item.icon?.startsWith("/") ? (
+                          <img
+                            src={item.icon}
+                            alt={item.title}
+                            className="w-full h-full object-contain p-2"
+                          />
+                        ) : (
+                          <span className="text-2xl">{item.icon}</span>
+                        )}
+                      </motion.div>
+                      <div>
+                        <h3 className="font-bold text-base m-0 text-zinc-900 dark:text-zinc-100 line-clamp-1">
+                          {item.title}
+                        </h3>
+                        <div className="text-[10px] text-zinc-400 font-mono mt-0.5">
+                          {item.date
+                            ? new Date(item.date).toLocaleDateString(
+                                i18n.currentLocale,
+                                {
+                                  year: "numeric",
+                                  month: "short",
+                                  day: "numeric",
+                                },
+                              )
+                            : "Recently"}
+                        </div>
+                        <div className="flex flex-wrap gap-1 mt-1.5">
+                          {item.tags?.slice(0, 2).map((tag) => (
+                            <span
+                              key={tag}
+                              className="text-[10px] font-mono px-1.5 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-500"
                             >
-                              {tags[tag]?.label || tag}
-                            </Translate>
-                          </span>
-                        ))}
+                              <Translate
+                                id={`recommend.tag.${tag.toLowerCase()}`}
+                              >
+                                {tags[tag]?.label || tag}
+                              </Translate>
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
 
-                <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-6 line-clamp-3 leading-relaxed flex-grow">
-                  {item.description || item.excerpt}
-                </p>
+                  <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-6 line-clamp-3 leading-relaxed flex-grow">
+                    {item.description || item.excerpt}
+                  </p>
 
-                <div className="mt-auto flex items-center gap-3 pt-4 border-t border-zinc-100 dark:border-zinc-800/50">
-                  <Link
-                    to={`/recommend/${item.slug}`}
-                    className="text-sm font-semibold text-zinc-900 dark:text-white hover:text-primary transition-colors after:absolute after:inset-0 after:content-['']"
-                  >
-                    <Translate id="recommend.card.read_more">
-                      Read More
-                    </Translate>
-                  </Link>
-                  <Link
-                    to={item.url}
-                    className="relative z-10 ml-auto text-xs text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 flex items-center gap-1"
-                  >
-                    <Translate id="recommend.card.visit">Visit</Translate>{" "}
-                    <motion.span
-                      variants={{
-                        hover: {
-                          x: 4,
-                          y: -2,
-                        },
-                      }}
-                      className="text-[10px] inline-block"
+                  <div className="mt-auto flex items-center gap-3 pt-4 border-t border-zinc-100 dark:border-zinc-800/50">
+                    <Link
+                      to={`/recommend/${item.slug}`}
+                      className="text-sm font-semibold text-zinc-900 dark:text-white hover:text-primary transition-colors after:absolute after:inset-0 after:content-['']"
                     >
-                      ↗
-                    </motion.span>
-                  </Link>
+                      <Translate id="recommend.card.read_more">
+                        Read More
+                      </Translate>
+                    </Link>
+                    <Link
+                      to={item.url}
+                      className="relative z-10 ml-auto text-xs text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 flex items-center gap-1"
+                    >
+                      <Translate id="recommend.card.visit">Visit</Translate>{" "}
+                      <motion.span
+                        variants={{
+                          hover: {
+                            x: 4,
+                            y: -2,
+                          },
+                        }}
+                        className="text-[10px] inline-block"
+                      >
+                        ↗
+                      </motion.span>
+                    </Link>
+                  </div>
                 </div>
-              </motion.div>
+              </div>
             </motion.div>
           ))}
         </AnimatePresence>
