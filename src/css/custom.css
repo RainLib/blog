@@ -821,7 +821,15 @@ html[data-theme="dark"] body .blog-post-page-wrapper article {
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   font-size: 0.8rem !important; /* Root shrink: Global text scaling */
   cursor: zoom-in !important; /* Visual cue: Click to Zoom */
+
+  /* Dynamic Sizing: Contrain height to avoid huge vertical scroll, allow width to auto-scale */
+  max-height: 50vh !important;
+  width: auto !important;
+  margin: 0 auto;
+  display: block;
 }
+
+/* User Request: Removed fixed 50% width rule in favor of dynamic max-height */
 
 /*
    ---------------------------
