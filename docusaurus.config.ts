@@ -168,7 +168,8 @@ const config: Config = {
         hashed: true,
         indexBlog: true,
         indexDocs: false, // Docs are disabled
-        language: ["en"],
+        indexPages: true, // Index custom pages like /recommend
+        language: ["en", "zh"],
         highlightSearchTermsOnTargetPage: true,
       },
     ],
