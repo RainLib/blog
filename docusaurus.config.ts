@@ -96,7 +96,7 @@ const config: Config = {
     // Replace with your project's social card
     image: "img/hero.png",
     colorMode: {
-      defaultMode: "dark",
+      defaultMode: "light",
       disableSwitch: false,
       respectPrefersColorScheme: false,
     },
