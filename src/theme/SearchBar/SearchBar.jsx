@@ -314,7 +314,12 @@ export default function SearchBar() {
                   value={query}
                   onChange={handleInputChange}
                   onKeyDown={handleKeyDown}
-                  placeholder="Search..."
+                  placeholder={translate({
+                    id: "theme.SearchBar.label",
+                    message: "Search",
+                    description:
+                      "The ARIA label and placeholder for search button",
+                  })}
                   autoComplete="off"
                   autoCorrect="off"
                   spellCheck="false"
@@ -326,7 +331,15 @@ export default function SearchBar() {
                 <div className={styles.resultsContainer}>
                   {results.length === 0 && !isLoading && (
                     <div className={styles.noResults}>
-                      No results found for "{query}"
+                      {translate(
+                        {
+                          id: "theme.SearchBar.noResultsFound",
+                          message: 'No results found for "{query}"',
+                          description:
+                            "The message shown when no search results are found",
+                        },
+                        { query },
+                      )}
                     </div>
                   )}
 
@@ -362,16 +375,37 @@ export default function SearchBar() {
               <div className={styles.footer}>
                 <div className={styles.shortcutHint}>
                   <kbd className={styles.shortcutKey}>↵</kbd>
-                  <span>to select</span>
+                  <span>
+                    {translate({
+                      id: "theme.SearchBar.shortcut.select",
+                      message: "to select",
+                      description:
+                        "The label for the select shortcut in search modal footer",
+                    })}
+                  </span>
                 </div>
                 <div className={styles.shortcutHint}>
                   <kbd className={styles.shortcutKey}>↓</kbd>
                   <kbd className={styles.shortcutKey}>↑</kbd>
-                  <span>to navigate</span>
+                  <span>
+                    {translate({
+                      id: "theme.SearchBar.shortcut.navigate",
+                      message: "to navigate",
+                      description:
+                        "The label for the navigate shortcut in search modal footer",
+                    })}
+                  </span>
                 </div>
                 <div className={styles.shortcutHint}>
                   <kbd className={styles.shortcutKey}>esc</kbd>
-                  <span>to close</span>
+                  <span>
+                    {translate({
+                      id: "theme.SearchBar.shortcut.close",
+                      message: "to close",
+                      description:
+                        "The label for the close shortcut in search modal footer",
+                    })}
+                  </span>
                 </div>
               </div>
             </div>

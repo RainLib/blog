@@ -453,6 +453,22 @@
         "message": "搜索",
         "description": "The ARIA label and placeholder for search button"
     },
+    "theme.SearchBar.noResultsFound": {
+        "message": "没有找到关于 \"{query}\" 的结果",
+        "description": "The message shown when no search results are found"
+    },
+    "theme.SearchBar.shortcut.select": {
+        "message": "选择",
+        "description": "The label for the select shortcut in search modal footer"
+    },
+    "theme.SearchBar.shortcut.navigate": {
+        "message": "切换",
+        "description": "The label for the navigate shortcut in search modal footer"
+    },
+    "theme.SearchBar.shortcut.close": {
+        "message": "关闭",
+        "description": "The label for the close shortcut in search modal footer"
+    },
     "theme.blog.post.plurals": {
         "message": "{count} 篇博文",
         "description": "Pluralized label for \"{count} posts\". Use as much plural forms (separated by \"|\") as your language support (see https://www.unicode.org/cldr/cldr-aux/charts/34/supplemental/language_plural_rules.html)"
