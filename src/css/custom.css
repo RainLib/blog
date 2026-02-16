@@ -57,16 +57,18 @@
   --ifm-color-primary-lighter: #c5fcf9;
   --ifm-color-primary-lightest: #e0fcfb;
 
-  /* Not pitch black - Deep Blue/Grey */
-  --ifm-background-color: #0b0c10;
-  --ifm-background-surface-color: #1f2833;
-  --ifm-text-color: #c5c6c7;
+  /* Premium High-Fashion Black Background */
+  --ifm-background-color: #050505;
+  --ifm-background-surface-color: #121212;
+  --ifm-text-color: #e5e7eb;
   --ifm-heading-color: #ffffff;
   --ifm-link-color: #66fcf1;
 
-  --glass-shadow: rgba(0, 0, 0, 0.3);
-  --neon-glow: rgba(102, 252, 241, 0.4);
-  --neon-pink: #d90166; /* Muted Magenta */
+  --glass-bg: rgba(0, 0, 0, 0.4);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-shadow: rgba(0, 0, 0, 0.6);
+  --neon-glow: rgba(102, 252, 241, 0.5);
+  --neon-pink: #ff0080;
 
   /* --- Mermaid Haus Theme Variables (Dark Mode) --- */
   --mermaid-node-bg: rgba(10, 10, 12, 0.85);
@@ -121,6 +123,22 @@
 }
 
 /* Animations */
+@keyframes pulse-slow {
+  0%,
+  100% {
+    opacity: 0.15;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.25;
+    transform: scale(1.05);
+  }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 8s ease-in-out infinite;
+}
+
 @keyframes float {
   0%,
   100% {
@@ -174,17 +192,18 @@
 [data-theme="dark"] .metallic-text {
   background: linear-gradient(
     110deg,
-    #888 20%,
-    #ccc 40%,
+    #666 20%,
+    #aaa 40%,
     #fff 50%,
-    #ccc 60%,
-    #888 80%
+    #aaa 60%,
+    #666 80%
   );
   background-size: 200% auto;
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  animation: shimmer 6s linear infinite;
+  animation: shimmer 5s linear infinite;
+  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.15));
 }
 
 @keyframes liquid {
@@ -260,7 +279,9 @@
 }
 
 [data-theme="dark"] .hero-button-primary {
-  color: #0b0c10 !important;
+  color: #000000 !important;
+  font-weight: 700;
+  box-shadow: 0 0 20px var(--neon-glow);
 }
 
 .hero-button-primary:hover {
@@ -900,7 +921,9 @@ html[data-theme="dark"] body .blog-post-page-wrapper article {
 .docusaurus-mermaid-container .node rect,
 .docusaurus-mermaid-container .node circle,
 .docusaurus-mermaid-container .node polygon,
-.docusaurus-mermaid-container .statediagram-state rect {
+.docusaurus-mermaid-container .node path,
+.docusaurus-mermaid-container .statediagram-state rect,
+.docusaurus-mermaid-container .statediagram-state path {
   fill: var(--mermaid-node-bg) !important;
   stroke: var(--mermaid-node-border) !important;
   stroke-width: 1.5px !important;
@@ -910,15 +933,25 @@ html[data-theme="dark"] body .blog-post-page-wrapper article {
 }
 
 /* 2. Text Logic */
-.docusaurus-mermaid-container .node .label {
+.docusaurus-mermaid-container .node .label,
+.docusaurus-mermaid-container .nodeLabel,
+.docusaurus-mermaid-container .nodeLabel p,
+.docusaurus-mermaid-container .nodeLabel span,
+.docusaurus-mermaid-container .labelText,
+.docusaurus-mermaid-container .edgeLabel,
+.docusaurus-mermaid-container .edgeLabel p,
+.docusaurus-mermaid-container .edgeLabel span {
   color: var(--mermaid-text-color) !important;
   fill: var(--mermaid-text-color) !important;
   font-weight: 600;
-  text-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+  text-shadow: none !important; /* Remove shadow to prevent blur in light mode */
   font-size: var(--mermaid-font-size) !important;
 }
 
-.docusaurus-mermaid-container .node .label foreignObject div {
+/* Specific fix for text inside foreignObject which often escapes general rules */
+.docusaurus-mermaid-container .node .label foreignObject div,
+.docusaurus-mermaid-container .label foreignObject div {
+  color: var(--mermaid-text-color) !important;
   line-height: 1.2 !important;
   font-size: 0.75rem !important;
   padding: 0 4px !important;
@@ -950,10 +983,27 @@ html[data-theme="dark"] body .blog-post-page-wrapper article {
 .docusaurus-mermaid-container .cluster .label,
 .docusaurus-mermaid-container .statediagram-cluster .label {
   fill: var(--mermaid-cluster-border) !important;
+  color: var(--mermaid-cluster-border) !important;
   font-weight: bold;
   text-transform: uppercase;
   font-size: 0.8rem;
   letter-spacing: 0.1em;
+}
+
+/* 4b. Notes & Messages (Mostly for Sequence/State) */
+.docusaurus-mermaid-container .note,
+.docusaurus-mermaid-container .note rect {
+  fill: var(--mermaid-node-bg) !important;
+  stroke: var(--mermaid-node-border) !important;
+  filter: var(--mermaid-node-glow) !important;
+}
+
+.docusaurus-mermaid-container .noteText,
+.docusaurus-mermaid-container .noteText tspan,
+.docusaurus-mermaid-container .noteText span {
+  fill: var(--mermaid-text-color) !important;
+  color: var(--mermaid-text-color) !important;
+  text-shadow: none !important;
 }
 
 /* 5. Edge Labels */
@@ -964,8 +1014,10 @@ html[data-theme="dark"] body .blog-post-page-wrapper article {
 
 .docusaurus-mermaid-container .edgeLabel .label,
 .docusaurus-mermaid-container .labelBkg,
+.docusaurus-mermaid-container .edgeLabel rect,
 .docusaurus-mermaid-container .edgeLabel span {
   background-color: transparent !important;
+  fill: transparent !important; /* For SVG rects */
   color: var(--mermaid-text-color) !important;
   border: none !important;
   border-bottom: 2px solid var(--mermaid-node-border) !important;
@@ -973,7 +1025,13 @@ html[data-theme="dark"] body .blog-post-page-wrapper article {
   padding: 0 4px 2px 4px !important;
   font-size: 0.85em;
   font-weight: 600;
-  text-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
+  text-shadow: none !important;
+}
+
+/* Transition labels in State Diagrams often use specialized rects */
+.docusaurus-mermaid-container .statediagram-state .label rect {
+  fill: transparent !important;
+  stroke: none !important;
 }
 
 /* 6. Sequence Specifics */

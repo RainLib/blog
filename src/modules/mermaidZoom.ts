@@ -307,31 +307,7 @@ if (ExecutionEnvironment.canUseDOM) {
     // Disable native dragging
     containerWrapper.ondragstart = () => false;
 
-    // Fix duplicate SVG ID conflict: the cloned SVG has the same ID as the
-    // page SVG, and its embedded <style> uses ID-scoped selectors (e.g.
-    // `#mermaid-svg-xxx .node rect { ... }`). Two SVGs with the same ID causes
-    // style conflicts. Assign a unique ID to the clone and update its <style>.
-    const originalId = clonedSvg.getAttribute("id");
-    if (originalId) {
-      const newId = originalId + "_zoom";
-      clonedSvg.setAttribute("id", newId);
-      // Update embedded <style> blocks to reference the new ID
-      clonedSvg.querySelectorAll("style").forEach((styleEl) => {
-        styleEl.textContent = (styleEl.textContent || "").replace(
-          new RegExp(`#${CSS.escape(originalId)}`, "g"),
-          `#${newId}`,
-        );
-      });
-      // Update any aria-roledescription or data attributes that reference the ID
-      clonedSvg.querySelectorAll(`[id^="${originalId}"]`).forEach((el) => {
-        const id = el.getAttribute("id");
-        if (id) {
-          el.setAttribute("id", id.replace(originalId, newId));
-        }
-      });
-    }
-
-    // Styling ensuring fit — allow zoom scaling without page constraints
+    // SVG Layout & Theme Sync
     clonedSvg.style.maxWidth = "95vw";
     clonedSvg.style.maxHeight = "95vh";
     clonedSvg.style.height = "auto";
@@ -378,11 +354,72 @@ if (ExecutionEnvironment.canUseDOM) {
       container.setAttribute("data-lightbox-active", "true");
       container.style.cursor = "zoom-in";
 
-      container.addEventListener("click", (e) => {
+      container.addEventListener("click", async (e) => {
         e.preventDefault();
-        const clonedSvg = svg.cloneNode(true) as SVGElement;
-        const classes = Array.from(container.classList);
-        openModal(clonedSvg, classes);
+
+        // 1. Attempt to get raw source code from React fiber
+        // Docusaurus theme-mermaid stores the source in the 'value' prop
+        let mermaidSource: string | null = null;
+        try {
+          const fiberKey = Object.keys(container).find((k) =>
+            k.startsWith("__reactFiber"),
+          );
+          if (fiberKey) {
+            const fiber = (container as any)[fiberKey];
+            // Walk up fiber tree to find the Mermaid component props
+            let curr = fiber;
+            while (curr && !mermaidSource) {
+              if (curr.memoizedProps?.value) {
+                mermaidSource = curr.memoizedProps.value;
+              }
+              curr = curr.return;
+            }
+          }
+        } catch (err) {
+          console.error("Failed to extract Mermaid source from fiber", err);
+        }
+
+        if (!mermaidSource) {
+          console.warn("Mermaid source not found, falling back to clone node");
+          const clonedSvg = svg.cloneNode(true) as SVGElement;
+          openModal(clonedSvg, Array.from(container.classList));
+          return;
+        }
+
+        // 2. Load mermaid and render fresh SVG
+        try {
+          const { default: mermaid } = await import("mermaid");
+          const isDark =
+            document.documentElement.getAttribute("data-theme") === "dark";
+
+          // Use a neutral theme for re-rendering to let our CSS handle the rest
+          mermaid.initialize({
+            startOnLoad: false,
+            theme: isDark ? ("dark" as any) : ("neutral" as any),
+            securityLevel: "loose",
+            fontFamily:
+              '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"',
+          });
+
+          const id = `mermaid-zoom-${Date.now()}`;
+          const renderResult = await mermaid.render(id, mermaidSource);
+          const svgCode = renderResult.svg;
+
+          // 3. Convert SVG string to element
+          const tempDiv = document.createElement("div");
+          tempDiv.innerHTML = svgCode;
+          const newSvg = tempDiv.querySelector("svg");
+
+          if (newSvg) {
+            openModal(newSvg, Array.from(container.classList));
+          } else {
+            throw new Error("Failed to parse rendered SVG");
+          }
+        } catch (err) {
+          console.error("Mermaid re-render failed", err);
+          const clonedSvg = svg.cloneNode(true) as SVGElement;
+          openModal(clonedSvg, Array.from(container.classList));
+        }
       });
     });
   };

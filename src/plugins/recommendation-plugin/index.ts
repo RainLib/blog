@@ -67,13 +67,15 @@ export default function recommendationPlugin(
         if (!fs.existsSync(dirPath)) return [];
         return fs
           .readdirSync(dirPath)
-          .filter((file) => file.endsWith(".md"))
+          .filter((file) => file.endsWith(".md") || file.endsWith(".mdx"))
           .map((file) => {
             const filePath = path.join(dirPath, file);
             const fileContent = fs.readFileSync(filePath, "utf-8");
             const { data, content } = matter(fileContent);
 
-            const filenameMatch = file.match(/^(\d{4}-\d{2}-\d{2})-(.+)\.md$/);
+            const filenameMatch = file.match(
+              /^(\d{4}-\d{2}-\d{2})-(.+)\.mdx?$/,
+            );
             const filenameDate = filenameMatch ? filenameMatch[1] : null;
             const filenameSlug = filenameMatch ? filenameMatch[2] : null;
 

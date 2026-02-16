@@ -1,0 +1,132 @@
+---
+title: "OpenClaw"
+description: "开源自主 AI 智能体，您的个人全能助理，支持连接多种 LLM 并通过主流消息平台进行交互。"
+url: "https://openclaw.ai/"
+tags: ["ai", "tools"]
+icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTSi9yD3jlcEBgaUkoDYEbCTE4BnkHLUQuZWw&s"
+sort: 2
+---
+
+## 视频演示与介绍
+
+通过以下演示视频，您可以快速了解 OpenClaw 如何在真实场景中辅助您的工作，并观察其多工具协作的强大能力：
+
+#### YouTube 深度功能实操
+
+<VideoCard
+  type="youtube"
+  src="YFjfBk8HI5o"
+  description="官方展示：OpenClaw 如何与各类工具集成并实现自主任务流。"
+/>
+
+#### Bilibili 全玩法攻略
+
+<VideoCard
+  type="bilibili"
+  src="BV1kH6nBFEPq"
+  description="深度攻略：OpenClaw 海量技能设置、国内网络优化及本地部署全流程。"
+/>
+
+---
+
+## 什么是 OpenClaw？
+
+OpenClaw 是由 Peter Steinberger 开发的一个免费开源项目。它的核心理念是创建一个能够自主执行复杂任务的 AI 助理，你可以通过熟悉的聊天软件（如 WhatsApp、Telegram、Discord 等）与之对话。
+
+### 技术架构：工具（Tools）与 技能（Skills）
+
+OpenClaw 采用了一种分层的能力体系：
+
+- **工具 (Tools)**：AI 的“器官”。定义了 AI 能**做**什么（如：读文件、发 HTTP 请求、点浏览器按钮）。核心版包含 8 个基础工具，扩展版包含 17 个高级工具。
+- **技能 (Skills)**：AI 的“知识库”。教导 AI 如何**组合使用**工具来完成特定任务（如：如何使用浏览器工具去 Notion 记笔记）。ClawHub 注册中心拥有数千个社区贡献的技能。
+
+---
+
+## 核心功能详解
+
+### 1. **全渠道交互与接入**
+
+OpenClaw 让你无需安装新 App，通过现有渠道即可调遣：
+
+- **即时通讯**：Telegram, Discord, WhatsApp (`wacli`), iMessage (`imsg`), Slack, X/Twitter (`bird`)。
+- **生产力工具**：Raycast, Alfred, 甚至是 macOS 系统通知。
+
+### 2. **深度系统集成（核心工具库）**
+
+- **基础 8 工具**：`read` (读文件), `write` (写文件), `exec` (执行命令), `web_search` (联网搜索), `web_fetch` (抓取网页内容)。
+- **高级 17 工具**：
+  - **浏览器控制**：支持 JavaScript 执行、全页/指定元素截图、导出为 PDF。可用于自动化测试、数据采集和自动填单。
+  - **持久化记忆**：跨会话、跨平台的长期偏好存储。
+  - **多会话管理**：支持并行处理多个复杂的长短期任务。
+
+### 3. **开发者专属技能（Dev-First）**
+
+OpenClaw 对开发人员极其友好，内置了：
+
+- **`github`**：调用 `gh` CLI 直接管理 Issue、PR 和仓库。
+- **`tmux`**：管理远程服务器的终端会话。
+- **`coding-agent`**：与其他编程 AI（如 Windsurf, Cursor）协作。
+- **`session-logs`**：通过语义检索快速查找过去的对话记录。
+
+### 4. **Google Workspace 深度整合**
+
+通过 `gog` 技能，OpenClaw 可以操作：
+
+- **Gmail/Calendar**：发送邮件、安排日程。
+- **Drive/Docs/Sheets**：读写文档，甚至直接在表格里生成报表。
+
+---
+
+## 推荐理由
+
+1. **完全掌控**：你的文档和偏好存储在本地 `~/.openclaw`，数据不上传云端（除非你主动选择云端模型）。
+2. **无限扩展**：你可以通过自然语言教它新技能，或者编写简单的脚本扩展工具集。
+3. **极低成本**：支持 DeepSeek 等国产高性价比模型，甚至可以连接本地运行的 Llama 3。
+4. **社区生态**：配合 **Moltbook** 等项目，它是目前最接近真实“数字分身”的开源方案。
+
+---
+
+## 详细使用与配置
+
+### 快速开始
+
+1. **安装**：推荐使用 Docker 或直接运行 `npx openclaw onboard`。
+2. **初始化**：运行命令后，OpenClaw 会引导你配置 API Key 和交互渠道（如 Telegram Token）。
+3. **安全自检**：
+   - `openclaw doctor`：检查环境依赖。
+   - `openclaw security audit --deep`：识别潜在的权限泄露风险。
+
+### 配置文件示例 (`~/.openclaw/openclaw.json`)
+
+```json
+{
+  "env": {
+    "OPENROUTER_API_KEY": "sk-or-...",
+    "TAVILY_API_KEY": "tvly-..."
+  },
+  "agents": {
+    "default": {
+      "model": "anthropic/claude-3-5-sonnet",
+      "heartbeat_model": "google/gemini-flash-1.5" // 节省心跳检测成本
+    }
+  },
+  "logging": {
+    "redactSensitive": true // 自动脱敏日志中的 Key
+  }
+}
+```
+
+---
+
+## 注意事项
+
+> **安全风险提醒**：由于 OpenClaw 有权限执行 Shell 命令和访问系统文件，在使用时务必进行合理的权限限制。不要在不受信任的环境中开放 root 权限给 AI 助理。建议配合 `OpenClaw Scanner` 等工具检查安全漏洞。
+
+---
+
+## 总结
+
+OpenClaw 是目前最成熟的、面向个人用户的开源“Autonomous Agent”方案之一。如果你希望拥有一个完全受控、能处理实际琐事、且能随处交互的 AI 助理，它是目前的不二之选。
+
+**推荐指数**：⭐⭐⭐⭐ (4.5/5)
+**官网**：[openclaw.ai](https://openclaw.ai/)

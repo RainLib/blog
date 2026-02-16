@@ -15,7 +15,10 @@ const config: Config = {
     v4: true, // Improve compatibility with the upcoming Docusaurus v4
   },
 
-  clientModules: [require.resolve("./src/modules/mermaidZoom.ts")],
+  clientModules: [
+    require.resolve("./src/modules/mermaidZoom.ts"),
+    require.resolve("./src/modules/imageZoom.ts"),
+  ],
 
   plugins: [
     [
