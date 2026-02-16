@@ -1288,6 +1288,6 @@ html body .blog-post-page-wrapper .container {
 }
 
 /* Fix KaTeX double rendering (hidden MathML being shown) */
-.katex-html {
+.katex-mathml {
   display: none !important;
 }
