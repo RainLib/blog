@@ -1,4 +1,11 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useMemo,
+} from "react";
+import ReactDOM from "react-dom";
 import clsx from "clsx";
 import useDocusaurusContext from "@docusaurus/useDocusaurusContext";
 import useIsBrowser from "@docusaurus/useIsBrowser";
@@ -12,63 +19,37 @@ import {
   fetchIndexesByWorker,
   searchByWorker,
 } from "@easyops-cn/docusaurus-search-local/dist/client/client/theme/searchByWorker";
-import { SuggestionTemplate } from "./SuggestionTemplate";
-import { EmptyTemplate } from "./EmptyTemplate";
 import { SearchDocumentType } from "@easyops-cn/docusaurus-search-local/dist/client/shared/interfaces";
 import {
   Mark,
   searchBarShortcut,
-  searchBarShortcutHint,
   searchBarShortcutKeymap,
-  searchBarPosition,
   docsPluginIdForPreferredVersion,
   searchContextByPaths,
-  hideSearchBarWithNoSearchContext,
   useAllContextsWithNoSearchContext,
-  askAi,
 } from "@easyops-cn/docusaurus-search-local/dist/client/client/utils/proxiedGenerated";
-import LoadingRing from "@easyops-cn/docusaurus-search-local/dist/client/client/theme/LoadingRing/LoadingRing";
+// import LoadingRing from "@easyops-cn/docusaurus-search-local/dist/client/client/theme/LoadingRing/LoadingRing"; // Replaced with custom CSS spinner
 import { normalizeContextByPath } from "@easyops-cn/docusaurus-search-local/dist/client/client/utils/normalizeContextByPath";
 import { searchResultLimits } from "@easyops-cn/docusaurus-search-local/dist/client/client/utils/proxiedGeneratedConstants";
 import {
   parseKeymap,
   matchesKeymap,
-  getKeymapHints,
 } from "@easyops-cn/docusaurus-search-local/dist/client/client/utils/keymap";
 import { isMacPlatform } from "@easyops-cn/docusaurus-search-local/dist/client/client/utils/platform";
 import styles from "./SearchBar.module.css";
-async function fetchAutoCompleteJS() {
-  const autoCompleteModule = await import("@easyops-cn/autocomplete.js");
-  const autoComplete = autoCompleteModule.default;
-  if (autoComplete.noConflict) {
-    // For webpack v5 since docusaurus v2.0.0-alpha.75
-    autoComplete.noConflict();
-  } else if (autoCompleteModule.noConflict) {
-    // For webpack v4 before docusaurus v2.0.0-alpha.74
-    autoCompleteModule.noConflict();
-  }
-  return autoComplete;
-}
-async function fetchOpenAskAI() {
-  try {
-    const openAskAIModule = await import("open-ask-ai");
-    await import("open-ask-ai/styles.css");
-    return {
-      AskAIWidget: openAskAIModule.AskAIWidget,
-    };
-  } catch (error) {
-    // open-ask-ai is optional, return null if not available
-    return null;
-  }
-}
-const SEARCH_PARAM_HIGHLIGHT = "_highlight";
 
-export default function SearchBar({ handleSearchBarToggle }) {
+const DEBOUNCE_DELAY = 300;
+
+export default function SearchBar() {
   const isBrowser = useIsBrowser();
   const {
     siteConfig: { baseUrl },
     i18n: { currentLocale },
   } = useDocusaurusContext();
+  const history = useHistory();
+  const location = useLocation();
+
+  // --- Context & Version Logic ---
   const activePlugin = useActivePlugin();
   let versionUrl = baseUrl;
   const activeVersion = useActiveVersion(
@@ -77,392 +58,333 @@ export default function SearchBar({ handleSearchBarToggle }) {
   if (activeVersion && !activeVersion.isLast) {
     versionUrl = activeVersion.path + "/";
   }
-  const history = useHistory();
-  const location = useLocation();
 
-  // --- New Modal State ---
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const searchBarRef = useRef(null);
-  const indexStateMap = useRef(new Map());
-  const focusAfterIndexLoaded = useRef(false);
-  const [loading, setLoading] = useState(false);
-  const [inputChanged, setInputChanged] = useState(false);
-  const [inputValue, setInputValue] = useState("");
-  const search = useRef(null);
-  const askAIWidgetRef = useRef(null);
-  const [AskAIWidgetComponent, setAskAIWidgetComponent] = useState(null);
-  const prevSearchContext = useRef("");
   const [searchContext, setSearchContext] = useState("");
-  const prevVersionUrl = useRef(baseUrl);
-
   useEffect(() => {
-    if (!Array.isArray(searchContextByPaths)) {
-      if (prevVersionUrl.current !== versionUrl) {
-        indexStateMap.current.delete("");
-        prevVersionUrl.current = versionUrl;
-      }
-      return;
-    }
+    if (!Array.isArray(searchContextByPaths)) return;
     let nextSearchContext = "";
     if (location.pathname.startsWith(versionUrl)) {
       const uri = location.pathname.substring(versionUrl.length);
-      let matchedPath;
-      for (const _path of searchContextByPaths) {
+      const matchedPath = searchContextByPaths.find((_path) => {
         const path = typeof _path === "string" ? _path : _path.path;
-        if (uri === path || uri.startsWith(`${path}/`)) {
-          matchedPath = path;
-          break;
-        }
-      }
+        return uri === path || uri.startsWith(`${path}/`);
+      });
       if (matchedPath) {
-        nextSearchContext = matchedPath;
+        nextSearchContext =
+          typeof matchedPath === "string" ? matchedPath : matchedPath.path;
       }
-    }
-    if (prevSearchContext.current !== nextSearchContext) {
-      indexStateMap.current.delete(nextSearchContext);
-      prevSearchContext.current = nextSearchContext;
     }
     setSearchContext(nextSearchContext);
   }, [location.pathname, versionUrl]);
 
-  const hidden =
-    !!hideSearchBarWithNoSearchContext &&
-    Array.isArray(searchContextByPaths) &&
-    searchContext === "";
+  // --- State ---
+  const [isOpen, setIsOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [highlightedIndex, setHighlightedIndex] = useState(0);
+  const [indexLoaded, setIndexLoaded] = useState(false);
 
+  const inputRef = useRef(null);
+  const modalRef = useRef(null);
+  const searchTimeoutRef = useRef(null);
+
+  // --- Actions ---
   const loadIndex = useCallback(async () => {
-    if (hidden || indexStateMap.current.get(searchContext) === "done") {
-      return;
-    }
-    // If already loading, don't start again
-    if (indexStateMap.current.get(searchContext) === "loading") return;
+    if (indexLoaded) return;
+    setIsLoading(true);
+    await fetchIndexesByWorker(versionUrl, searchContext);
+    setIndexLoaded(true);
+    setIsLoading(false);
+  }, [versionUrl, searchContext, indexLoaded]);
 
-    indexStateMap.current.set(searchContext, "loading");
-    search.current?.autocomplete.destroy();
-    setLoading(true);
-    const [autoComplete, openAskAIModule] = await Promise.all([
-      fetchAutoCompleteJS(),
-      askAi ? fetchOpenAskAI() : Promise.resolve(null),
-      fetchIndexesByWorker(versionUrl, searchContext),
-    ]);
-    if (openAskAIModule) {
-      setAskAIWidgetComponent(() => openAskAIModule.AskAIWidget);
-    }
+  const performSearch = useCallback(
+    async (screenQuery) => {
+      if (!screenQuery) {
+        setResults([]);
+        return;
+      }
+      setIsLoading(true);
 
-    const searchFooterLinkElement = ({ query, isEmpty }) => {
-      const a = document.createElement("a");
-      const params = new URLSearchParams();
-      params.set("q", query);
-      let linkText;
-      if (searchContext) {
-        const detailedSearchContext =
-          searchContext && Array.isArray(searchContextByPaths)
-            ? searchContextByPaths.find((item) =>
-                typeof item === "string"
-                  ? item === searchContext
-                  : item.path === searchContext,
-              )
-            : searchContext;
-        const translatedSearchContext = detailedSearchContext
-          ? normalizeContextByPath(detailedSearchContext, currentLocale).label
-          : searchContext;
-        if (useAllContextsWithNoSearchContext && isEmpty) {
-          linkText = translate(
+      try {
+        // Dev mock for testing
+        if (process.env.NODE_ENV === "development" && screenQuery === "test") {
+          setResults([
             {
-              id: "theme.SearchBar.seeAllOutsideContext",
-              message: 'See all results outside "{context}"',
+              document: { t: "Test Title A", u: "/docs/a", b: ["Docs"] },
+              page: { t: "Page A" },
+              type: SearchDocumentType.Keywords,
             },
-            { context: translatedSearchContext },
-          );
-        } else {
-          linkText = translate(
             {
-              id: "theme.SearchBar.searchInContext",
-              message: 'See all results within "{context}"',
+              document: { t: "Test Title B", u: "/docs/b", b: ["Docs"] },
+              page: { t: "Page B" },
+              type: SearchDocumentType.Keywords,
             },
-            { context: translatedSearchContext },
-          );
+          ]);
+          setIsLoading(false);
+          return;
         }
+
+        const rawResults = await searchByWorker(
+          versionUrl,
+          searchContext,
+          screenQuery,
+          searchResultLimits,
+        );
+        setResults(rawResults);
+        setHighlightedIndex(0); // Reset selection
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [versionUrl, searchContext],
+  );
+
+  // --- Inputs Handlers ---
+  const handleInputChange = (e) => {
+    const newVal = e.target.value;
+    setQuery(newVal);
+
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+
+    searchTimeoutRef.current = setTimeout(() => {
+      performSearch(newVal);
+    }, DEBOUNCE_DELAY);
+  };
+
+  const navigateToResult = (index) => {
+    const result = results[index];
+    if (result) {
+      let url = result.document.u;
+
+      // Add highlight param if tokens exist (mimicking original logic)
+      if (Mark && result.tokens && result.tokens.length > 0) {
+        const params = new URLSearchParams();
+        for (const token of result.tokens) {
+          params.append("_highlight", token);
+        }
+        url += `?${params.toString()}`;
+      }
+
+      if (result.document.h) {
+        url += result.document.h;
+      }
+
+      history.push(url);
+      handleClose();
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Escape") {
+      e.preventDefault();
+      e.stopPropagation(); // Stops global listener from firing
+
+      // Apple Spotlight behavior: if input exists, clear it first.
+      if (query && query.length > 0) {
+        setQuery("");
+        if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+        setResults([]);
       } else {
-        linkText = translate({
-          id: "theme.SearchBar.seeAll",
-          message: "See all results",
-        });
+        handleClose();
       }
-      if (
-        searchContext &&
-        Array.isArray(searchContextByPaths) &&
-        (!useAllContextsWithNoSearchContext || !isEmpty)
-      ) {
-        params.set("ctx", searchContext);
-      }
-      if (versionUrl !== baseUrl) {
-        params.set("version", versionUrl.substring(baseUrl.length));
-      }
-      const url = `${baseUrl}search/?${params.toString()}`;
-      a.href = url;
-      a.textContent = linkText;
-      a.addEventListener("click", (e) => {
-        if (!e.ctrlKey && !e.metaKey) {
-          e.preventDefault();
-          search.current?.autocomplete.close();
-          setIsModalOpen(false); // Close on click
-          history.push(url);
-        }
-      });
-      return a;
-    };
-
-    search.current = autoComplete(
-      searchBarRef.current,
-      {
-        hint: false,
-        autoselect: true,
-        openOnFocus: true,
-        cssClasses: {
-          root: clsx(styles.searchBar, {
-            [styles.searchBarLeft]: searchBarPosition === "left",
-          }),
-          noPrefix: true,
-          dropdownMenu: styles.dropdownMenu,
-          input: styles.input,
-          hint: styles.hint,
-          suggestions: styles.suggestions,
-          suggestion: styles.suggestion,
-          cursor: styles.cursor,
-          dataset: styles.dataset,
-          empty: styles.empty,
-        },
-      },
-      [
-        {
-          source: async (input, callback) => {
-            if (process.env.NODE_ENV === "development" && input === "test") {
-              // Return mock results for UI testing
-              callback([
-                {
-                  document: {
-                    i: 1,
-                    t: "Mock Result 1",
-                    s: "Mock Result 1",
-                    u: "/mock-1",
-                    b: ["Docs", "Mock"],
-                  },
-                  type: SearchDocumentType.Keywords,
-                  page: { t: "Mock Page 1", b: ["Home"] },
-                  metadata: {},
-                  tokens: ["test"],
-                },
-                {
-                  document: {
-                    i: 2,
-                    t: "Mock Result 2 with a longer title to test wrapping",
-                    s: "Mock Result 2 with a longer title to test wrapping",
-                    u: "/mock-2",
-                    b: ["Blog"],
-                  },
-                  type: SearchDocumentType.Keywords,
-                  page: { t: "Mock Blog", b: ["Archive"] },
-                  metadata: {},
-                  tokens: ["test"],
-                },
-              ]);
-              return;
-            }
-            const result = await searchByWorker(
-              versionUrl,
-              searchContext,
-              input,
-              searchResultLimits,
-            );
-            if (input && askAi) {
-              callback([
-                {
-                  document: { i: -1, t: "", u: "" },
-                  type: SearchDocumentType.AskAI,
-                  page: undefined,
-                  metadata: {},
-                  tokens: [input],
-                },
-                ...result,
-              ]);
-            } else {
-              callback(result);
-            }
-          },
-          templates: {
-            suggestion: SuggestionTemplate,
-            empty: EmptyTemplate,
-            footer: ({ query, isEmpty }) => {
-              if (
-                isEmpty &&
-                (!searchContext || !useAllContextsWithNoSearchContext)
-              ) {
-                return;
-              }
-              const a = searchFooterLinkElement({ query, isEmpty });
-              const div = document.createElement("div");
-              div.className = styles.hitFooter;
-              div.appendChild(a);
-              return div;
-            },
-          },
-        },
-      ],
-    )
-      .on(
-        "autocomplete:selected",
-        function (event, { document: { u, h }, type, tokens }) {
-          searchBarRef.current?.blur();
-          setIsModalOpen(false); // Close on select
-          if (type === SearchDocumentType.AskAI && askAi) {
-            askAIWidgetRef.current?.openWithNewSession(tokens.join(""));
-            return;
-          }
-          let url = u;
-          if (Mark && tokens.length > 0) {
-            const params = new URLSearchParams();
-            for (const token of tokens) {
-              params.append(SEARCH_PARAM_HIGHLIGHT, token);
-            }
-            url += `?${params.toString()}`;
-          }
-          if (h) {
-            url += h;
-          }
-          history.push(url);
-        },
-      )
-      .on("autocomplete:closed", () => {
-        // searchBarRef.current?.blur();
-      });
-    indexStateMap.current.set(searchContext, "done");
-    setLoading(false);
-    // Focus the input inside the modal
-    if (isModalOpen) {
-      searchBarRef.current?.focus();
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setHighlightedIndex((prev) => (prev + 1) % Math.max(1, results.length));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setHighlightedIndex(
+        (prev) => (prev - 1 + results.length) % Math.max(1, results.length),
+      );
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      navigateToResult(highlightedIndex);
     }
-  }, [hidden, searchContext, versionUrl, baseUrl, history, isModalOpen]);
+  };
 
-  useEffect(() => {
-    if (isModalOpen) {
-      loadIndex();
-      document.body.style.overflow = "hidden"; // Prevent scroll
-    } else {
-      document.body.style.overflow = "";
-    }
-  }, [isModalOpen, loadIndex]);
+  const handleOpen = useCallback(() => {
+    setIsOpen(true);
+    loadIndex();
+    // Blur whatever triggered it
+    if (document.activeElement) document.activeElement.blur();
+  }, [loadIndex]);
 
-  // Handle shortcuts to open modal
+  const handleClose = useCallback(() => {
+    setIsOpen(false);
+    setQuery("");
+    setResults([]);
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+  }, []);
+
+  // --- Effect: Shortcuts ---
   useEffect(() => {
     if (!searchBarShortcut || !searchBarShortcutKeymap) return;
     const parsedKeymap = parseKeymap(searchBarShortcutKeymap);
     const handleShortcut = (event) => {
       if (matchesKeymap(event, parsedKeymap)) {
         event.preventDefault();
-        setIsModalOpen(true);
+        if (isOpen) handleClose();
+        else handleOpen();
       }
     };
     document.addEventListener("keydown", handleShortcut);
     return () => document.removeEventListener("keydown", handleShortcut);
-  }, [searchBarShortcutKeymap]);
+  }, [isOpen, handleOpen, handleClose]);
 
-  const onInputChange = useCallback((event) => {
-    setInputValue(event.target.value);
-    if (event.target.value) {
-      setInputChanged(true);
+  // --- Effect: Focus ---
+  useEffect(() => {
+    if (isOpen) {
+      // Small timeout to allow animation or React render
+      setTimeout(() => inputRef.current?.focus(), 50);
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
     }
-  }, []);
+  }, [isOpen]);
 
+  // --- Effect: Global Escape ---
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleGlobalKeyDown = (e) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        // If input is focused, the input's onKeyDown will handle it.
+        // We only care if focus is lost or bubbling issues.
+        // But to be safe and consistent with "Global" idea:
+        if (query.length > 0) {
+          setQuery("");
+          setResults([]);
+        } else {
+          handleClose();
+        }
+      }
+    };
+    document.addEventListener("keydown", handleGlobalKeyDown);
+    return () => document.removeEventListener("keydown", handleGlobalKeyDown);
+  }, [isOpen, handleClose, query]);
+
+  // --- Render ---
   const isMac = isBrowser ? isMacPlatform() : false;
-  const shortcutHint = getKeymapHints(searchBarShortcutKeymap, isMac);
+  const cmdKey = isMac ? "⌘" : "Ctrl";
 
   return (
     <div className={styles.searchBarContainer}>
-      {/* Trigger Button */}
+      {/* Navbar Trigger */}
       <button
         className={styles.searchTrigger}
-        onClick={() => setIsModalOpen(true)}
+        onClick={handleOpen}
         aria-label="Search"
       >
-        <MarkIcon className={styles.hitIcon} />
-        <span>
+        <SearchIcon className={styles.searchTriggerIcon} />
+        <span className={styles.searchTriggerText}>
           {translate({ id: "theme.SearchBar.label", message: "Search" })}
         </span>
-        <div className={styles.searchTriggerKey}>
-          {shortcutHint.map((hint, i) => (
-            <kbd key={i}>{hint}</kbd>
-          ))}
+        <div className={styles.searchTriggerKeys}>
+          <span className={styles.searchTriggerKey}>{cmdKey}</span>
+          <span className={styles.searchTriggerKey}>K</span>
         </div>
       </button>
 
-      {/* Modal Overlay */}
-      {isModalOpen && (
-        <div
-          className={styles.modalOverlay}
-          onClick={() => setIsModalOpen(false)}
-        >
-          <div
-            className={styles.modalContainer}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className={styles.modalHeader}>
-              <MarkIcon
-                className={styles.hitIcon}
-                style={{ width: 24, height: 24, opacity: 0.6 }}
-              />
-              <div className={styles.searchBar}>
+      {/* Modal - Portaled to body to escape Navbar transforms */}
+      {isOpen &&
+        isBrowser &&
+        ReactDOM.createPortal(
+          <div className={styles.overlay} onClick={handleClose}>
+            <div
+              className={styles.modal}
+              onClick={(e) => e.stopPropagation()}
+              role="dialog"
+              aria-modal="true"
+              ref={modalRef}
+            >
+              <div className={styles.searchHeader}>
+                {isLoading ? (
+                  <LoadingIcon
+                    className={styles.loadingIcon}
+                    style={{ width: 24, height: 24, marginRight: 16 }}
+                  />
+                ) : (
+                  <SearchIcon className={styles.searchIcon} />
+                )}
                 <input
-                  ref={searchBarRef}
-                  className={styles.modalInput}
-                  placeholder={translate({
-                    id: "theme.SearchBar.label",
-                    message: "Search",
-                  })}
-                  value={inputValue}
-                  onChange={onInputChange}
-                  autoFocus
+                  ref={inputRef}
+                  className={styles.searchInput}
+                  value={query}
+                  onChange={handleInputChange}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Search..."
+                  autoComplete="off"
+                  autoCorrect="off"
+                  spellCheck="false"
                 />
               </div>
-              {inputValue && (
-                <button
-                  className={styles.searchClearButton}
-                  onClick={() => {
-                    setInputValue("");
-                    search.current?.autocomplete.setVal("");
-                    searchBarRef.current?.focus();
-                  }}
-                  style={{ position: "static", opacity: 0.5 }}
-                >
-                  ✕
-                </button>
+
+              {/* Only show results container if there is query or results */}
+              {(query || results.length > 0) && (
+                <div className={styles.resultsContainer}>
+                  {results.length === 0 && !isLoading && (
+                    <div className={styles.noResults}>
+                      No results found for "{query}"
+                    </div>
+                  )}
+
+                  {results.map((result, index) => (
+                    <div
+                      key={index}
+                      className={styles.resultItem}
+                      data-active={index === highlightedIndex}
+                      onClick={() => navigateToResult(index)}
+                      onMouseEnter={() => setHighlightedIndex(index)}
+                    >
+                      <span className={styles.resultIcon}>
+                        {result.type === 0 ? <DocIcon /> : <HashIcon />}
+                      </span>
+                      <div className={styles.resultContent}>
+                        <div
+                          className={styles.resultTitle}
+                          dangerouslySetInnerHTML={{
+                            __html: result.document.t || result.page?.t,
+                          }}
+                        />
+                        <div className={styles.resultPath}>
+                          {result.document.b
+                            ? result.document.b.join(" > ")
+                            : result.document.u}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               )}
-              {loading && <LoadingRing style={{ width: 24, height: 24 }} />}
-            </div>
 
-            {/* The dropdown menu will be injected by autocomplete.js near the input.
-                Because we set dropdownMenu to position: static in CSS, it will appear here. */}
-
-            <div className={styles.modalFooter}>
-              <span>
-                <kbd>↵</kbd> select
-              </span>
-              <span>
-                <kbd>↑↓</kbd> navigate
-              </span>
-              <span>
-                <kbd>esc</kbd> close
-              </span>
+              <div className={styles.footer}>
+                <div className={styles.shortcutHint}>
+                  <kbd className={styles.shortcutKey}>↵</kbd>
+                  <span>to select</span>
+                </div>
+                <div className={styles.shortcutHint}>
+                  <kbd className={styles.shortcutKey}>↓</kbd>
+                  <kbd className={styles.shortcutKey}>↑</kbd>
+                  <span>to navigate</span>
+                </div>
+                <div className={styles.shortcutHint}>
+                  <kbd className={styles.shortcutKey}>esc</kbd>
+                  <span>to close</span>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }
 
-const MarkIcon = (props) => (
+// --- Icons ---
+
+const SearchIcon = (props) => (
   <svg
     width="20"
     height="20"
@@ -476,5 +398,67 @@ const MarkIcon = (props) => (
   >
     <circle cx="8" cy="8" r="6" />
     <line x1="18" y1="18" x2="12.35" y2="12.35" />
+  </svg>
+);
+
+const DocIcon = (props) => (
+  <svg
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    {...props}
+  >
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+    <polyline points="14 2 14 8 20 8"></polyline>
+    <line x1="16" y1="13" x2="8" y2="13"></line>
+    <line x1="16" y1="17" x2="8" y2="17"></line>
+    <polyline points="10 9 9 9 8 9"></polyline>
+  </svg>
+);
+
+const HashIcon = (props) => (
+  <svg
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    {...props}
+  >
+    <line x1="4" y1="9" x2="20" y2="9"></line>
+    <line x1="4" y1="15" x2="20" y2="15"></line>
+    <line x1="10" y1="3" x2="8" y2="21"></line>
+    <line x1="16" y1="3" x2="14" y2="21"></line>
+  </svg>
+);
+
+const LoadingIcon = (props) => (
+  <svg
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    {...props}
+  >
+    <line x1="12" y1="2" x2="12" y2="6"></line>
+    <line x1="12" y1="18" x2="12" y2="22"></line>
+    <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
+    <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
+    <line x1="2" y1="12" x2="6" y2="12"></line>
+    <line x1="18" y1="12" x2="22" y2="12"></line>
+    <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
+    <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
   </svg>
 );
