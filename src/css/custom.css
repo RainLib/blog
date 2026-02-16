@@ -1286,3 +1286,8 @@ html body .blog-post-page-wrapper .container {
   border-radius: 0 !important;
   background: transparent !important;
 }
+
+/* Fix KaTeX double rendering (hidden MathML being shown) */
+.katex-html {
+  display: none !important;
+}

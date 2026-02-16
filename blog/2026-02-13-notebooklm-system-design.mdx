@@ -1229,9 +1229,7 @@ impl SearchService {
 :::tip 为什么使用 RRF (Reciprocal Rank Fusion)?
 RRF 是一种无需训练的融合算法，公式为：
 
-$$
-\text\{RRF\}(d) = \sum_\{r \in R\} \frac\{1\}\{k + \text\{rank\}_r(d)\}
-$$
+$$ \text{RRF}(d) = \sum_{r \in R} \frac{1}{k + \text{rank}_r(d)} $$
 
 - **优点**：简单、有效、不需要权重调优
 - **替代方案**：学习型方法（如 LambdaMART）精度更高，但需要标注数据

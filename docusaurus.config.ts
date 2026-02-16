@@ -2,6 +2,8 @@ import { themes as prismThemes } from "prism-react-renderer";
 import type { Config } from "@docusaurus/types";
 import type * as Preset from "@docusaurus/preset-classic";
 import recommendationPlugin from "./src/plugins/recommendation-plugin";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
 
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
@@ -14,6 +16,14 @@ const config: Config = {
   future: {
     v4: true, // Improve compatibility with the upcoming Docusaurus v4
   },
+
+  stylesheets: [
+    {
+      href: "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css",
+      type: "text/css",
+      crossorigin: "anonymous",
+    },
+  ],
 
   clientModules: [
     require.resolve("./src/modules/mermaidZoom.ts"),
@@ -70,9 +80,13 @@ const config: Config = {
       {
         docs: {
           sidebarPath: "./sidebars.ts",
+          remarkPlugins: [remarkMath],
+          rehypePlugins: [rehypeKatex],
         },
         blog: {
           showReadingTime: true,
+          remarkPlugins: [remarkMath],
+          rehypePlugins: [rehypeKatex],
           feedOptions: {
             type: ["rss", "atom"],
             xslt: true,
