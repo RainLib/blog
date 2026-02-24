@@ -2,6 +2,7 @@ import { themes as prismThemes } from "prism-react-renderer";
 import type { Config } from "@docusaurus/types";
 import type * as Preset from "@docusaurus/preset-classic";
 import recommendationPlugin from "./src/plugins/recommendation-plugin";
+import recentBlogPostsPlugin from "./src/plugins/recent-blog-posts-plugin";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 
@@ -37,6 +38,7 @@ const config: Config = {
         // Plugin options here
       },
     ],
+    recentBlogPostsPlugin,
     function (context, options) {
       return {
         name: "custom-webpack-plugin",

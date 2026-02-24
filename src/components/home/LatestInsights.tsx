@@ -3,66 +3,42 @@ import Link from "@docusaurus/Link";
 import Translate, { translate } from "@docusaurus/Translate";
 import useDocusaurusContext from "@docusaurus/useDocusaurusContext";
 
-// Explicitly import blog posts to ensure data availability
-// @ts-ignore
-import * as PostNew from "../../../blog/2026-02-13-notebooklm-system-design.mdx";
-// @ts-ignore
-import * as Post0 from "../../../blog/2026-02-08-grpc-idl.mdx";
-// @ts-ignore
-import * as Post1 from "../../../blog/2026-02-10-grpc-production.mdx";
+import useGlobalData from "@docusaurus/useGlobalData";
 
-const RECENT_POSTS_DATA = [
-  { module: PostNew, filename: "2026-02-13-notebooklm-system-design.mdx" },
-  { module: Post0, filename: "2026-02-08-grpc-idl.mdx" },
-  { module: Post1, filename: "2026-02-10-grpc-production.mdx" },
-];
+export default function LatestInsights() {
+  const { i18n } = useDocusaurusContext();
+  const globalData = useGlobalData();
+  const pluginData = globalData["recent-blog-posts-plugin"]?.["default"] as
+    | { recentPosts: any[] }
+    | undefined;
 
-function getRecentPosts(locale: string) {
-  return RECENT_POSTS_DATA.map((item) => {
-    const module = item.module as any;
-    const frontMatter = module.frontMatter || {};
-    const filename = item.filename;
+  const rawPosts = pluginData?.recentPosts || [];
 
-    // Parse filename for date: 2026-02-09-slug.mdx
-    const match = filename.match(/^(\d{4}-\d{2}-\d{2})-(.+)\.mdx?$/);
-    const dateStr = match ? match[1] : null;
-    const filenameSlug = match ? match[2] : filename.replace(".mdx", "");
-
-    // Format Date
-    const date = dateStr
-      ? new Date(dateStr).toLocaleDateString(locale, {
-          year: "numeric",
-          month: "short",
-          day: "numeric",
-        })
-      : "Recently";
-
-    // Construct Link
-    const slug = frontMatter.slug || filenameSlug;
-    const link = `/blog/${slug}`;
+  const displayPosts = rawPosts.map((post) => {
+    const date =
+      post.date && post.date !== "1970-01-01"
+        ? new Date(post.date).toLocaleDateString(i18n.currentLocale, {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+          })
+        : "Recently";
 
     return {
-      title: frontMatter.title || "Untitled",
+      title: post.title || "Untitled",
       desc:
-        frontMatter.description ||
+        post.description ||
         translate({
           id: "homepage.insights.post_description_fallback",
           message: "深入探索 gRPC 与分布式系统的核心技术。",
           description: "Fallback description for blog posts on homepage",
         }),
       date: date,
-      rawDate: dateStr || "1970-01-01",
-      link: link,
-      tags: frontMatter.tags || ["Blog"],
+      rawDate: post.date || "1970-01-01",
+      link: `/blog/${post.slug}`,
+      tags: post.tags || ["Blog"],
     };
-  }).sort((a, b) => b.rawDate.localeCompare(a.rawDate));
-}
-
-export default function LatestInsights() {
-  const { i18n } = useDocusaurusContext();
-  const posts = getRecentPosts(i18n.currentLocale);
-
-  const displayPosts = posts.length > 0 ? posts : [];
+  });
 
   return (
     <section className="py-32 relative z-10 overflow-hidden">
