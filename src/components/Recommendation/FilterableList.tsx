@@ -21,7 +21,7 @@ export default function FilterableList({ recommendations, tags }: Props) {
   const availableTags = useMemo(() => {
     const tagSet = new Set<string>();
     recommendations.forEach((item) =>
-      item.tags?.forEach((tag) => tagSet.add(tag)),
+      item.tags?.forEach((tag) => tagSet.add(tag.toLowerCase())),
     );
     return Array.from(tagSet).sort();
   }, [recommendations]);
@@ -29,7 +29,9 @@ export default function FilterableList({ recommendations, tags }: Props) {
   // Filter recommendations
   const filteredItems = useMemo(() => {
     if (!selectedTag) return recommendations;
-    return recommendations.filter((item) => item.tags?.includes(selectedTag));
+    return recommendations.filter((item) =>
+      item.tags?.some((tag) => tag.toLowerCase() === selectedTag.toLowerCase()),
+    );
   }, [recommendations, selectedTag]);
 
   const visibleItems = filteredItems.slice(0, visibleCount);
@@ -195,7 +197,7 @@ export default function FilterableList({ recommendations, tags }: Props) {
                               <Translate
                                 id={`recommend.tag.${tag.toLowerCase()}`}
                               >
-                                {tags[tag]?.label || tag}
+                                {tags[tag.toLowerCase()]?.label || tag}
                               </Translate>
                             </span>
                           ))}
