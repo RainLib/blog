@@ -17,59 +17,158 @@ hola:
   label: Hola
   permalink: /hola
   description: Hola 标签描述
+
 grpc:
   label: gRPC
   permalink: /grpc
   description: gRPC 框架
+
 http2:
   label: HTTP/2
   permalink: /http2
   description: HTTP/2 协议
+
 protocol:
   label: 协议
   permalink: /protocol
   description: 协议详情
+
 deep-dive:
   label: 深度解析
   permalink: /deep-dive
   description: 深度技术文章
-java:
-  label: Java
-  permalink: /java
-  description: Java 编程语言
+
 netty:
   label: Netty
   permalink: /netty
   description: Netty 框架
+
 distributed-systems:
   label: 分布式系统
   permalink: /distributed-systems
   description: 分布式系统架构
+
 protobuf:
   label: Protobuf
   permalink: /protobuf
   description: Protocol Buffers 序列化
+
 idl:
   label: IDL
   permalink: /idl
   description: 接口定义语言
+
 api-design:
   label: API 设计
   permalink: /api-design
   description: API 设计模式与最佳实践
+
 production:
   label: 生产环境
   permalink: /production
   description: 生产环境实践
+
 health-check:
   label: 健康检查
   permalink: /health-check
   description: 服务健康检查
+
 load-balancing:
   label: 负载均衡
   permalink: /load-balancing
   description: 负载均衡策略
+
 observability:
   label: 可观测性
   permalink: /observability
   description: 监控、追踪与指标
+
+langchain:
+  label: LangChain
+  permalink: /langchain
+  description: LLM 应用开发框架
+
+langgraph:
+  label: LangGraph
+  permalink: /langgraph
+  description: 构建状态化的多代理 LLM 应用
+
+ai-agent:
+  label: AI Agent
+  permalink: /ai-agent
+  description: 智能代理系统
+
+llm:
+  label: LLM
+  permalink: /llm
+  description: 大型语言模型
+
+workflow:
+  label: Workflow
+  permalink: /workflow
+  description: 工作流与编排
+
+opa:
+  label: OPA
+  permalink: /opa
+  description: Open Policy Agent, 策略引擎与授权控制
+
+java:
+  label: Java
+  permalink: /java
+  description: 企业级后端开发语言与生态
+
+rust:
+  label: Rust
+  permalink: /rust
+  description: 高性能系统级编程语言
+
+rag:
+  label: RAG
+  permalink: /rag
+  description: 检索增强生成
+
+vector-db:
+  label: Vector DB
+  permalink: /vector-db
+  description: 向量数据库
+
+ai-system:
+  label: AI System
+  permalink: /ai-system
+  description: 智能系统架构
+
+graphql:
+  label: GraphQL
+  permalink: /graphql
+  description: 客户端接口查询语言
+
+casbin:
+  label: Casbin
+  permalink: /casbin
+  description: 强大的访问控制框架
+
+authorization:
+  label: Authorization
+  permalink: /authorization
+  description: 鉴权与访问控制
+
+security:
+  label: Security
+  permalink: /security
+  description: 系统与应用安全
+
+architecture:
+  label: Architecture
+  permalink: /architecture
+  description: 软件和系统架构体系
+
+apisix:
+  label: APISIX
+  permalink: /apisix
+  description: 云原生 API 网关
+
+monitoring:
+  label: Monitoring
+  permalink: /monitoring
+  description: 系统监控与可观测性
