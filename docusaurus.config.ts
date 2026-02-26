@@ -87,6 +87,7 @@ const config: Config = {
         },
         blog: {
           showReadingTime: true,
+          postsPerPage: 10,
           remarkPlugins: [remarkMath],
           rehypePlugins: [rehypeKatex],
           feedOptions: {
