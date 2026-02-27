@@ -88,6 +88,8 @@ const config: Config = {
         blog: {
           showReadingTime: true,
           postsPerPage: 10,
+          blogSidebarCount: "ALL",
+          blogSidebarTitle: "所有文章",
           remarkPlugins: [remarkMath],
           rehypePlugins: [rehypeKatex],
           feedOptions: {
