@@ -39,3 +39,11 @@ video:
   label: 视频
   color: "#ef4444" # Red 500
   description: 视频生成和编辑工具
+code-intelligence:
+  label: 代码情报
+  color: "#8b5cf6" # Violet 500
+  description: 基于知识图谱的代码分析与理解工具
+mcp:
+  label: MCP
+  color: "#3b82f6" # Blue 500
+  description: Model Context Protocol 协议支持
