@@ -165,20 +165,52 @@ def pagerank_step(nodes, pr_values, d=0.85):
 
 ---
 
-## 4. 实战架构：图数据库选型指南
+## 4. 工业级深度解析：Neo4j Graph Data Science (GDS)
 
-当你的数据量达到千万级节点、亿级边时，单纯的代码逻辑已无法满足查询性能。这时需要专业的图数据库。
+当你的数据量级跨越千万级节点时，“手搓”算法由于内存占用与并发管理的限制，往往难以支撑生产环境。此时，**Neo4j Graph Data Science (GDS)** 库成为了事实上的工业标准。它通过将图数据投影到内存中（Graph Projection），利用并行化引擎实现极致的计算性能。
 
-### 4.1 主流开源图数据库对比
+基于官方文档的 19 个核心维度，我们将 GDS 算法库划分为以下五大实战矩阵：
 
-| 数据库           | 模型       | 优势                                                | 挑战                                       | 适用场景                                   |
-| :--------------- | :--------- | :-------------------------------------------------- | :----------------------------------------- | :----------------------------------------- |
-| **Neo4j**        | 原生图存储 | 生态极其成熟，Cypher 语言易用性世界第一。           | 社区版不支持集群，大规模水平扩展性有限。   | 知识图谱、企业内控、推荐系统原型。         |
-| **Nebula Graph** | 分布式架构 | 分布式设计，支持超大规模并发，存储与计算分离。      | 部署相对复杂，查询语言 (nGQL) 有学习成本。 | 大厂级社交网络、金融实时风控、TB级数据流。 |
-| **JanusGraph**   | 基于底层库 | 可插拔存储（HBase/Cassandra），高度兼容分布式生态。 | 性能调优繁琐，依赖组件较多。               | 已有 HBase/Cassandra 基础设施的企业。      |
-| **Memgraph**     | 内存图     | 极致的实时性，完全兼容 Cypher 语言。                | 受限于单机内存容量。                       | 极低延迟的实时流计算、动态路径规划。       |
+### 4.1 中心性算法 (Centrality)：衡量节点权重与排名
 
-### 4.2 如何选择？
+此类算法旨在量化节点在网络中的“话语权”。
+
+| 算法                  | 核心原理与公式                                                            | 典型应用与链接                                                                                                               |
+| :-------------------- | :------------------------------------------------------------------------ | :--------------------------------------------------------------------------------------------------------------------------- |
+| **PageRank**          | 基于链接传递权重：$PR(A) = \frac{1-d}{N} + d \sum \frac{PR(T_i)}{C(T_i)}$ | 网页排名、关键基础设施识别。 [View Doc](https://neo4j.com/docs/graph-data-science/current/algorithms/page-rank/)             |
+| **ArticleRank**       | PageRank 变体，通过降低低度数节点的初始贡献来缓解“蜘蛛陷阱”。             | 学术文献引用价值评估。 [View Doc](https://neo4j.com/docs/graph-data-science/current/algorithms/article-rank/)                |
+| **Degree Centrality** | 直接度量：计算节点的总入度/出度（权重图则算权重的总和）。                 | 社交网络人气指数、流量枢纽监测。 [View Doc](https://neo4j.com/docs/graph-data-science/current/algorithms/degree-centrality/) |
+
+### 4.2 社区发现与连通性 (Community & Connectivity)：挖掘拓扑结构
+
+- **Leiden 算法**：Louvain 算法的现代改良版，通过最大化模块度（Modularity）发现层级社区。它修正了 Louvain 可能产生内部连通性差的社区的缺陷。 [Doc](https://neo4j.com/docs/graph-data-science/current/algorithms/leiden/)
+- **K-Core**：递归提取度数至少为 k 的子图节点。用于寻找网络中生存力最强、最核心的群体。 [Doc](https://neo4j.com/docs/graph-data-science/current/algorithms/k-core/)
+- **切断点 (Articulation Points)**：找出那些一旦移除就会导致图分裂成更多连通分量的“咽喉节点”。 [Doc](https://neo4j.com/docs/graph-data-science/current/algorithms/articulation-points/)
+- **WCC & SCC**：
+  - **WCC (弱连通)**：忽略方向，识别“孤岛”数据。 [Doc](https://neo4j.com/docs/graph-data-science/current/algorithms/wcc/)
+  - **SCC (强连通)**：严格要求双向可达，识别紧密的互动闭环。 [Doc](https://neo4j.com/docs/graph-data-science/current/algorithms/strongly-connected-components/)
+
+### 4.3 相似性与搜索 (Similarity & Searching)：邻域发现与路经优化
+
+| 算法                | 描述                                               | 应用场景与链接                                                                                                                                                                                                            |
+| :------------------ | :------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **KNN (K-Nearest)** | 基于节点属性特征向量寻找最接近的 K 个邻居。        | 自动化推荐、特征补全。 [View Doc](https://neo4j.com/docs/graph-data-science/current/algorithms/knn/)                                                                                                                      |
+| **Node Similarity** | 基于 Jaccard 系数衡量节点邻居集合的交集程度。      | 好友推荐、内容相似性比对。 [Normal](https://neo4j.com/docs/graph-data-science/current/algorithms/node-similarity/) / [Filtered](https://neo4j.com/docs/graph-data-science/current/algorithms/filtered-node-similarity/)   |
+| **A\* Search**      | 引入启发式函数 $f(n) = g(n) + h(n)$ 引导搜索方向。 | 指令集路径规划、游戏寻路。 [View Doc](https://neo4j.com/docs/graph-data-science/current/algorithms/astar/)                                                                                                                |
+| **Dijkstra [S-T]**  | 计算指定源节点到目标节点的精确最短路径。           | 网络路由、物流交付。 [View Doc](https://neo4j.com/docs/graph-data-science/current/algorithms/dijkstra-source-target/)                                                                                                     |
+| **MST & Topo Sort** | 生成树优化与有向图拓扑序列生成。                   | 网络布线、编译器依赖分析。 [MST](https://neo4j.com/docs/graph-data-science/current/algorithms/minimum-weight-spanning-tree/) / [Topo](https://neo4j.com/docs/graph-data-science/current/algorithms/dag/topological-sort/) |
+
+### 4.4 机器学习与图嵌入 (Node Embeddings)
+
+图嵌入将高维拓扑结构映射为低维浮点向量，是图机器学习（GML）的基石。
+
+1. **FastRP (Fast Random Projection)**：一种基于随机投影的可扩展算法。通过多次矩阵迭代更新，在极短时间内生成高质量的向量表示。 [Doc](https://neo4j.com/docs/graph-data-science/current/machine-learning/node-embeddings/fastrp/)
+2. **Node2Vec**：结合了 BFS（提取局部结构）和 DFS（提取同质性）的游走模型。 [Doc](https://neo4j.com/docs/graph-data-science/current/machine-learning/node-embeddings/node2vec/)
+3. **HashGNN**：利用消息传递（Message Passing）和局部敏感哈希（Min-Hashing）技术，捕捉复杂的节点特征。 [Doc](https://neo4j.com/docs/graph-data-science/current/machine-learning/node-embeddings/hashgnn/)
+
+---
+
+## 5. 架构选型与综合考量
 
 1. **数据规模**：GB 级别选 **Neo4j**；TB/PB 级别首选 **Nebula Graph**。
 2. **读写特性**：高频更新、低延迟查询选 **Memgraph**。
@@ -198,6 +230,7 @@ def pagerank_step(nodes, pr_values, d=0.85):
 > - GitHub: [Graph Algorithms Library](https://github.com/williamfiset/Algorithms) (经典 Java/C++ 实现)
 > - Paper: _The Anatomy of a Large-Scale Hypertextual Web Search Engine_ (PageRank 鼻祖)
 > - Tool: [Nebula Graph 官网](https://nebula-graph.com.cn/)
+> - Doc: [Neo4j Graph Data Science (GDS) 官方文档](https://neo4j.com/docs/graph-data-science/current/)
 
 ---
 
