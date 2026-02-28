@@ -1,0 +1,204 @@
+---
+slug: graph-algorithms-comprehensive-guide
+title: 图算法全景指南：从基础理论到分布式图数据库实战
+authors: [me]
+tags:
+  [
+    graph-theory,
+    algorithm,
+    python,
+    data-structure,
+    architecture,
+    distributed-systems,
+  ]
+description: 本文将带你进入图论的高阶世界。从基础的 BFS/DFS 到复杂的最短路径方案，再到 Tarjan 强连通分量与 PageRank 定量分析。最后，我们将对比 Neo4j、Nebula Graph 等主流图数据库，帮助你在架构选型中做出明智决策。
+---
+
+图（Graph）不仅仅是一种数据结构，更是一种看待世界联系的思维方式。在海量数据的今天，简单的关系型数据库已难以应对复杂的关联查询。
+
+本文旨在重塑你对图算法的认知。我们采用**渐进式深度**的设计，从最直观的遍历开始，逐步深入到复杂的结构分析，并最终探讨工业级的图存储方案。
+
+<!-- truncate -->
+
+### 图算法分类与应用概览
+
+在展开技术细节前，下表展示了图算法在实际业务中的垂直分布：
+
+| 维度           | 类别                   | 代表算法                   | 典型应用                           |
+| :------------- | :--------------------- | :------------------------- | :--------------------------------- |
+| **基础搜索**   | 路径查找 (Pathfinding) | Dijkstra, A\*, BFS/DFS     | 路径规划、地图导航、迷宫求解       |
+| **重要性评估** | 中心性 (Centrality)    | PageRank, Betweenness      | 社交枢纽发现、网页排名、影响分析   |
+| **结构分析**   | 社区发现 (Community)   | Louvain, Label Propagation | 用户分群、洗钱团伙检测、蛋白质建模 |
+| **关联预测**   | 相似性 (Similarity)    | Node2Vec, Jaccard Index    | 好友推荐、知识图谱补全、商品关联   |
+
+---
+
+## 1. 入门阶段：图的表达与基础遍历
+
+### 1.1 邻接表：Python 的优雅实现
+
+对于大多数稀疏图（Sparse Graph），邻接表是性能与空间的最佳平衡。
+
+```python
+from collections import defaultdict
+
+class Graph:
+    def __init__(self):
+        self.adj = defaultdict(list)
+
+    def add_edge(self, u, v, weight=1):
+        self.adj[u].append((v, weight))
+
+# 这种结构 natural 地支持了 Python 的 for-in 循环
+```
+
+### 1.2 遍历逻辑的差异性
+
+- **BFS (广度优先)**：利用队列分层扩展。它是寻找**无权图最短路径**的唯一最优解。
+- **DFS (深度优先)**：利用递归或栈探寻边界。它是解决**拓扑排序**和**环检测**的核心。
+
+---
+
+## 2. 进阶阶段：路径优化与结构约束
+
+### 2.1 Dijkstra 及其局限性
+
+Dijkstra 虽强，但无法处理**负权边**。当面临金融风控中的“信用抵扣”或“回扣”场景（负值路径）时，我们需要 **Bellman-Ford** 或 **SPFA**。
+
+### 2.2 拓扑排序 (Topological Sorting)
+
+在处理流水线依赖（如 DAG 编译器）时，拓扑排序能给出执行的线性序列。
+
+```python
+def kahn_topo_sort(num_nodes, edges):
+    in_degree = [0] * num_nodes
+    adj = defaultdict(list)
+    for u, v in edges:
+        adj[u].append(v)
+        in_degree[v] += 1
+
+    queue = [i for i in range(num_nodes) if in_degree[i] == 0]
+    result = []
+
+    while queue:
+        u = queue.pop(0)
+        result.append(u)
+        for v in adj[u]:
+            in_degree[v] -= 1
+            if in_degree[v] == 0:
+                queue.append(v)
+    return result if len(result) == num_nodes else "Cycle Detected"
+```
+
+### 2.3 Bellman-Ford：处理负权边的利器
+
+与 Dijkstra 不同，Bellman-Ford 可以处理包含负权边的图，并能检测**负权环**。这是非原生算法库中经常需要“手搓”实现的经典代码。
+
+```python
+def bellman_ford(vertices, edges, start):
+    # edges: [(u, v, w), ...]
+    dist = {v: float('inf') for v in vertices}
+    dist[start] = 0
+
+    # 进行 V-1 次松弛操作
+    for _ in range(len(vertices) - 1):
+        for u, v, w in edges:
+            if dist[u] != float('inf') and dist[u] + w < dist[v]:
+                dist[v] = dist[u] + w
+
+    # 第 V 次松弛用于检测负权环
+    for u, v, w in edges:
+        if dist[u] != float('inf') and dist[u] + w < dist[v]:
+            return "Graph contains negative weight cycle"
+
+    return dist
+```
+
+### 2.4 Prim 算法：最小生成树 (MST)
+
+在构建最低成本连接（如敷设网线、建立交通网络）时，Prim 算法能以最优成本覆盖所有节点。
+
+```python
+import heapq
+
+def prim_mst(graph, start):
+    # graph: {u: [(v, w), ...]}
+    mst = []
+    visited = {start}
+    edges = [(w, start, v) for v, w in graph[start]]
+    heapq.heapify(edges)
+
+    while edges:
+        w, u, v = heapq.heappop(edges)
+        if v not in visited:
+            visited.add(v)
+            mst.append((u, v, w))
+            for next_v, next_w in graph[v]:
+                if next_v not in visited:
+                    heapq.heappush(edges, (next_w, v, next_v))
+    return mst
+```
+
+---
+
+## 3. 高阶阶段：强连通与定量影响力
+
+### 3.1 Tarjan 算法：寻找“小团体”
+
+强连通分量 (SCC) 能识别图中那些能相互到达的闭环。在社交网络中，SCC 常被用于识别核心小团体。
+
+### 3.2 PageRank：定量的价值衡量
+
+PageRank 不仅仅是搜索引擎的专利。它在推荐系统中用于评估 User-Item 二部图中的节点权威性。
+
+```python
+# 简化的 PageRank 核心公式实现思路
+def pagerank_step(nodes, pr_values, d=0.85):
+    new_pr = {}
+    N = len(nodes)
+    for node in nodes:
+        rank_sum = sum(pr_values[m] / len(out_neighbors[m])
+                       for m in in_neighbors[node])
+        new_pr[node] = (1 - d) / N + d * rank_sum
+    return new_pr
+```
+
+---
+
+## 4. 实战架构：图数据库选型指南
+
+当你的数据量达到千万级节点、亿级边时，单纯的代码逻辑已无法满足查询性能。这时需要专业的图数据库。
+
+### 4.1 主流开源图数据库对比
+
+| 数据库           | 模型       | 优势                                                | 挑战                                       | 适用场景                                   |
+| :--------------- | :--------- | :-------------------------------------------------- | :----------------------------------------- | :----------------------------------------- |
+| **Neo4j**        | 原生图存储 | 生态极其成熟，Cypher 语言易用性世界第一。           | 社区版不支持集群，大规模水平扩展性有限。   | 知识图谱、企业内控、推荐系统原型。         |
+| **Nebula Graph** | 分布式架构 | 分布式设计，支持超大规模并发，存储与计算分离。      | 部署相对复杂，查询语言 (nGQL) 有学习成本。 | 大厂级社交网络、金融实时风控、TB级数据流。 |
+| **JanusGraph**   | 基于底层库 | 可插拔存储（HBase/Cassandra），高度兼容分布式生态。 | 性能调优繁琐，依赖组件较多。               | 已有 HBase/Cassandra 基础设施的企业。      |
+| **Memgraph**     | 内存图     | 极致的实时性，完全兼容 Cypher 语言。                | 受限于单机内存容量。                       | 极低延迟的实时流计算、动态路径规划。       |
+
+### 4.2 如何选择？
+
+1. **数据规模**：GB 级别选 **Neo4j**；TB/PB 级别首选 **Nebula Graph**。
+2. **读写特性**：高频更新、低延迟查询选 **Memgraph**。
+3. **语言偏好**：追求 SQL 感选 **Nebula**；追求类似 Python 的表现力选 **Neo4j (Cypher)**。
+
+---
+
+## 5. 总结与前瞻：图神经网络 (GNN)
+
+图算法的演进并未停止。随着深度学习的发展，**图神经网络 (GNN)** 正在将算法从“手工设计规则”推向“表征学习”。
+
+通过 **GraphSAGE** 或 **GAT**，我们现在可以让机器自动学习图中节点的特征向量（Node Embedding），从而在分类和预测任务中达到惊人的准确度。
+
+> **参考资源：**
+>
+> - GitHub: [TheAlgorithms/Python/Graphs](https://github.com/TheAlgorithms/Python/tree/master/graphs) (最全的 Vanilla Python 手搓算法库)
+> - GitHub: [Graph Algorithms Library](https://github.com/williamfiset/Algorithms) (经典 Java/C++ 实现)
+> - Paper: _The Anatomy of a Large-Scale Hypertextual Web Search Engine_ (PageRank 鼻祖)
+> - Tool: [Nebula Graph 官网](https://nebula-graph.com.cn/)
+
+---
+
+希望这篇从 0 到 1 再到架构选型的指南，能让你在图的丛林中找到方向。

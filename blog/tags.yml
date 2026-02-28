@@ -172,3 +172,23 @@ monitoring:
   label: Monitoring
   permalink: /monitoring
   description: 系统监控与可观测性
+
+graph-theory:
+  label: 图论
+  permalink: /graph-theory
+  description: 图论与图算法
+
+algorithm:
+  label: 算法
+  permalink: /algorithm
+  description: 算法设计与分析
+
+python:
+  label: Python
+  permalink: /python
+  description: Python 编程语言
+
+data-structure:
+  label: 数据结构
+  permalink: /data-structure
+  description: 数据结构与抽象
