@@ -116,7 +116,7 @@ export default function HomepageHeader() {
           </div>
         </motion.div>
 
-        <div className="flex gap-4 items-center justify-center mt-12">
+        <div className="flex flex-wrap gap-4 items-center justify-center mt-12">
           <Link
             to="/blog"
             className="px-8 py-3 rounded-full hero-button-primary transition-all font-semibold"
@@ -127,6 +127,15 @@ export default function HomepageHeader() {
             >
               探索花园
             </Translate>
+          </Link>
+          <Link
+            to="/promotions"
+            className="px-8 py-3 rounded-full relative group overflow-hidden bg-white/5 dark:bg-white/10 hover:bg-white/20 border border-[var(--ifm-color-primary)]/30 hover:border-[var(--ifm-color-primary)] transition-all font-semibold text-zinc-800 dark:text-zinc-100 backdrop-blur-md shadow-[0_0_15px_rgba(var(--ifm-color-primary-rgb),0.1)] hover:shadow-[0_0_20px_rgba(var(--ifm-color-primary-rgb),0.3)]"
+          >
+            <span className="relative z-10 flex items-center gap-2">
+              <span className="text-lg">🎁</span>
+              <Translate id="homepage.hero.promotions">获取专属折扣</Translate>
+            </span>
           </Link>
           <Link
             to="https://github.com/RainLib"
