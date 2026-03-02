@@ -207,3 +207,18 @@ router:
   label: Router
   permalink: /router
   description: API 路由与网关
+
+wundergraph:
+  label: WunderGraph
+  permalink: /wundergraph
+  description: WunderGraph GraphQL 管理平台
+
+cosmo:
+  label: Cosmo
+  permalink: /cosmo
+  description: Cosmo 联邦微服务网关架构
+
+open-source:
+  label: 开源生态
+  permalink: /open-source
+  description: 开源技术与平台生态
