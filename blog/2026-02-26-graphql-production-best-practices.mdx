@@ -252,3 +252,9 @@ GraphQL 对于外部网关而言经常是一个黑盒。一旦出现慢查询，
 ## 结语
 
 将 GraphQL 推向万级 QPS 的生产系统绝非易事，它那无与伦比的灵活性对架构师提出了极高要求。通过 **APISIX 管理入口层流量**、**底层引擎限制深度复杂度截断黑客攻击**、**借助 OPA 代理动态权限判定**、**规范 DataLoader 与全局异常脱敏约定**、以及**完善的链路级可观察性平台**，这把双刃剑才能成为坚不可摧的神兵利器，帮助你毫无顾忌地撑起企业级的大规模高并发业务线。
+
+:::tip 延伸阅读
+
+想深入了解 Apollo Federation 联邦架构以及 Router 的请求生命周期是如何将多个微服务的 GraphQL Subgraph 无缝编排为统一 Supergraph 的？请阅读 👉 [Apollo Router 由浅入深：从 Federation 到请求生命周期的全链路剖析](/blog/apollo-graphql-router-deep-dive)
+
+:::

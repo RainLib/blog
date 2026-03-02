@@ -1,0 +1,364 @@
+---
+slug: apollo-graphql-router-deep-dive
+title: Apollo Router 由浅入深：从 Federation 到请求生命周期的全链路剖析
+authors: [me]
+tags:
+  [graphql, apollo, federation, router, deep-dive, architecture, observability]
+description: 从 Supergraph 与 Federation 的基础概念出发，逐层拆解 Apollo Router 的四层服务管线（Router → Supergraph → Execution → Subgraph），深入查询规划、响应合并、可观测性及自定义扩展，最终衔接生产级 GraphQL 架构实战。
+---
+
+import Tabs from "@theme/Tabs";
+import TabItem from "@theme/TabItem";
+import MotionCanvasPlayer from "@site/src/components/MotionCanvasPlayer";
+
+# Apollo Router 由浅入深：从 Federation 到请求生命周期的全链路剖析
+
+当你的 GraphQL 服务从一个 monolith 发展到十几个甚至几十个微服务时，如何让客户端只面对**一个端点**、同时让后端团队**各自独立迭代**？Apollo 的答案是 **Federation（联邦架构）** 和一个用 Rust 编写的高性能入口——**Apollo Router**。
+
+本文将带你从最基础的概念一路走到生产级配置，完整覆盖 Apollo Router 的**请求生命周期（Request Lifecycle）**。
+
+<!-- truncate -->
+
+---
+
+## 1. 入门篇：Supergraph 与 Federation
+
+### 1.1 为什么需要 Supergraph？
+
+在微服务架构下，每个团队往往拥有独立的 GraphQL Schema。如果直接暴露给前端，客户端需要知道"去哪个服务查哪个字段"，这与 GraphQL "单一入口"的理念完全矛盾。
+
+**Supergraph（超级图）** 通过将多个 **Subgraph（子图）** 的 Schema **组合（Composition）** 成一个统一的 Schema，让客户端无需感知后端的拆分方式。
+
+<div style={{ marginTop: "2rem", marginBottom: "2rem" }}>
+  <MotionCanvasPlayer
+    src="/animation/src/project_apollo_supergraph.js"
+    auto={true}
+  />
+</div>
+
+### 1.2 Federation 核心概念
+
+Apollo Federation 2 引入了几个关键原语：
+
+| 指令         | 用途                                               | 示例                                                        |
+| ------------ | -------------------------------------------------- | ----------------------------------------------------------- |
+| `@key`       | 声明实体的主键，使跨 Subgraph 引用成为可能         | `type User @key(fields: "id")`                              |
+| `@shareable` | 允许多个 Subgraph 都定义同一个字段                 | `type Product { name: String @shareable }`                  |
+| `@external`  | 标记当前 Subgraph 并不解析此字段，只引用其值       | `extend type User @key(fields: "id") { id: ID! @external }` |
+| `@requires`  | 表示解析该字段前需要先从其他 Subgraph 获取某些字段 | `shippingEstimate: Int @requires(fields: "weight")`         |
+| `@provides`  | 声明某次查询的返回中额外"顺带"带回了哪些字段       | `reviews: [Review] @provides(fields: "author { name }")`    |
+
+**一句话总结**：Federation 让每个 Subgraph 各管各的 Schema，Apollo Router 负责在运行时把它们缝合起来并高效分发。
+
+---
+
+## 2. 架构篇：请求生命周期的四层服务
+
+Apollo Router 处理每一个客户端请求时，都经过了一条**四层服务管线（Service Pipeline）**。理解这条管线是掌握 Router 的核心。
+
+### 2.1 Request Path（请求路径）
+
+<div style={{ marginTop: "2rem", marginBottom: "2rem" }}>
+  <MotionCanvasPlayer
+    src="/animation/src/project_apollo_request.js"
+    auto={true}
+  />
+</div>
+
+每一层都将请求 **包装（wrap）** 为更具体的类型：
+
+| 层级               | 请求类型            | 核心职责                              |
+| ------------------ | ------------------- | ------------------------------------- |
+| Router Service     | `RouterRequest`     | HTTP → GraphQL 解析、APQ、Schema 校验 |
+| Supergraph Service | `SupergraphRequest` | 查询规划、计划生成                    |
+| Execution Service  | `ExecutionRequest`  | 计划执行调度                          |
+| Subgraph Service   | `SubgraphRequest`   | 向具体 Subgraph 发 HTTP 请求          |
+
+### 2.2 Response Path（响应路径）
+
+响应路径是请求路径的**镜像反转**：
+
+1. 每个 **Subgraph** 返回 HTTP 响应 → Subgraph Service 创建 `SubgraphResponse`
+2. **Execution Service** 收集所有 Subgraph 响应 → 格式化（移除冗余数据、传播 null）→ 构建 `ExecutionResponse`
+3. **Supergraph Service** 将内容包装为 `SupergraphResponse`（包含响应流）
+4. **Router Service** 将 GraphQL 响应序列化为 JSON → 通过 HTTP 返回客户端
+
+> **流式响应**：对于使用 `@defer` 指令或 Subscription 的查询，`SupergraphResponse` 中的流可以包含多个 GraphQL 响应元素，而非仅一个。
+
+---
+
+## 3. 核心篇：查询规划（Query Planning）
+
+查询规划是 Apollo Router 最核心的智慧所在。它决定了**一个客户端请求如何被拆解为多个 Subgraph 请求**。
+
+### 3.1 Query Plan 是什么？
+
+Query Plan（查询计划）就是一份**执行蓝图**：
+
+- **分解**：将一个统一的 GraphQL 操作拆分为多个子操作，每个子操作由单独一个 Subgraph 解析
+- **依赖排序**：某些子操作依赖其他子操作的结果（例如先查 User ID，再拿 ID 去查 Orders）
+- **最优化**：Query Planner 会计算最优的执行策略，最大化并行度
+
+### 3.2 一个具体的例子
+
+假设客户端发送以下查询：
+
+```graphql
+query GetUserWithOrders {
+  user(id: "123") {
+    name # ← Users Subgraph
+    email # ← Users Subgraph
+    orders {
+      # ← Orders Subgraph (需要 user.id)
+      id
+      total
+      product {
+        # ← Products Subgraph (需要 order.productId)
+        name
+        price
+      }
+    }
+  }
+}
+```
+
+Query Planner 生成的执行计划类似于：
+
+```
+Sequence:
+  ├── Fetch(Users):  { user(id:"123") { id name email } }
+  │
+  └── Parallel:
+       ├── Flatten(user):
+       │    Fetch(Orders):  { _entities(representations:[{__typename:"User",id:"123"}]) { orders { id total productId } } }
+       │
+       └── Flatten(user.orders.@):
+            Fetch(Products): { _entities(representations:[...]) { name price } }
+```
+
+**关键洞察**：
+
+- **`_entities` 查询**：这是 Federation 的核心机制。Router 不会直接调用 `orders(userId: "123")`，而是使用 **实体引用（Entity Representation）**——通过 `@key` 声明的主键——去目标 Subgraph "认领" 数据。
+- **Sequence vs Parallel**：有数据依赖时串行，无依赖时并行。Query Planner 会自动找到最优安排。
+
+### 3.3 SubgraphRequest 的内部结构
+
+每个 `SubgraphRequest` 包含以下信息：
+
+```typescript
+interface SubgraphRequest {
+  supergraphRequest: SupergraphRequest; // 只读的原始超级图请求
+  headers: Headers; // HTTP 头（可在 plugin 中修改）
+  operationType: "query" | "mutation" | "subscription";
+  body: GraphQLRequest; // 发给 Subgraph 的 GraphQL 请求体
+}
+```
+
+Router 还暴露了 `subgraph_request_id` 字段，用于在自定义插件中将 Subgraph 的请求和响应配对追踪。
+
+---
+
+## 4. 进阶篇：并发模式与流式响应
+
+### 4.1 并行与串行的共舞
+
+在实际场景中，请求和响应**并非**简单地线性执行：
+
+- **并行执行**：互不依赖的 Subgraph 请求同时发出
+- **串行执行**：某个 Subgraph 的响应作为另一个请求的输入
+- **混合模式**：Query Plan 中可以嵌套 `Sequence` 和 `Parallel` 节点
+
+这与前一篇文章中讲到的 **DataLoader 批处理**理念一脉相承——本质都是**减少网络往返次数**。
+
+### 4.2 @defer 增量交付
+
+Apollo Router 原生支持 `@defer` 指令，实现**增量响应交付**：
+
+```graphql
+query GetUserProfile {
+  user(id: "123") {
+    name
+    avatar
+    ... @defer {
+      orderHistory {
+        # 可能较慢，延迟发送
+        totalCount
+        recentOrders {
+          id
+          total
+        }
+      }
+    }
+  }
+}
+```
+
+客户端会先收到 `name` 和 `avatar`（毫秒级），而 `orderHistory` 会在准备好后以第二个 chunk 通过 multipart response 送达。这对首屏加载体验的提升是显著的。
+
+### 4.3 Subscription 的持续响应
+
+对于 Subscription，Subgraph 每次数据更新都会发送新的 `SubgraphResponse`。每个响应对象都会完整走过响应路径中的所有 Service，并触发你配置的所有自定义逻辑。
+
+---
+
+## 5. 可观测性与自定义扩展
+
+### 5.1 基于 OpenTelemetry 的可观测性
+
+Apollo Router 的遥测体系完全基于 [OpenTelemetry](https://opentelemetry.io/) 构建。你可以通过 YAML 配置为 Router、Supergraph、Subgraph 三层 Service 分别添加：
+
+| 维度        | 说明                                       | 典型场景                   |
+| ----------- | ------------------------------------------ | -------------------------- |
+| **Traces**  | 每个 Service 生成 Span，形成请求链路瀑布图 | 发现慢 Subgraph / N+1 调用 |
+| **Metrics** | Prometheus 兼容的计数器与直方图            | QPS、P99 延迟、错误率大盘  |
+| **Logs**    | 结构化日志，可按条件过滤                   | 异常诊断、请求审计         |
+
+配置示例：
+
+```yaml title="router.yaml"
+telemetry:
+  instrumentation:
+    events:
+      router:
+        request:
+          level: info
+        response:
+          level: info
+          condition:
+            eq:
+              - response_status: error
+              - true
+      subgraph:
+        request:
+          level: debug
+        response:
+          level: warn
+          condition:
+            gt:
+              - duration_ms
+              - 500
+  exporters:
+    tracing:
+      jaeger:
+        endpoint: http://jaeger:14268/api/traces
+    metrics:
+      prometheus:
+        listen: 0.0.0.0:9090
+        path: /metrics
+```
+
+> **与上一篇的衔接**：在 [面向生产环境的 GraphQL 架构实战](/blog/graphql-production-best-practices) 中，我们提到了 Resolver 级别的 `graphql_resolver_duration_seconds` 指标。Apollo Router 把这个粒度进一步提升到了 **Subgraph Service 级别**——你可以直接看到每个子图的延迟分布，而无需在每个 Resolver 中手动埋点。
+
+### 5.2 Plugin 自定义扩展
+
+Apollo Router 的每一层 Service 都支持插件化扩展。插件在请求到达 Service **之前**执行介入，在响应离开 Service **之后**执行后处理。
+
+#### Rhai Scripts（内嵌脚本）
+
+适合轻量级的自定义逻辑，无需编译：
+
+```rhai
+// 在 Router Service 层为所有响应添加自定义 header
+fn supergraph_service(service) {
+    let add_header = |response| {
+        response.headers["x-custom-header"] = "apollo-router";
+    };
+    service.map_response(add_header);
+}
+```
+
+#### Coprocessor（外部协处理器）
+
+适合复杂的自定义逻辑，通过 HTTP 与外部服务通信：
+
+```yaml title="router.yaml"
+coprocessor:
+  url: http://my-coprocessor:8080
+  router:
+    request:
+      headers: true
+      body: true
+    response:
+      headers: true
+  subgraph:
+    all:
+      request:
+        headers: true
+```
+
+> **适用场景**：外部认证服务、动态限流、请求审计、A/B 测试路由等。
+
+#### Context 对象：跨层通信
+
+每个请求都携带一个唯一的 `Context` 对象，贯穿整个生命周期。你可以在任意 Plugin 中向 Context 写入数据，然后在后续层级读取：
+
+```rhai
+// 在 Router 层写入
+fn router_service(service) {
+    let set_context = |request| {
+        request.context["my_key"] = "my_value";
+    };
+    service.map_request(set_context);
+}
+
+// 在 Subgraph 层读取
+fn subgraph_service(service) {
+    let read_context = |request| {
+        let val = request.context["my_key"];
+        // 做复杂处理...
+    };
+    service.map_request(read_context);
+}
+```
+
+---
+
+## 6. 实战篇：与生产架构的衔接
+
+将 Apollo Router 融入企业级 GraphQL 生产架构时，它与我们在前文《面向生产环境的 GraphQL 架构实战》中讨论的各层防护形成互补：
+
+| 架构层       | 前文方案                                  | Apollo Router 能力        | 衔接方式                                       |
+| ------------ | ----------------------------------------- | ------------------------- | ---------------------------------------------- |
+| **流量网关** | APISIX GraphQL 路由                       | Router 自身即网关角色     | APISIX 作为 Router 前的 L7 反代，处理 SSL/限流 |
+| **安全防护** | `graphql-java` / `async-graphql` 深度限制 | Router 内置 `limits` 配置 | 双层限制：Router 限全局，Subgraph 限业务       |
+| **权限控制** | OPA + Rego 字段级鉴权                     | Coprocessor 对接 OPA      | Router Coprocessor → OPA → 字段级放行          |
+| **可观测性** | Resolver 级 Prometheus 指标               | Subgraph Service 级 OTEL  | 两级指标汇聚到同一 Grafana 大盘                |
+
+### 6.1 安全限制配置
+
+Apollo Router 内置了查询限制能力，可以在 `router.yaml` 中直接配置：
+
+```yaml title="router.yaml"
+limits:
+  max_depth: 15
+  max_height: 200
+  max_aliases: 30
+  max_root_fields: 20
+  parser_max_tokens: 15000
+  parser_max_recursion: 500
+```
+
+这与我们在 Subgraph 中用 `graphql-java` 的 `MaxQueryDepthInstrumentation` 或 `async-graphql` 的 `limit_depth` 形成**双重保险**：Router 在网关层快速拦截明显的恶意请求，Subgraph 在业务层兜底未被捕获的复杂查询。
+
+### 6.2 推荐的部署拓扑
+
+<div style={{ marginTop: "2rem", marginBottom: "2rem" }}>
+  <MotionCanvasPlayer
+    src="/animation/src/project_apollo_deploy.js"
+    auto={true}
+  />
+</div>
+
+---
+
+## 结语
+
+Apollo Router 不仅仅是一个 GraphQL 网关——它是整个 **Federation 联邦架构**的运行时核心。通过四层 Service 管线和智能的 Query Planner，一个面向客户端的简单请求被精确分解、高效调度、安全执行，最终无缝合并返回。
+
+掌握 Router 的请求生命周期，你就掌握了在微服务架构下运营大规模 GraphQL 系统的核心能力。结合 [前文的生产环境实战经验](/blog/graphql-production-best-practices)（APISIX 限流 + 深度防护 + OPA 鉴权 + 可观测性），你已经拥有了一套完整的 GraphQL 生产技术栈。
+
+> **延伸阅读**：
+>
+> - [Apollo Router Request Lifecycle（官方文档）](https://www.apollographql.com/docs/graphos/routing/request-lifecycle)
+> - [Apollo Federation 2 Specification](https://www.apollographql.com/docs/federation/)
+> - [Router Customization Overview](https://www.apollographql.com/docs/graphos/routing/customization/overview)

@@ -192,3 +192,18 @@ data-structure:
   label: 数据结构
   permalink: /data-structure
   description: 数据结构与抽象
+
+apollo:
+  label: Apollo
+  permalink: /apollo
+  description: Apollo GraphQL 生态与工具链
+
+federation:
+  label: Federation
+  permalink: /federation
+  description: GraphQL Federation 联邦架构
+
+router:
+  label: Router
+  permalink: /router
+  description: API 路由与网关

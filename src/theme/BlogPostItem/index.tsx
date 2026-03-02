@@ -4,17 +4,15 @@ import type BlogPostItemType from "@theme/BlogPostItem";
 import type { WrapperProps } from "@docusaurus/types";
 import { PROMOTIONS, type Promotion } from "../../data/promotions";
 import PromoBanner from "../../components/PromoBanner";
-import { useLocation } from "@docusaurus/router";
+import { useBlogPost } from "@docusaurus/plugin-content-blog/client";
 
 type Props = WrapperProps<typeof BlogPostItemType>;
 
 export default function BlogPostItemWrapper(props: Props): ReactNode {
   const [randomPromo, setRandomPromo] = useState<Promotion | null>(null);
-  const location = useLocation();
 
-  // Only show on individual blog post pages, not in list views
-  const isBlogPostPage =
-    location.pathname.includes("/blog/") && location.pathname !== "/blog";
+  // Use official hook to determine if it's an individual post page
+  const { isBlogPostPage } = useBlogPost();
 
   useEffect(() => {
     // Select a random promotion on client-side to avoid hydration mismatches
