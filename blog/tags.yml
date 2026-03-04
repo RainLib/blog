@@ -222,3 +222,28 @@ open-source:
   label: 开源生态
   permalink: /open-source
   description: 开源技术与平台生态
+
+openclaw:
+  label: OpenClaw
+  permalink: /openclaw
+  description: 开源自托管 AI 个人助手平台
+
+wsl:
+  label: WSL
+  permalink: /wsl
+  description: Windows Subsystem for Linux
+
+telegram:
+  label: Telegram
+  permalink: /telegram
+  description: Telegram 即时通讯平台
+
+self-hosted:
+  label: 自托管
+  permalink: /self-hosted
+  description: 自托管与私有化部署
+
+tutorial:
+  label: 教程
+  permalink: /tutorial
+  description: 手把手实操教程
