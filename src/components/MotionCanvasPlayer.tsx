@@ -24,6 +24,7 @@ export default function MotionCanvasPlayer({ src }: { src: string }) {
   const playerRef = React.useRef<any>(null); // Use any to access specific methods
   const [isPlaying, setIsPlaying] = React.useState(false);
   const [isFullscreen, setIsFullscreen] = React.useState(false);
+  const [isVisible, setIsVisible] = React.useState(false);
 
   // Toggle Native Fullscreen
   const toggleFullscreen = (e: React.MouseEvent) => {
@@ -51,27 +52,68 @@ export default function MotionCanvasPlayer({ src }: { src: string }) {
     const player = playerRef.current;
     if (!player) return;
 
-    // Use setPlaying from prototype if available (preferred)
-    // @ts-ignore
     if (player.state === "ready" && typeof player.setPlaying === "function") {
-      // @ts-ignore
       player.setPlaying(!isPlaying);
       setIsPlaying(!isPlaying);
-    } else {
-      // Fallback or log
-      console.warn("MotionCanvasPlayer: Player not ready or method missing.", {
-        state: (player as any).state,
-      });
-
-      // Try fallback to core player instance
-      // @ts-ignore
-      if (player.player && typeof player.player.togglePlayback === "function") {
-        // @ts-ignore
-        player.player.togglePlayback(!isPlaying);
-        setIsPlaying(!isPlaying);
-      }
+    } else if (
+      player.player &&
+      typeof player.player.togglePlayback === "function"
+    ) {
+      player.player.togglePlayback(!isPlaying);
+      setIsPlaying(!isPlaying);
     }
   };
+
+  // 高效、安全的播放状态控制函数
+  const setPlaybackState = React.useCallback((shouldPlay: boolean) => {
+    const player = playerRef.current;
+    if (!player) return;
+
+    setIsPlaying((prev) => {
+      // 避免重复触发相同的状态，提升性能
+      if (prev === shouldPlay) return prev;
+
+      if (player.state === "ready" && typeof player.setPlaying === "function") {
+        player.setPlaying(shouldPlay);
+      } else if (
+        player.player &&
+        typeof player.player.togglePlayback === "function"
+      ) {
+        player.player.togglePlayback(shouldPlay);
+      }
+
+      return shouldPlay;
+    });
+  }, []);
+
+  // 高效、不阻塞主线程的页面滚动监测 (IntersectionObserver原生API)
+  React.useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        // 进入屏幕中部区域时触发 true，离开进入上下边缘区域时触发 false
+        setIsVisible(entry.isIntersecting);
+      },
+      {
+        root: null,
+        // 核心逻辑：定义“中间区域”。通过 rootMargin 缩小视口触发范围：
+        // 排除顶部 25% 和底部 25%，相当于元素只有进入屏幕中间区 50% 时才会播放
+        // 移动到上下边缘则会自动暂停播放
+        rootMargin: "-25% 0px -25% 0px",
+        threshold: 0,
+      },
+    );
+
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, []);
+
+  // 监听可见性状态并同步播放状态
+  React.useEffect(() => {
+    setPlaybackState(isVisible);
+  }, [isVisible, setPlaybackState]);
 
   React.useEffect(() => {
     const player = playerRef.current;
@@ -79,50 +121,44 @@ export default function MotionCanvasPlayer({ src }: { src: string }) {
       // player.setAttribute("auto", "true"); // Manual control
 
       const initPlayer = () => {
-        // Poll until ready
-        // @ts-ignore
         if (player.state !== "ready") {
           requestAnimationFrame(initPlayer);
           return;
         }
 
+        // Apply initial playback state once ready
+        setPlaybackState(isVisible);
+
         // Inject shadow DOM styles
         const shadow = player.shadowRoot;
-        if (shadow) {
-          if (!shadow.querySelector("#custom-styles")) {
-            const style = document.createElement("style");
-            style.id = "custom-styles";
-            style.textContent = `
-                  /* Hide native controls */
-                  .overlay { display: none !important; opacity: 0 !important; pointer-events: none !important; }
-
-                  /* Host: Full size flex container */
-                  :host {
-                    display: flex !important;
-                    align-items: center !important;
-                    justify-content: center !important;
-                    width: 100% !important;
-                    height: 100% !important;
-                    background: black !important; /* Ensure background matches */
-                  }
-
-                  /* Canvas: Intrinsic size with constraints, centered by flex */
-                  #canvas {
-                    width: auto !important;
-                    height: auto !important;
-                    max-width: 100% !important;
-                    max-height: 100% !important;
-                    display: block !important;
-                  }
-                `;
-            shadow.appendChild(style);
-          }
+        if (shadow && !shadow.querySelector("#custom-styles")) {
+          const style = document.createElement("style");
+          style.id = "custom-styles";
+          style.textContent = `
+                .overlay { display: none !important; opacity: 0 !important; pointer-events: none !important; }
+                :host {
+                  display: flex !important;
+                  align-items: center !important;
+                  justify-content: center !important;
+                  width: 100% !important;
+                  height: 100% !important;
+                  background: black !important;
+                }
+                #canvas {
+                  width: auto !important;
+                  height: auto !important;
+                  max-width: 100% !important;
+                  max-height: 100% !important;
+                  display: block !important;
+                }
+              `;
+          shadow.appendChild(style);
         }
       };
 
       initPlayer();
     }
-  }, []);
+  }, [isVisible, setPlaybackState]);
 
   return (
     <BrowserOnly
