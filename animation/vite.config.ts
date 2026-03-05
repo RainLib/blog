@@ -23,6 +23,7 @@ export default defineConfig({
         "./src/project_chunking_propositional.ts",
         "./src/project_chunking_late.ts",
         "./src/project_chunking_contextual.ts",
+        "./src/project_cosmo_grpc.ts",
       ],
     }),
     ffmpeg(),
