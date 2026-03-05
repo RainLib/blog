@@ -51,6 +51,7 @@ graph TD
     A[文本 Chunking 策略] --> B[物理切分]
     A --> C[结构感知切分]
     A --> D[语义感知切分]
+    A --> F[智能体驱动切分 2026]
     A --> E[VLM 端到端解析]
 
     B --> B1[固定大小切片]
@@ -66,6 +67,10 @@ graph TD
     D --> D3[Late Chunking]
     D --> D4[Contextual Retrieval]
 
+    F --> F1[Agentic Chunking]
+    F --> F2[Multimodal 多模态切分]
+    F --> F3[PageIndex 推理式检索]
+
     E --> E1[PaddleOCR PP-StructureV3]
     E --> E2[Unstructured.io]
     E --> E3[Infinity-Parser-7B]
@@ -73,6 +78,7 @@ graph TD
     style B fill:#ff9999
     style C fill:#ffcc99
     style D fill:#99ff99
+    style F fill:#cc99ff
     style E fill:#99ccff
 ```
 
@@ -127,11 +133,27 @@ splitter = TokenTextSplitter(
 | 不感知文档结构        | 表格、列表、代码块被随机切断                             |
 | 最优 chunk_size 难定  | 事实性问题最优 256-512 token，分析性问题最优 1024+ token |
 
+:::warning 2026 关键发现：「Context Cliff」效应
+**2026 年 1 月的系统性分析**揭示了一个重要阈值——当发送给 LLM 的上下文总量超过 **2,500 tokens** 时，响应质量出现断崖式下降。这意味着：
+
+- 不是 Chunk 越大越好、上下文越多越好
+- 精准的检索（少量高质量 Chunk）优于宽泛的检索（大量中等质量 Chunk）
+- `Top-K=5 × 512tok = 2560tok` 可能是性能劣化点；尝试 `Top-K=3 × 512tok` 或更小的 chunk_size
+  :::
+
+:::note 关于 Overlap 的最新认知（2026 年 1 月）
+传统上推荐 10-20% 的 `chunk_overlap`，但最新实验表明：**Overlap 并不总是有效**。
+
+- 对于段落边界清晰的文档（如 Markdown、结构化报告），Overlap 几乎无收益，反而增加约 20% 索引成本
+- 对边界模糊的流水线式文本（如对话记录、连续叙述），Overlap 收益更显著
+- **建议**：先不加 Overlap 建基线，仅在发现边界信息丢失时才开启
+  :::
+
 :::note 什么时候用固定切分？
 
 - 纯文本、逻辑结构简单、快速原型验证
 - 对延迟极度敏感、无法承担 Embedding 计算成本
-- 2026 年学术研究表明：对于通用学术文档，512-token 固定切分的准确率（69%）与递归切分相当，优于语义切分（过度碎片化问题）
+- **Vecta 2026 年 2 月基准**：对学术文档，512-token 递归切分准确率 **69%**，固定切分 **67%**，均显著优于语义切分（过度碎片化导致精度损失）
   :::
 
 ---
@@ -752,6 +774,209 @@ def add_context_with_caching(document: str, chunks: list[str]) -> list[str]:
 
 ---
 
+### 5.5 Agentic Chunking（智能体驱动切分）
+
+**2025-2026 年最前沿的切分范式**：不再使用固定规则，而是让 LLM **扮演人类编辑**，动态决定每个切分边界在哪里——综合考量内容密度、主题转换、段落逻辑。
+
+**核心思路**：让 Agent 分析整篇文档，选择最优的切分策略，甚至在不同 Section 使用不同的切分方法。
+
+```
+传统切分：固定规则 → 所有段落用同一把尺子
+Agentic 切分：Agent 感知内容 → 代码用语义切分，表格整体保留，事实陈述做命题切片
+```
+
+**实战实现**（使用 LangGraph 构建切分 Agent）：
+
+```python
+from langgraph.graph import StateGraph, END
+from langchain_openai import ChatOpenAI
+from langchain_core.messages import HumanMessage
+from typing import TypedDict
+import json
+
+class ChunkState(TypedDict):
+    text: str
+    doc_type: str  # detected document type
+    strategy: str  # chosen strategy
+    chunks: list[str]
+
+llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+
+def detect_document_type(state: ChunkState) -> ChunkState:
+    """Agent 分析文档类型，决定最优切分策略"""
+    analysis_prompt = f"""分析以下文档的前 500 个字符，判断文档类型和最优切分策略。
+
+文档内容：
+{state['text'][:500]}
+
+请输出 JSON 格式：
+{{"doc_type": "narrative|technical|financial|legal|mixed",
+  "strategy": "recursive|semantic|propositional|by_title|by_page",
+  "reason": "选择理由"}}"""
+
+    response = llm.invoke([HumanMessage(content=analysis_prompt)])
+    result = json.loads(response.content)
+    return {**state, "doc_type": result["doc_type"], "strategy": result["strategy"]}
+
+def apply_strategy(state: ChunkState) -> ChunkState:
+    """根据 Agent 决策应用对应策略"""
+    strategy = state["strategy"]
+
+    if strategy == "recursive":
+        from langchain_text_splitters import RecursiveCharacterTextSplitter
+        splitter = RecursiveCharacterTextSplitter(chunk_size=512, chunk_overlap=0)
+        chunks = splitter.split_text(state["text"])
+
+    elif strategy == "by_title":
+        from langchain_text_splitters import MarkdownHeaderTextSplitter
+        splitter = MarkdownHeaderTextSplitter(
+            headers_to_split_on=[("#", "H1"), ("##", "H2"), ("###", "H3")]
+        )
+        chunks = [doc.page_content for doc in splitter.split_text(state["text"])]
+
+    elif strategy == "semantic":
+        from langchain_experimental.text_splitter import SemanticChunker
+        from langchain_openai import OpenAIEmbeddings
+        splitter = SemanticChunker(embeddings=OpenAIEmbeddings())
+        chunks = splitter.split_text(state["text"])
+
+    else:  # fallback
+        chunks = state["text"].split("\n\n")
+
+    return {**state, "chunks": chunks}
+
+# 构建 Agent Graph
+graph = StateGraph(ChunkState)
+graph.add_node("detect", detect_document_type)
+graph.add_node("apply", apply_strategy)
+graph.add_edge("detect", "apply")
+graph.add_edge("apply", END)
+graph.set_entry_point("detect")
+
+agent_chunker = graph.compile()
+
+# 使用
+result = agent_chunker.invoke({"text": document_text, "doc_type": "", "strategy": "", "chunks": []})
+print(f"文档类型：{result['doc_type']}")
+print(f"选用策略：{result['strategy']}")
+print(f"切分结果：{len(result['chunks'])} 个 Chunk")
+```
+
+**Agentic Chunking 的性能数据**（2026 年研究报告）：
+
+- 与纯规则切分相比，因不当切分导致的**错误假设平均减少约 92%**
+- 特别适合混合内容文档（正文 + 代码 + 表格 + 图表并存）
+- 代价：每次文档处理需额外 1-2 次 LLM 推理（策略选择阶段），约增加 $0.001/页 的成本
+
+:::tip Agentic Chunking 最适合哪些场景？
+
+- **多格式混合文档**：一个 PDF 里既有叙述段落，又有代码示例，还有数据表格
+- **大规模异构文档库**：不同部门上传的文档格式不统一，无法统一制定切分规则
+- **长期运营的知识库**：随着文档类型增多，基于规则的切分维护成本越来越高
+  :::
+
+---
+
+### 5.6 Multimodal Chunking（多模态切分）
+
+**现代文档 = 文字 + 图片 + 表格 + 图表**。当 RAG 只处理文字时，图表数据、产品说明图等关键信息被完全丢失。行业研究表明，企业报告中图表占信息量的 **30-50%**。
+
+**多模态 RAG 架构对比**：
+
+```mermaid
+graph LR
+    subgraph "传统文本 RAG"
+        A1[PDF] -->|只提取文字| B1[文本 Chunks]
+        B1 --> C1[向量检索]
+        A1 -->|忽略| X1["❌ 图片/图表"]
+    end
+
+    subgraph "Multimodal RAG 2026"
+        A2[PDF] --> B2[文本 Chunks]
+        A2 --> C2["图片 → VLM 摘要"]
+        A2 --> D2["表格 → Markdown"]
+        A2 --> E2["图表 → 数据提取"]
+        B2 & C2 & D2 & E2 --> F2[混合向量索引]
+        F2 --> G2[多模态 LLM 回答]
+    end
+```
+
+**实战：VLM 驱动的 PDF 多模态切分**：
+
+```python
+import fitz  # PyMuPDF
+from openai import OpenAI
+import base64
+
+client = OpenAI()
+
+def describe_image_with_vlm(image_bytes: bytes) -> str:
+    """使用 VLM 为图片生成文字描述，供向量检索使用"""
+    img_b64 = base64.b64encode(image_bytes).decode()
+    response = client.chat.completions.create(
+        model="gpt-4o",
+        messages=[{
+            "role": "user",
+            "content": [
+                {"type": "image_url",
+                 "image_url": {"url": f"data:image/png;base64,{img_b64}"}},
+                {"type": "text",
+                 "text": "请用 2-3 句话描述这张图片/图表的核心内容，"
+                         "重点提取可供检索的关键信息（数字、趋势、实体名称）。"}
+            ]
+        }]
+    )
+    return response.choices[0].message.content
+
+def build_multimodal_chunks(pdf_path: str) -> list[dict]:
+    """构建包含文字、图片描述的多模态 Chunk 列表"""
+    doc = fitz.open(pdf_path)
+    all_chunks = []
+
+    for page_num in range(len(doc)):
+        page = doc[page_num]
+
+        # ① 文字 Chunks
+        page_text = page.get_text("text")
+        if len(page_text.strip()) > 50:
+            all_chunks.append({
+                "type": "text",
+                "content": page_text,
+                "metadata": {"page": page_num, "source": pdf_path}
+            })
+
+        # ② 图片 Chunks：VLM 描述后入库
+        for img_ref in page.get_images(full=True):
+            xref = img_ref[0]
+            img_data = doc.extract_image(xref)
+            description = describe_image_with_vlm(img_data["image"])
+            all_chunks.append({
+                "type": "image",
+                "content": description,      # 文字描述用于向量检索
+                "raw_image": img_data["image"],  # 原图用于 VLM 生成时展示
+                "metadata": {"page": page_num, "source": pdf_path}
+            })
+
+    return all_chunks
+```
+
+**多模态 Chunk 类型处理策略**：
+
+| 元素类型    | 处理方法              | 存储形式        | 检索效果               |
+| ----------- | --------------------- | --------------- | ---------------------- |
+| 文字段落    | 递归/语义切分         | 文本向量        | ✅ 最佳                |
+| 数据表格    | 整体保留→ Markdown    | 文本向量        | ✅ 极好（不切分！）    |
+| 图表/信息图 | VLM 提取文字摘要      | 摘要向量 + 原图 | ✅ 好（注意 VLM 成本） |
+| 产品图片    | CLIP Embedding        | 图像向量        | ✅ 适合视觉搜索        |
+| 数学公式    | LaTeX 提取 + 文字解释 | 文本向量        | ⚠️ 依赖 VLM 质量       |
+| 页眉页脚    | 过滤丢弃              | —               | —                      |
+
+:::note PageIndex — 推理式检索的新范式（2026）
+[PageIndex](https://pageindex.ai) 提出了一种不依赖固定 Chunk 的检索方式：让 LLM 像人类阅读器一样，通过文档的目录结构和标题层级**推理**出相关信息在哪里，然后动态导航到该位置提取内容，无需预先切分整篇文档。这将「分块后检索」转变为「按需导航式读取」，在结构化文档上展现出独特优势。
+:::
+
+---
+
 ## 六、第四层：VLM 端到端文档解析（最前沿）
 
 传统方法都基于一个假设：文档已经是**可读取的文本**。但现实中大量文档是扫描件、图片 PDF，或者有复杂的混合布局（数学公式 + 代码 + 图表 + 多栏文字）。
@@ -868,21 +1093,23 @@ elements = partition_pdf(
 
 ## 七、SOTA 方案对比与选型指南
 
-### 7.1 全方案性能对比
+### 7.1 全方案性能对比（含 2026 最新数据）
 
-| 方案                              | 语义完整性 | 结构保留   | 实现复杂度 | 成本                 | 延迟 | 推荐场景             |
-| --------------------------------- | ---------- | ---------- | ---------- | -------------------- | ---- | -------------------- |
-| **固定切片**                      | ⭐⭐       | ⭐         | ⭐         | 免费                 | 极低 | 快速原型、纯文本     |
-| **递归字符切分**                  | ⭐⭐⭐     | ⭐⭐       | ⭐         | 免费                 | 极低 | 通用首选方案         |
-| **Markdown 结构切分**             | ⭐⭐⭐⭐   | ⭐⭐⭐⭐   | ⭐⭐       | 免费                 | 低   | 技术文档、Wiki       |
-| **Unstructured.io**               | ⭐⭐⭐⭐   | ⭐⭐⭐⭐⭐ | ⭐⭐⭐     | 中（API费用）        | 中   | 复杂 PDF、年报       |
-| **PaddleOCR PP-StructureV3**      | ⭐⭐⭐⭐   | ⭐⭐⭐⭐   | ⭐⭐⭐     | 低（本地部署）       | 中   | 中文扫描件           |
-| **语义切分**                      | ⭐⭐⭐⭐⭐ | ⭐⭐⭐     | ⭐⭐⭐     | 低（Embedding）      | 中   | 学术论文、叙述型文档 |
-| **父子节点检索**                  | ⭐⭐⭐⭐⭐ | ⭐⭐⭐     | ⭐⭐⭐     | 低                   | 低   | 通用 RAG 优化        |
-| **Contextual Retrieval**          | ⭐⭐⭐⭐⭐ | ⭐⭐⭐     | ⭐⭐⭐⭐   | 高（LLM费用）        | 中   | 高精度知识库 QA      |
-| **命题式切片**                    | ⭐⭐⭐⭐⭐ | ⭐⭐       | ⭐⭐⭐⭐⭐ | 极高（LLM 大量调用） | 极高 | 专业知识库、合规审查 |
-| **Late Chunking**                 | ⭐⭐⭐⭐⭐ | ⭐⭐⭐     | ⭐⭐⭐     | 低                   | 中   | 长文档语义连贯场景   |
-| **VLM 端到端（Infinity-Parser）** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐   | 高（GPU 推理）       | 高   | 扫描件、复杂混合版式 |
+| 方案                              | 语义完整性 | 结构保留   | 实现复杂度 | 成本                 | 延迟 | 推荐场景                                           |
+| --------------------------------- | ---------- | ---------- | ---------- | -------------------- | ---- | -------------------------------------------------- |
+| **固定切片**                      | ⭐⭐       | ⭐         | ⭐         | 免费                 | 极低 | 快速原型、纯文本                                   |
+| **递归字符切分**                  | ⭐⭐⭐     | ⭐⭐       | ⭐         | 免费                 | 极低 | **通用首选**（2026 Vecta: 69% 准确率，最优性价比） |
+| **Markdown 结构切分**             | ⭐⭐⭐⭐   | ⭐⭐⭐⭐   | ⭐⭐       | 免费                 | 低   | 技术文档、Wiki                                     |
+| **Unstructured.io**               | ⭐⭐⭐⭐   | ⭐⭐⭐⭐⭐ | ⭐⭐⭐     | 中（API费用）        | 中   | 复杂 PDF、年报                                     |
+| **PaddleOCR PP-StructureV3**      | ⭐⭐⭐⭐   | ⭐⭐⭐⭐   | ⭐⭐⭐     | 低（本地部署）       | 中   | 中文扫描件                                         |
+| **语义切分**                      | ⭐⭐⭐⭐⭐ | ⭐⭐⭐     | ⭐⭐⭐     | 低（Embedding）      | 中   | 叙述型文档（注意 Context Cliff！）                 |
+| **父子节点检索**                  | ⭐⭐⭐⭐⭐ | ⭐⭐⭐     | ⭐⭐⭐     | 低                   | 低   | 通用 RAG 优化（最佳升级路径）                      |
+| **Contextual Retrieval**          | ⭐⭐⭐⭐⭐ | ⭐⭐⭐     | ⭐⭐⭐⭐   | 高（LLM费用）        | 中   | 高精度知识库 QA（-35% 检索失败率）                 |
+| **命题式切片**                    | ⭐⭐⭐⭐⭐ | ⭐⭐       | ⭐⭐⭐⭐⭐ | 极高（LLM 大量调用） | 极高 | 专业知识库、合规审查                               |
+| **Late Chunking**                 | ⭐⭐⭐⭐⭐ | ⭐⭐⭐     | ⭐⭐⭐     | 低                   | 中   | 长文档语义连贯                                     |
+| **Agentic Chunking** 🆕2026       | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐   | 中（LLM 策略选择）   | 中   | 混合格式文档库、异构知识库                         |
+| **Multimodal Chunking** 🆕2026    | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | 高（VLM 描述费用）   | 高   | 含图表图片的企业报告                               |
+| **VLM 端到端（Infinity-Parser）** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐   | 高（GPU 推理）       | 高   | 扫描件、复杂混合版式                               |
 
 ### 7.2 决策树：选哪种方案？
 
@@ -890,8 +1117,10 @@ elements = partition_pdf(
 flowchart TD
     A[开始] --> B{文档类型？}
     B -->|纯文本 / 简单 HTML| C{对精度要求高？}
-    B -->|结构化文档 PDF/Word| D{是否有扫描件？}
+    B -->|结构化 PDF/Word| D{是否有扫描件？}
     B -->|Markdown / 代码文档| E[MarkdownSplitter / text-splitter]
+    B -->|含大量图表图片| MM[Multimodal Chunking]
+    B -->|混合异构文档库| AG[Agentic Chunking]
 
     C -->|否| F[递归字符切分 ✅ 首选]
     C -->|是| G{预算充足？}
@@ -1044,35 +1273,69 @@ def evaluate_chunk_coherence(chunks: list[str], embeddings_model) -> float:
 
 ## 九、总结
 
-文本分块技术的演进，本质上是对"**如何让机器理解人类书写逻辑**"这一问题的持续探索：
+文本分块技术的演进，本质上是对「**如何让机器理解人类书写逻辑**」这一问题的持续深挖：
 
 ```
 固定切片 → 递归切分 → 语义切分 → 命题切片 → VLM 端到端理解
   物理     →  语法感知  →  语义感知  →  知识原子化  →  视觉认知
 ```
 
-**核心结论**：
+**2026 年的核心结论**：
 
-1. **没有万能方案**：最优策略取决于文档类型、查询类型、成本预算的组合
-2. **递归切分仍是默认最优基线**：512-token 递归切分在大多数场景下是最佳起点
-3. **通过父子节点把精度和上下文两者兼得**：这是性价比最高的升级路径
-4. **Embedding 模型的影响 ≥ 切分策略的影响**：先把 BGE-M3 换上去，比换切分策略收益更大
-5. **VLM 解析是复杂文档的终极答案**：但成本和延迟仍是生产部署的主要障碍
+1. **没有万能方案**：最优策略取决于文档类型、查询类型和成本预算
+2. **递归切分仍是最优基线（Vecta 2026 验证）**：512-token 递归切分通用场景准确率 69%，优于更复杂方案
+3. **Context Cliff 是 2026 新的优化红线**：上下文超过 2,500 tokens 质量断崖下降，精准 Top-K 比加大 Chunk 更重要
+4. **Overlap 先不加**：边界清晰的文档先跑无 Overlap 基线，节省 20% 存储
+5. **Embedding 模型 ≥ 切分策略**：换 BGE-M3 性价比高于换切分方法
+6. **Agentic 切分解锁异构文档库**：混合格式场景让 Agent 决策比统一规则更有效
+7. **Multimodal Chunking 是 2026 刚需**：企业报告中图表占 30-50% 信息量，不处理就丢失一半数据
 
-随着 LLM 上下文窗口持续扩大（GPT-4o: 128K, Gemini 2.0: 1M+），未来可能出现"**不需要切分，直接全文检索**"的 RAG 范式——但在此之前，Chunk 策略仍将是 RAG 质量最关键的工程变量之一。
+:::tip 2026 版 RAG Chunking 优先实施路线图
+
+```
+Step 1  递归切分 512 token（先不加 Overlap）→ 建立基线
+Step 2  升级 Embedding → BGE-M3 / text-embedding-3-large
+Step 3  加父子节点检索 → 性价比最高的质量提升
+Step 4  控制 Top-K，不超过 Context Cliff（2,500 tokens）
+Step 5  加 Contextual Retrieval（若基线 Recall < 80%）
+Step 6  处理图片和图表 → Multimodal Chunking
+Step 7  复杂异构场景 → 升级到 Agentic Chunking
+```
+
+:::
+
+随着 LLM 上下文窗口持续扩大（GPT-4o: 128K, Gemini 2.0: 1M+），「全文塞入 LLM」看似可行，但 **Context Cliff 效应**告诉我们：信息量越多 ≠ 回答质量越高。精准的检索、合理的 Chunk 粒度，在可见的未来仍将是 RAG 最关键的工程优化点。
 
 ---
 
 ## 参考资料
 
-- [Dense X Retrieval: What Retrieval Granularity Should We Use?](https://arxiv.org/abs/2312.06648) — 命题式切片原始论文
-- [Chonkie Documentation](https://docs.chonkie.ai/oss/chunkers/recursive-chunker) — 轻量级 Chunking 库
-- [benbrandt/text-splitter](https://github.com/benbrandt/text-splitter) — Rust 高性能文本切分
-- [Unstructured.io](https://github.com/Unstructured-IO/unstructured) — 结构化文档解析
-- [Infinity-Parser-7B](https://huggingface.co/infly/Infinity-Parser-7B) — SOTA VLM 文档解析
+**论文**
+
+- [Dense X Retrieval: What Retrieval Granularity Should We Use?](https://arxiv.org/abs/2312.06648)（2023）— 命题式切片理论基础
+- [Late Chunking in Long-Context Embedding Models](https://arxiv.org/abs/2409.04701)（Jina AI，2024）
+- NAACL 2025 Findings — 语义切分 vs 固定切分对比研究
+- arXiv 2025 (Qu et al.) — Semantic Chunking 成本收益分析
+
+**工具与库**
+
+- [Chonkie](https://docs.chonkie.ai/oss/chunkers/recursive-chunker) — 轻量级 Chunking 库（RecursiveChunker + SDPMChunker）
+- [benbrandt/text-splitter](https://github.com/benbrandt/text-splitter) — Rust 高性能文本切分，支持 Python
+- [Unstructured.io](https://github.com/Unstructured-IO/unstructured) — 结构化文档解析（含 VLM Two-Pass 模式）
 - [PaddleOCR PP-StructureV3](https://github.com/PaddlePaddle/PaddleOCR) — 中文文档理解
-- [Anthropic Contextual Retrieval](https://www.anthropic.com/news/contextual-retrieval) — 上下文增强检索
-- [Jina Late Chunking](https://jina.ai/news/late-chunking-in-long-context-embedding-models/) — 延迟切分技术
+- [LangChain Text Splitters](https://python.langchain.com/docs/modules/data_connection/document_transformers/) — SemanticChunker、MarkdownSplitter 等
+
+**模型**
+
+- [Infinity-Parser-7B](https://huggingface.co/infly/Infinity-Parser-7B)（infly，2025）— 当前 SOTA 开源文档解析
+- [BAAI/bge-m3](https://huggingface.co/BAAI/bge-m3) — 推荐的多语言 Embedding 模型
+- [jinaai/jina-embeddings-v3](https://huggingface.co/jinaai/jina-embeddings-v3) — 支持 Late Chunking 的长上下文 Embedding
+
+**行业研究**
+
 - NVIDIA 文档分块基准研究（2024）
-- Chroma Research: SemanticChunking 性能分析（2024）
-- NAACL 2025 Findings: 语义切分 vs 固定切分的对比研究
+- Chroma Research: SemanticChunking Recall 性能分析（2024）
+- Anthropic [Contextual Retrieval](https://www.anthropic.com/news/contextual-retrieval)（2024）— 检索失败率降低 35%
+- Vecta.io 文档分块基准（2026 年 2 月）— 512-token 递归切分准确率最高 69%
+- 「Context Cliff」系统性分析（2026 年 1 月）— 2,500 token 质量拐点
+- [PageIndex](https://pageindex.ai) — 推理式文档导航新范式（2026）
