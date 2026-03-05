@@ -134,14 +134,6 @@ export default function BlogPostItemHeader() {
               </time>
             </div>
             <div className="flex items-center gap-3">
-              <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
-                {readingTime
-                  ? `${Math.ceil(readingTime)} MIN READ`
-                  : "8 MIN READ"}
-              </span>
-              <span className="text-zinc-300 dark:text-zinc-700 opacity-30">
-                /
-              </span>
               <span
                 id="busuanzi_container_page_pv"
                 className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500"
