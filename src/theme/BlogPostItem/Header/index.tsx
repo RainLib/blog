@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useBlogPost } from "@docusaurus/plugin-content-blog/client";
 import BlogPostItemHeaderTitle from "@theme/BlogPostItem/Header/Title";
 import BlogPostItemHeaderInfo from "@theme/BlogPostItem/Header/Info";
@@ -7,12 +7,26 @@ import { motion } from "framer-motion";
 
 export default function BlogPostItemHeader() {
   const { metadata, isBlogPostPage } = useBlogPost();
-  const { date, tags } = metadata;
+  const { date, tags, readingTime } = metadata;
   const formattedDate = new Date(date).toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
     day: "numeric",
   });
+
+  // Inject Busuanzi script for view counting
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const script = document.createElement("script");
+    script.src = "//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js";
+    script.async = true;
+    document.body.appendChild(script);
+    return () => {
+      if (document.body.contains(script)) {
+        document.body.removeChild(script);
+      }
+    };
+  }, []);
 
   // Only customize for the detailed Post Page
   if (!isBlogPostPage) {
@@ -119,9 +133,25 @@ export default function BlogPostItemHeader() {
                 {formattedDate}
               </time>
             </div>
-            <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
-              8 MIN READ // TRENDING
-            </span>
+            <div className="flex items-center gap-3">
+              <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
+                {readingTime
+                  ? `${Math.ceil(readingTime)} MIN READ`
+                  : "8 MIN READ"}
+              </span>
+              <span className="text-zinc-300 dark:text-zinc-700 opacity-30">
+                /
+              </span>
+              <span
+                id="busuanzi_container_page_pv"
+                className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500"
+              >
+                <span id="busuanzi_value_page_pv" className="mr-1">
+                  ...
+                </span>{" "}
+                VIEWS
+              </span>
+            </div>
           </div>
         </div>
       </motion.div>
