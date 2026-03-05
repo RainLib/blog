@@ -113,22 +113,23 @@ export default function BlogPostItemHeader() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 1.5, ease: [0.22, 1, 0.36, 1], delay: 0.6 }}
-        className="flex flex-col items-center gap-6"
+        className="flex flex-col items-center gap-6 w-full px-4 sm:px-0"
       >
         {/* Combined Info Pill */}
-        <div className="flex items-center gap-6 px-8 py-4 bg-zinc-50/30 dark:bg-white/5 backdrop-blur-xl rounded-2xl border border-zinc-200/20 dark:border-white/5 shadow-sm">
-          <div className="relative">
+        <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 px-6 sm:px-8 py-4 sm:py-4 irregular-glass bg-zinc-50/30 dark:bg-white/5 shadow-sm w-full sm:w-auto max-w-full box-border">
+          <div className="relative shrink-0 flex items-center justify-center">
             <BlogPostItemHeaderAuthors className="!m-0 !p-0" />
           </div>
 
-          <div className="w-[1px] h-8 bg-zinc-300/30 dark:bg-white/10" />
+          <div className="hidden sm:block w-[1px] h-8 bg-zinc-300/30 dark:bg-white/10 shrink-0" />
+          <div className="sm:hidden w-12 h-[1px] bg-zinc-300/30 dark:bg-white/10 shrink-0" />
 
-          <div className="flex flex-col items-start gap-1">
+          <div className="flex flex-col items-center sm:items-start gap-1 shrink-0">
             <div className="flex items-center gap-2">
               <span className="w-1.5 h-1.5 rounded-full bg-purple-500 dark:bg-purple-400" />
               <time
                 dateTime={metadata.date}
-                className="font-mono text-[10px] md:text-xs uppercase tracking-widest text-zinc-600 dark:text-zinc-400 font-bold"
+                className="font-mono text-[10px] md:text-xs uppercase tracking-widest text-zinc-600 dark:text-zinc-400 font-bold text-center sm:text-left"
               >
                 {formattedDate}
               </time>
@@ -136,7 +137,7 @@ export default function BlogPostItemHeader() {
             <div className="flex items-center gap-3">
               <span
                 id="busuanzi_container_page_pv"
-                className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500"
+                className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-zinc-400 dark:text-zinc-500 text-center sm:text-left"
               >
                 <span id="busuanzi_value_page_pv" className="mr-1">
                   ...
