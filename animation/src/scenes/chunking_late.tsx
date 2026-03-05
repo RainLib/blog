@@ -76,7 +76,7 @@ export default makeScene2D(function* (view) {
         {/* Raw text chunks (Cut immediately) */}
         <Rect
           ref={tradText1}
-          width={300}
+          width={360}
           height={60}
           y={-90}
           fill={colors.chunkBg}
@@ -92,7 +92,7 @@ export default makeScene2D(function* (view) {
         </Rect>
         <Rect
           ref={tradText2}
-          width={300}
+          width={360}
           height={60}
           y={-10}
           fill={colors.chunkBg}
@@ -126,7 +126,7 @@ export default makeScene2D(function* (view) {
         {/* Output Vectors */}
         <Rect
           ref={tradVec1}
-          width={300}
+          width={360}
           height={40}
           y={160}
           fill={colors.bg}
@@ -139,7 +139,7 @@ export default makeScene2D(function* (view) {
         </Rect>
         <Rect
           ref={tradVec2}
-          width={300}
+          width={360}
           height={40}
           y={220}
           fill={colors.bg}
@@ -169,7 +169,7 @@ export default makeScene2D(function* (view) {
         {/* Full Text (No cut) */}
         <Rect
           ref={lateText}
-          width={360}
+          width={400}
           height={140}
           y={-50}
           fill={colors.chunkBg}
@@ -252,7 +252,7 @@ export default makeScene2D(function* (view) {
           />
           <Rect
             ref={lateVec1}
-            width={300}
+            width={400}
             height={40}
             y={160}
             fill={colors.bg}
@@ -271,7 +271,7 @@ export default makeScene2D(function* (view) {
           </Rect>
           <Rect
             ref={lateVec2}
-            width={300}
+            width={400}
             height={40}
             y={220}
             fill={colors.bg}
@@ -297,7 +297,7 @@ export default makeScene2D(function* (view) {
 
   yield* all(
     subtitleRef().opacity(1, 0.8),
-    subtitleRef().y(-340, 0.8, easeOutCubic),
+    subtitleRef().y(-360, 0.8, easeOutCubic),
     explanationRef().text("Step 1: 传统分块方法 (先切分，后 Embedding)", 0.5),
     explanationRef().opacity(1, 0.5),
   );

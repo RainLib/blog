@@ -85,8 +85,7 @@ export default makeScene2D(function* (view) {
         lineWidth={3}
         radius={12}
         opacity={0}
-        alignItems="start"
-        justifyContent="start"
+        offsetY={-1}
       />
       <Rect
         ref={group2BoxRef}
@@ -99,6 +98,7 @@ export default makeScene2D(function* (view) {
         lineWidth={3}
         radius={12}
         opacity={0}
+        offsetY={-1}
       />
 
       {/* Sentences */}
@@ -274,7 +274,7 @@ export default makeScene2D(function* (view) {
   // 1. Intro
   yield* all(
     subtitleRef().opacity(1, 0.8),
-    subtitleRef().y(-340, 0.8, easeOutCubic),
+    subtitleRef().y(-360, 0.8, easeOutCubic),
     explanationRef().text("Step 1: 将文本转化为 Embedding 向量", 0.5),
     explanationRef().opacity(1, 0.5),
   );

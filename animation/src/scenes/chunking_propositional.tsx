@@ -34,7 +34,7 @@ export default makeScene2D(function* (view) {
 
   const rawBoxRef = createRef<Rect>();
   const machineRef = createRef<Node>();
-  const promptRef = createRef<Txt>();
+  const promptRef = createRef<Rect>();
   const propContainerRef = createRef<Node>();
 
   const inLineRef = createRef<Line>();
@@ -65,9 +65,9 @@ export default makeScene2D(function* (view) {
       {/* Raw Text Box */}
       <Rect
         ref={rawBoxRef}
-        width={400}
-        height={320}
-        x={-480}
+        width={440}
+        height={340}
+        x={-460}
         y={0}
         fill={colors.chunkBg}
         stroke={colors.chunkBorder}
@@ -76,11 +76,13 @@ export default makeScene2D(function* (view) {
         opacity={0}
       >
         <Txt
-          text="原始文本：\n张三生于1990年的北京，随后进入清华大学计算机系，2015年毕业后加入某知名互联网公司担任算法工程师，期间发表了多篇关于向量检索的顶会论文。"
+          text={`原始文本：\n张三生于1990年的北京，随后进入清华大学计算机系。2015年毕业后加入某知名互联网公司担任算法工程师，期间发表了多篇关于向量检索的顶会论文。`}
           fill={colors.textDim}
           fontSize={22}
-          width={350}
+          width={400}
+          textWrap={true}
           padding={20}
+          lineHeight={32}
           fontFamily={"Inter, sans-serif"}
         />
       </Rect>
@@ -102,16 +104,25 @@ export default makeScene2D(function* (view) {
           lineDash={[10, 10]}
         />
         {/* Processing prompt */}
-        <Txt
+        <Rect
           ref={promptRef}
-          text="System Prompt:\n- 提取独立原子事实\n- 去除无用代词\n- 补全所有缺失主语"
-          fill={colors.success}
-          fontSize={16}
-          fontWeight={600}
           y={-120}
           opacity={0}
-          fontFamily={"monospace"}
-        />
+          fill={"rgba(16, 185, 129, 0.1)"}
+          stroke={colors.success}
+          lineWidth={2}
+          radius={8}
+          padding={10}
+        >
+          <Txt
+            text={`System Prompt:\n- 提取独立原子事实\n- 去除无用代词\n- 补全所有缺失主语`}
+            fill={colors.success}
+            fontSize={16}
+            fontWeight={600}
+            lineHeight={24}
+            fontFamily={"monospace"}
+          />
+        </Rect>
       </Node>
 
       {/* Assembly Lines */}

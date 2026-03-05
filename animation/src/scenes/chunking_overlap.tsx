@@ -159,20 +159,20 @@ export default makeScene2D(function* (view) {
         fill={colors.textDim}
         fontSize={20}
         x={0}
-        y={100}
+        y={160}
         opacity={0}
       />
 
       <Line
         ref={pointer1Ref}
         points={[
-          [-175, 40],
-          [-175, -40],
+          [-175, 110],
+          [-175, 50],
         ]}
         stroke={colors.highlight}
         lineWidth={2}
         endArrow
-        endOffset={10}
+        endOffset={8}
         opacity={0}
       />
       <Txt
@@ -182,20 +182,20 @@ export default makeScene2D(function* (view) {
         fontSize={16}
         fontWeight={600}
         x={-175}
-        y={60}
+        y={130}
         opacity={0}
       />
 
       <Line
         ref={pointer2Ref}
         points={[
-          [175, 40],
-          [175, -40],
+          [175, 110],
+          [175, 50],
         ]}
         stroke={colors.highlight}
         lineWidth={2}
         endArrow
-        endOffset={10}
+        endOffset={8}
         opacity={0}
       />
       <Txt
@@ -205,7 +205,7 @@ export default makeScene2D(function* (view) {
         fontSize={16}
         fontWeight={600}
         x={175}
-        y={60}
+        y={130}
         opacity={0}
       />
     </Node>,

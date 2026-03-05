@@ -79,10 +79,13 @@ export default makeScene2D(function* (view) {
         opacity={0}
       >
         <Txt
-          text="== ACME 2024年报 ==\n\n行业概述...\n\nQ3 财务表现...\n\n风险提示...\n\n高管薪酬..."
+          text={`== ACME 2024年报 ==\n\n行业概述...\n\nQ3 财务表现...\n\n风险提示...\n\n高管薪酬...`}
           fill={colors.textDim}
           fontSize={18}
-          y={-80}
+          width={280}
+          textWrap={true}
+          lineHeight={32}
+          y={-40}
         />
       </Rect>
 
