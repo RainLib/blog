@@ -6,6 +6,8 @@ tags: [rag, llm, ai-system, python, langchain, deep-dive, algorithm]
 description: 系统性地梳理了 RAG 系统中文本分块（Chunking）的全技术栈——从最基础的固定切片、递归切分，到语义感知分块、布局解析、命题式切片，再到命中行业前沿的 Late Chunking 与 VLM 端到端文档解析，附实战代码、性能基准与场景选型指南。
 ---
 
+import MotionCanvasPlayer from "@site/src/components/MotionCanvasPlayer";
+
 # RAG 核心基建：文本 Chunk 策略全景解析
 
 > "To chunk, or not to chunk — that is the question. But _how_ to chunk is the engineering battle."
@@ -133,6 +135,15 @@ splitter = TokenTextSplitter(
 | 不感知文档结构        | 表格、列表、代码块被随机切断                             |
 | 最优 chunk_size 难定  | 事实性问题最优 256-512 token，分析性问题最优 1024+ token |
 
+**动画演示：文本分块策略的演进与痛点解决**
+
+<div style={{ marginTop: "2rem", marginBottom: "2rem" }}>
+  <MotionCanvasPlayer
+    src="/animation/src/project_chunking_fixed.js"
+    auto={true}
+  />
+</div>
+
 :::warning 2026 关键发现：「Context Cliff」效应
 **2026 年 1 月的系统性分析**揭示了一个重要阈值——当发送给 LLM 的上下文总量超过 **2,500 tokens** 时，响应质量出现断崖式下降。这意味着：
 
@@ -163,6 +174,13 @@ splitter = TokenTextSplitter(
 **LangChain 最常用的切分器**，也是绝大多数 RAG 项目的默认选择。
 
 **核心思路**：按照优先级从高到低依次尝试分隔符 `["\n\n", "\n", " ", ""]`，尽量在段落边界切分，而不是在字符中间强行切断。
+
+<div style={{ marginTop: "2rem", marginBottom: "2rem" }}>
+  <MotionCanvasPlayer
+    src="/animation/src/project_chunking_semantic.js"
+    auto={true}
+  />
+</div>
 
 ```python
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -376,6 +394,13 @@ for region in result:
 ### 4.3 父子节点检索（Parent-Child / Small-to-Big Retrieval）
 
 **核心思路**：检索时用小 Chunk 精准匹配，生成时用大 Chunk 提供完整上下文。
+
+<div style={{ marginTop: "2rem", marginBottom: "2rem" }}>
+  <MotionCanvasPlayer
+    src="/animation/src/project_chunking_parent_child.js"
+    auto={true}
+  />
+</div>
 
 ```
                 ┌──────────────────────────── Parent Chunk (~1000 token) ──────────────────────────────┐

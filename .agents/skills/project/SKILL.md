@@ -57,6 +57,13 @@ The recommendation system is powered by a local Docusaurus plugin.
 - **Motion.dev Aesthetic**: Uses glassmorphism (backdrop-blur), gradient borders, and staggered animations.
 - **Stretched Link**: Cards are fully clickable to detail pages using the `after:absolute after:inset-0` technique.
 - **Internationalization**: All text strings are wrapped in `<Translate>` or `translate()` from `@docusaurus/Translate`.
+- **Motion Canvas Embedded Animations**: When inserting Motion Canvas animations into MDX files, _never_ use `<iframe>`. Use the dedicated React component standard as follows:
+  ```tsx
+  <div style={{ marginTop: "2rem", marginBottom: "2rem" }}>
+    <MotionCanvasPlayer src="/animation/src/project_name.js" auto={true} />
+  </div>
+  ```
+  Ensure all target animation entrypoints (`project_name.ts`) are registered manually within `/animation/vite.config.ts`.
 
 ## Development Workflows
 
