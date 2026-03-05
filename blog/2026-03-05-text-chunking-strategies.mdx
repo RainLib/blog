@@ -94,9 +94,12 @@ graph TD
 
 **原理**：
 
-```
-[=====Chunk1=====][overlap][=====Chunk2=====][overlap][=====Chunk3=====]
-```
+<div style={{ marginTop: "2rem", marginBottom: "2rem" }}>
+  <MotionCanvasPlayer
+    src="/animation/src/project_chunking_overlap.js"
+    auto={true}
+  />
+</div>
 
 **代码实现**（使用 LangChain）：
 
@@ -402,15 +405,6 @@ for region in result:
   />
 </div>
 
-```
-                ┌──────────────────────────── Parent Chunk (~1000 token) ──────────────────────────────┐
-                │                                                                                        │
-     ┌──────────┤  [Child 1]          [Child 2]          [Child 3]          [Child 4]  ├──────────┐
-     │ ~200 tok │  向量检索目标        向量检索目标        向量检索目标        向量检索目标 │ ~200 tok │
-     └──────────┘                                                                       └──────────┘
-                 ↑ 1. 向量匹配命中 Child                  ↑ 2. 返回给 LLM 的是 Parent
-```
-
 **LangChain 实现**：
 
 ```python
@@ -455,14 +449,12 @@ results = retriever.invoke("什么是 RAG？")
 
 **核心思路**：不再按固定大小切割，而是利用 Embedding 模型找到文本中的"语义转折点"。
 
-```
-句子 S1 ──→ Embedding e1 ─┐
-句子 S2 ──→ Embedding e2  │──── cosine_sim(e1, e2) = 0.92 ✅ 相似，保持在同一 Chunk
-句子 S3 ──→ Embedding e3 ─┘
-句子 S4 ──→ Embedding e4  ──── cosine_sim(e3, e4) = 0.31 ❌ 语义跳转！→ 切分点
-句子 S5 ──→ Embedding e5 ─┐
-句子 S6 ──→ Embedding e6  │──── 新的 Chunk 开始
-```
+<div style={{ marginTop: "2rem", marginBottom: "2rem" }}>
+  <MotionCanvasPlayer
+    src="/animation/src/project_chunking_semantic_detail.js"
+    auto={true}
+  />
+</div>
 
 **LangChain SemanticChunker 实战**：
 
@@ -537,22 +529,12 @@ chunks = chunker("这是一段很长的中文技术文档...")
 
 **核心思路**：用 LLM 将每个段落分解为多个**独立的原子命题（Propositions）**，每个命题是一个完整的、自包含的陈述事实。
 
-```
-原始段落：
-"张三生于1990年的北京，随后进入清华大学计算机系，
- 2015年毕业后加入某知名互联网公司担任算法工程师，
- 期间发表了多篇关于向量检索的顶会论文。"
-
-↓ LLM 分解为原子命题 ↓
-
-Proposition 1: 张三出生于1990年。
-Proposition 2: 张三出生在北京。
-Proposition 3: 张三就读于清华大学计算机系。
-Proposition 4: 张三于2015年从清华大学毕业。
-Proposition 5: 张三毕业后加入了一家知名互联网公司。
-Proposition 6: 张三在该公司担任算法工程师。
-Proposition 7: 张三发表了多篇关于向量检索的顶会论文。
-```
+<div style={{ marginTop: "2rem", marginBottom: "2rem" }}>
+  <MotionCanvasPlayer
+    src="/animation/src/project_chunking_propositional.js"
+    auto={true}
+  />
+</div>
 
 每个命题都是一个**高密度、低噪声**的知识点，Embedding 质量极高，检索精度大幅提升。
 
@@ -631,18 +613,12 @@ Late Chunking：
 
 **直观理解**：
 
-```
-文档："Apple 发布了新款 MacBook。这款电脑搭载了 M4 芯片。"
-
-传统切分后 Embedding：
-- "Apple 发布了新款 MacBook。" → e1（知道 Apple、MacBook）
-- "这款电脑搭载了 M4 芯片。" → e2（不知道"这款电脑"是谁）
-
-Late Chunking：
-- 先整体 Embedding，"这款电脑"的向量已经通过注意力机制
-  "看到"了前文的 MacBook 信息
-- 再按位置切分，每个 Chunk 的向量富含全局语义
-```
+<div style={{ marginTop: "2rem", marginBottom: "2rem" }}>
+  <MotionCanvasPlayer
+    src="/animation/src/project_chunking_late.js"
+    auto={true}
+  />
+</div>
 
 **代码实现**（使用 Jina AI 的 long-context embedding）：
 
@@ -712,21 +688,12 @@ def late_chunking_open(text: str, chunk_size: int = 256) -> list[np.ndarray]:
 
 **原理**：
 
-```
-原始 Chunk:
-"公司 Q3 净利润同比增长 23.5%"
-
-+ LLM 生成上下文说明:
-"该数据来自 ACME 公司 2024 年第三季度财务报告，
- Q3 指7月至9月，净利润增长相对于 2023 年同期。"
-
-↓ 合并后 Embedding ↓
-
-Contextual Chunk:
-"该数据来自 ACME 公司 2024 年第三季度财务报告，
- Q3 指7月至9月，净利润增长相对于 2023 年同期。
- 公司 Q3 净利润同比增长 23.5%"
-```
+<div style={{ marginTop: "2rem", marginBottom: "2rem" }}>
+  <MotionCanvasPlayer
+    src="/animation/src/project_chunking_contextual.js"
+    auto={true}
+  />
+</div>
 
 **实战实现**（Anthropic 官方方案）：
 
