@@ -6,6 +6,29 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Global Layout Fixes for Mobile */
+body {
+  overflow-x: hidden;
+  width: 100%;
+  position: relative;
+}
+
+#__docusaurus {
+  overflow-x: hidden;
+  width: 100%;
+}
+
+.mermaid {
+  max-width: 100% !important;
+  overflow-x: auto !important;
+  display: block;
+}
+
+.mermaid svg {
+  max-width: 100% !important;
+  height: auto !important;
+}
+
 :root {
   /* Light Mode - "Digital Paper" (Comfortable & Clean) */
   --ifm-color-primary: #1062cd; /* A deeper, more sophisticated blue */
@@ -668,7 +691,10 @@ html body .blog-post-page-wrapper article {
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(0, 0, 0, 0.05) !important;
   border-radius: 24px !important;
-  padding: 3rem 4rem !important; /* Wide padding for focus */
+  padding: 1.5rem !important; /* Reduced for mobile */
+  @media (min-width: 768px) {
+    padding: 3rem 4rem !important;
+  }
   box-shadow:
     0 4px 6px -1px rgba(0, 0, 0, 0.05),
     0 2px 4px -1px rgba(0, 0, 0, 0.03),
@@ -730,6 +756,8 @@ html[data-theme="dark"] body .blog-post-page-wrapper article {
 
 /* 3. Code Blocks & Inline Code */
 .markdown pre {
+  max-width: 100%;
+  overflow-x: auto !important;
   border-radius: 12px;
   border: 1px solid rgba(0, 0, 0, 0.08);
   background: #f6f8fa !important; /* Light grey for light mode */
@@ -746,8 +774,11 @@ html[data-theme="dark"] body .blog-post-page-wrapper article {
 
 /* Table Design - Premium Glassmorphism */
 .markdown table {
-  display: table;
+  display: block; /* Force block for scrolling */
   width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   border-collapse: separate;
   border-spacing: 0;
   border-radius: 12px;

@@ -39,13 +39,13 @@ export default function PromoBanner({
       }}
       className="group relative w-full border-b border-zinc-200 dark:border-zinc-800 transition-all duration-500 hover:bg-black dark:hover:bg-white overflow-hidden"
     >
-      {/* Huge background marquee text on hover */}
-      <div className="absolute inset-0 pointer-events-none flex items-center overflow-hidden opacity-0 group-hover:opacity-10 dark:group-hover:opacity-[0.05] transition-opacity duration-700">
+      {/* Huge background marquee text on hover - Hidden on mobile to prevent overflow */}
+      <div className="absolute inset-0 pointer-events-none hidden md:flex items-center overflow-hidden opacity-0 group-hover:opacity-10 dark:group-hover:opacity-[0.05] transition-opacity duration-700">
         <motion.span
           initial={{ x: "0%" }}
           animate={{ x: "-50%" }}
           transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-          className="text-[20rem] font-black whitespace-nowrap text-white dark:text-black inline-block leading-none"
+          className="text-[10rem] md:text-[20rem] font-black whitespace-nowrap text-white dark:text-black inline-block leading-none"
         >
           {promotion.name.toUpperCase()} {promotion.name.toUpperCase()}{" "}
           {promotion.name.toUpperCase()} {promotion.name.toUpperCase()}
@@ -58,7 +58,7 @@ export default function PromoBanner({
           <span className="text-sm font-mono tracking-[0.4em] text-zinc-400 dark:text-zinc-600 uppercase w-24 shrink-0 transition-colors duration-500 group-hover:text-zinc-400 dark:group-hover:text-zinc-500">
             {promotion.category.split(" ")[0]}
           </span>
-          <h2 className="text-6xl md:text-[6rem] lg:text-[8rem] leading-[0.8] font-black tracking-tighter text-zinc-900 dark:text-white uppercase m-0 transition-all duration-500 group-hover:text-white dark:group-hover:text-black group-hover:translate-x-4">
+          <h2 className="text-4xl sm:text-6xl md:text-[6rem] lg:text-[8rem] leading-[0.8] font-black tracking-tighter text-zinc-900 dark:text-white uppercase m-0 transition-all duration-500 group-hover:text-white dark:group-hover:text-black group-hover:translate-x-4">
             {promotion.name.split(" ")[0]}
             <span className="text-[var(--ifm-color-primary)]">.</span>
           </h2>

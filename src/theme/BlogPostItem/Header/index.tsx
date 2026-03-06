@@ -40,7 +40,7 @@ export default function BlogPostItemHeader() {
   }
 
   return (
-    <header className="relative mb-8 text-center max-w-[90rem] mx-auto px-6 py-12 md:py-24 overflow-visible bg-transparent mt-4 group">
+    <header className="relative mb-8 text-center max-w-[90rem] mx-auto px-6 py-12 md:py-24 overflow-hidden bg-transparent mt-4 group">
       {/* Dynamic Background Blobs - Ambient Light Effect (No Clipping) */}
       <motion.div
         animate={{
@@ -54,7 +54,7 @@ export default function BlogPostItemHeader() {
           repeat: Infinity,
           ease: "linear",
         }}
-        className="pointer-events-none absolute top-[-20%] left-[-20%] w-[800px] h-[800px] bg-purple-400/10 dark:bg-purple-900/5 rounded-full filter blur-[150px] opacity-60"
+        className="pointer-events-none absolute top-[-20%] left-[-20%] w-[300px] h-[300px] md:w-[800px] md:h-[800px] bg-purple-400/10 dark:bg-purple-900/5 rounded-full filter blur-[80px] md:blur-[150px] opacity-60"
       />
       <motion.div
         animate={{
@@ -69,7 +69,7 @@ export default function BlogPostItemHeader() {
           ease: "linear",
           delay: 5,
         }}
-        className="pointer-events-none absolute top-[-10%] right-[-20%] w-[800px] h-[800px] bg-amber-400/10 dark:bg-amber-900/5 rounded-full filter blur-[150px] opacity-60"
+        className="pointer-events-none absolute top-[-10%] right-[-20%] w-[300px] h-[300px] md:w-[800px] md:h-[800px] bg-amber-400/10 dark:bg-amber-900/5 rounded-full filter blur-[80px] md:blur-[150px] opacity-60"
       />
 
       {/* Top: Tags Container (Minimal Floating Pills) */}
@@ -105,7 +105,7 @@ export default function BlogPostItemHeader() {
         }}
         className="mb-12 relative z-10 px-8"
       >
-        <BlogPostItemHeaderTitle className="text-5xl sm:text-7xl md:text-[8rem] font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-zinc-900 to-zinc-700 dark:from-white dark:to-zinc-500 drop-shadow-sm leading-none" />
+        <BlogPostItemHeaderTitle className="text-4xl sm:text-6xl md:text-7xl lg:text-[8rem] font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-zinc-900 to-zinc-700 dark:from-white dark:to-zinc-500 drop-shadow-sm leading-none" />
       </motion.div>
 
       {/* Bottom: Floating Metadata (Clean & Minimal) */}
@@ -116,7 +116,7 @@ export default function BlogPostItemHeader() {
         className="flex flex-col items-center gap-6 w-full px-4 sm:px-0"
       >
         {/* Combined Info Pill */}
-        <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 px-6 sm:px-8 py-4 sm:py-4 irregular-glass bg-zinc-50/30 dark:bg-white/5 shadow-sm w-full sm:w-auto max-w-full box-border">
+        <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 px-4 sm:px-8 py-3 sm:py-4 irregular-glass bg-zinc-50/30 dark:bg-white/5 shadow-sm w-full sm:w-auto max-w-[calc(100vw-3rem)] sm:max-w-full box-border">
           <div className="relative shrink-0 flex items-center justify-center">
             <BlogPostItemHeaderAuthors className="!m-0 !p-0" />
           </div>
