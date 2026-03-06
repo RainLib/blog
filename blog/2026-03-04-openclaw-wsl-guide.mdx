@@ -618,48 +618,74 @@ OpenClaw 最强大的特性之一是**支持任何 OpenAI-Compatible 的 API 端
 
 ### 9.1 接入 OpenAI-Compatible API
 
-许多第三方 API 代理服务（如 OpenRouter、Together AI、硅基流动 SiliconFlow 等）都兼容 OpenAI 的 API 格式。配置方法：
+许多第三方 API 代理服务（如 OpenRouter、Together AI、硅基流动 SiliconFlow 等）都兼容 OpenAI 的 API 格式。所有自定义模型和提供商的配置都在 **`~/.openclaw/openclaw.json`** 中完成，修改后**重启 Gateway 即可生效**。
 
-```bash
-# 通过 CLI 添加自定义 Provider
-openclaw config set models.providers.custom-provider '{
-  "name": "my-api-proxy",
-  "type": "openai-completions",
-  "baseUrl": "https://your-api-proxy.com/v1",
-  "apiKey": "your-api-key-here",
+直接编辑 `~/.openclaw/openclaw.json`，在 `models.providers` 中添加自定义提供商：
+
+```json title="~/.openclaw/openclaw.json（自定义模型部分）"
+{
   "models": {
-    "your-model-id": {
-      "contextWindow": 128000,
-      "reasoning": true,
-      "costPerMillionInput": 3.0,
-      "costPerMillionOutput": 15.0
+    "mode": "merge",
+    "providers": {
+      "my-silicon-flow": {
+        "baseUrl": "https://api.siliconflow.cn/v1",
+        "apiKey": "sk-xxxxxx",
+        "api": "openai-completions",
+        "models": [
+          {
+            "id": "deepseek-ai/DeepSeek-V3",
+            "name": "DeepSeek-V3 (SiliconFlow)",
+            "reasoning": true,
+            "input": ["text"],
+            "cost": {
+              "input": 2.0,
+              "output": 8.0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 64000,
+            "maxTokens": 8192
+          },
+          {
+            "id": "Qwen/Qwen2.5-72B-Instruct",
+            "name": "Qwen2.5-72B (SiliconFlow)",
+            "reasoning": false,
+            "input": ["text"],
+            "cost": {
+              "input": 4.13,
+              "output": 4.13,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 131072,
+            "maxTokens": 4096
+          }
+        ]
+      }
     }
   }
-}'
+}
 ```
 
-或者直接编辑配置文件 `~/.openclaw/agents/<agentId>/models.json`：
+> 💡 **关键字段说明**：
+>
+> - `mode: "merge"` — 表示与内置模型列表合并，保留原有模型
+> - `api: "openai-completions"` — 指定 API 兼容格式
+> - `models` — **使用数组格式**，每个模型包含 `id`、`name`、`reasoning`、`cost` 等字段
+> - Provider ID（如 `my-silicon-flow`）将作为引用前缀
 
-```json title="models.json"
+然后在同一配置文件中，将自定义模型设为主模型，引用格式为 **`<provider-id>/<model-id>`**：
+
+```json title="~/.openclaw/openclaw.json（设置主模型）"
 {
-  "providers": {
-    "my-silicon-flow": {
-      "name": "SiliconFlow",
-      "type": "openai-completions",
-      "baseUrl": "https://api.siliconflow.cn/v1",
-      "apiKey": "sk-xxxxxx",
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "my-silicon-flow/deepseek-ai/DeepSeek-V3"
+      },
       "models": {
-        "deepseek-ai/DeepSeek-V3": {
-          "contextWindow": 64000,
-          "reasoning": true,
-          "costPerMillionInput": 2.0,
-          "costPerMillionOutput": 8.0
-        },
-        "Qwen/Qwen2.5-72B-Instruct": {
-          "contextWindow": 131072,
-          "reasoning": false,
-          "costPerMillionInput": 4.13,
-          "costPerMillionOutput": 4.13
+        "my-silicon-flow/deepseek-ai/DeepSeek-V3": {
+          "alias": "sf-deepseek"
         }
       }
     }
@@ -667,10 +693,10 @@ openclaw config set models.providers.custom-provider '{
 }
 ```
 
-然后将自定义模型设为主模型：
+配置完成后，重启 Gateway 使其生效：
 
 ```bash
-openclaw config set agents.defaults.model.primary "my-silicon-flow:deepseek-ai/DeepSeek-V3"
+openclaw gateway restart
 ```
 
 ### 9.2 接入本地 Ollama 模型
