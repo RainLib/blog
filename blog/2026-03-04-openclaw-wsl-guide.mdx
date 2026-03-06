@@ -766,6 +766,109 @@ curl http://localhost:11434/api/tags
 - **云端限流时**：自动降级到第三方 API 代理（如 SiliconFlow 的 DeepSeek-V3）
 - **网络断开时**：兜底使用本地 Ollama 模型，确保服务不中断
 
+### 9.4 搜索引擎配置
+
+OpenClaw 支持为 AI 配置网络搜索能力，让你的助手能够实时检索最新信息。目前主要有两种方式：
+
+<Tabs groupId="search-engine">
+<TabItem value="brave" label="方式一：Brave Search（内置）" default>
+
+Brave Search 是 OpenClaw **官方内置**的搜索引擎，通过 `web_search` 工具直接调用，无需安装额外 Skill。
+
+#### Step 1：获取 API Key
+
+1. 前往 [Brave Search API](https://brave.com/search/api/) 注册账号
+2. 在控制台中选择 **Data for Search** 计划，生成 API Key
+
+> ⚠️ 注意：**Data for AI** 计划与 `web_search` 工具不兼容，请选择 **Data for Search**。
+
+#### Step 2：在 `openclaw.json` 中配置
+
+```json title="~/.openclaw/openclaw.json（搜索配置部分）"
+{
+  "tools": {
+    "web": {
+      "search": {
+        "provider": "brave",
+        "apiKey": "BSAxxxxxxxxxxxxxxxx",
+        "maxResults": 5,
+        "timeoutSeconds": 30
+      }
+    }
+  }
+}
+```
+
+#### Step 3：重启 Gateway 生效
+
+```bash
+openclaw gateway restart
+```
+
+配置完成后，AI 助手会在需要时自动调用 `web_search` 工具，支持按语言、国家、时间范围精确搜索：
+
+```javascript
+// 按国家和语言搜索
+web_search({ query: "可再生能源", country: "CN", language: "zh" });
+
+// 搜索最近一周的结果
+web_search({ query: "AI 最新进展", freshness: "week" });
+
+// 按日期范围搜索
+web_search({
+  query: "AI developments",
+  date_after: "2026-01-01",
+  date_before: "2026-03-01",
+});
+```
+
+> 💡 搜索结果默认缓存 15 分钟（可通过 `cacheTtlMinutes` 配置调整）。
+
+</TabItem>
+<TabItem value="tavily" label="方式二：Tavily Search（ClawHub Skill）">
+
+[Tavily](https://tavily.com) 是专为 AI Agent 优化的搜索引擎，返回的结果更简洁、与 LLM 兼容性更好。通过 ClawHub Skill 安装。
+
+#### Step 1：获取 Tavily API Key
+
+前往 [tavily.com](https://tavily.com) 注册并获取 API Key。
+
+#### Step 2：安装 Skill
+
+```bash
+npx clawhub@latest install arun-8687/tavily-search
+```
+
+#### Step 3：设置环境变量
+
+在 `~/.openclaw/openclaw.json` 的 `env` 部分添加：
+
+```json title="~/.openclaw/openclaw.json"
+{
+  "env": {
+    "TAVILY_API_KEY": "tvly-xxxxxxxxxxxxxxxx"
+  }
+}
+```
+
+#### Step 4：重启 Gateway
+
+```bash
+openclaw gateway restart
+```
+
+安装后，AI 助手即可使用 Tavily 搜索能力：
+
+- **普通搜索**：返回简洁、AI 友好的搜索结果
+- **深度搜索**（`--deep`）：触发更全面的研究级搜索，适合复杂问题
+- **新闻搜索**（`--topic news`）：专注新闻资讯，支持按天数过滤
+- **URL 内容提取**：直接提取指定网页的文本内容
+
+</TabItem>
+</Tabs>
+
+> 💡 **如何选择？** Brave Search 是内置方案，配置简单、开箱即用；Tavily 的搜索结果针对 AI Agent 做了优化，回答质量通常更好。推荐先试用 Brave（免费额度充足），有更高质量需求再切换到 Tavily。
+
 ---
 
 ## 10. 进阶配置与技巧
