@@ -131,7 +131,7 @@ const config: Config = {
         { to: "/blog", label: "Blog", position: "left" },
         { to: "/recommend", label: "Recommend", position: "left" },
         {
-          href: "https://github.com/RainLib",
+          href: "https://github.com/RainLib/blog",
           label: "GitHub",
           position: "right",
         },
