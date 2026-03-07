@@ -5,7 +5,7 @@
 [![React](https://img.shields.io/badge/framework-React-61dafb?logo=react&logoColor=white)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/language-TypeScript-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 
-[中文版本 (README_CN.md)](./README_CN.md)
+[中文版本 (README_CN.md)](./README_CN.md) | [Live Demo: blog.rainlib.com](https://blog.rainlib.com/)
 
 RainLib is an open-source, developer-focused blogging platform and digital garden system. Built on **Docusaurus 3**, it is designed for technical content, documentation, and knowledge sharing. It uniquely integrates [Motion Canvas](https://motioncanvas.io/) to render **interactive high-level system architecture animations** directly within blog posts.
 
@@ -22,6 +22,30 @@ RainLib is an open-source, developer-focused blogging platform and digital garde
 - **🔍 Local Search**: Fast, offline full-text search powered by `@easyops-cn/docusaurus-search-local`.
 - **🎁 Recommendation System**: Custom `recommendationPlugin` for showcasing curated tools, papers, and projects.
 - **🎨 Modern UI**: Styled with Tailwind CSS and a premium dark-mode-first aesthetic.
+
+---
+
+## 🖼️ Showcase
+
+### 🏠 Home Page
+
+![Home Page](./images/home.png)
+_A stunning, interactive home page with dynamic backgrounds and a premium look-and-feel._
+
+### 📝 Blog List
+
+![Blog List](./images/blog.png)
+_A structured and clean blog listing page with category filtering and featured posts._
+
+### 🎬 Interactive Animations (Motion Canvas)
+
+![Blog Item](./images/blog_item.png)
+_Embedded Motion Canvas animations that visualize complex system architectures directly within the content._
+
+### 🎁 Recommendation Gallery
+
+![Recommend Page](./images/recommend.png)
+_A beautifully designed gallery for showcasing curated tools, papers, and high-quality resources._
 
 ---
 

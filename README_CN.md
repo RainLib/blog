@@ -5,7 +5,7 @@
 [![React](https://img.shields.io/badge/framework-React-61dafb?logo=react&logoColor=white)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/language-TypeScript-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 
-[English Version (README.md)](./README.md)
+[English Version (README.md)](./README.md) | [在线体验: blog.rainlib.com](https://blog.rainlib.com/)
 
 RainLib 是一个开源的、以开发者为中心的技术博客平台与数字花园系统。基于 **Docusaurus 3** 构建，旨在提供现代化的技术内容管理、文档编写与知识共享体验。本项目的一个核心特色是深度集成了 [Motion Canvas](https://motioncanvas.io/)，允许在博文中直接渲染**交互式的高级系统架构动态动画**。
 
@@ -22,6 +22,30 @@ RainLib 是一个开源的、以开发者为中心的技术博客平台与数字
 - **🔍 极速本地搜索**: 基于 `@easyops-cn/docusaurus-search-local`，纯离线极速索引。
 - **🎁 定制化推荐体系**: 独有的 `recommendationPlugin`，将高质量开源项目、论文、工具转化为组件化卡片。
 - **🎨 现代化审美**: 采用 Tailwind CSS 构建，支持深色模式优先的精致视觉设计。
+
+---
+
+## 🖼️ 效果展示
+
+### 🏠 首页设计
+
+![首页](./images/home.png)
+_极具现代感的首页，支持动态背景与交互式设计。_
+
+### 📝 博客列表
+
+![博客列表](./images/blog.png)
+_清晰的博客列表页，支持标签分类与置顶文章。_
+
+### 🎬 交互式动画 (Motion Canvas)
+
+![博客正文](./images/blog_item.png)
+_在博文中嵌入的 Motion Canvas 动画，直观地展示复杂的系统架构。_
+
+### 🎁 推荐资源库
+
+![推荐页](./images/recommend.png)
+_精心设计的组件化卡片视图，用于推荐高质量的工具、论文和开源项目。_
 
 ---
 
