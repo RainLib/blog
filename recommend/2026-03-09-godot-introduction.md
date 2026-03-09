@@ -3,7 +3,7 @@ title: "Godot 引擎介绍"
 description: "开源的 2D 和 3D 游戏引擎，适用于多种平台，提供强大的工具集和活跃的社区支持。"
 url: "https://godotengine.org/"
 tags: ["Game Development", "Tools"]
-icon: "https://godotengine.org/assets/img/logo.png"
+icon: "https://godotengine.org/assets/logo_dark.svg"
 sort: 20
 ---
 
@@ -81,13 +81,16 @@ func _ready():
 ## 相关资源
 
 ### 官方地址
+
 - **Godot 官网**: [https://godotengine.org/](https://godotengine.org/)
 - **Godot GitHub**: [https://github.com/godotengine/godot](https://github.com/godotengine/godot)
 
 ### Awesome Godot 资源列表
+
 - **Awesome Godot**: [https://github.com/godotengine/awesome-godot](https://github.com/godotengine/awesome-godot)
 
 ### 好用的插件
+
 - **Godot Steam 插件**: [https://github.com/CoaguCo-Industries/GodotSteam](https://github.com/CoaguCo-Industries/GodotSteam)
 - **Godot Asset Library**: [https://godotengine.org/asset-library/asset](https://godotengine.org/asset-library/asset)
 
