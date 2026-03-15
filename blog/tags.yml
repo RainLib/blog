@@ -247,3 +247,28 @@ tutorial:
   label: 教程
   permalink: /tutorial
   description: 手把手实操教程
+
+claude-code:
+  label: Claude Code
+  permalink: /claude-code
+  description: Claude Code 命令行工具与生态
+
+skills:
+  label: Skills
+  permalink: /skills
+  description: Claude Skills 扩展与插件系统
+
+full-stack:
+  label: Full Stack
+  permalink: /full-stack
+  description: 全栈开发与生命周期管理
+
+storyboard:
+  label: Storyboard
+  permalink: /storyboard
+  description: AI 驱动的分镜与创意工作流
+
+ai:
+  label: AI
+  permalink: /ai
+  description: 人工智能与大模型技术综述
